@@ -1528,7 +1528,7 @@ dumpState(const char * file)
 	/*
 	 * Finish up with the setting offsets and the final line.
 	 */
-	fprintf(fp, "T %d %d\n", baseSet - setTable, nextSet - setTable);
+	fprintf(fp, "T %ld %ld\n", baseSet - setTable, nextSet - setTable);
 	fprintf(fp, "E\n");
 
 	if (fclose(fp))
