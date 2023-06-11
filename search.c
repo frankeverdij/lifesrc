@@ -73,6 +73,7 @@ static	ColInfo	dummyColInfo;		/* dummy info for ignored cells */
  */
 static	void	initTransit(void);
 static	void	initImplic(void);
+static  void    initNextState(const State *,  const State *);
 static	void	initSearchOrder(void);
 static	void	linkCell(Cell *);
 static	State	transition(State, int, int);
@@ -244,6 +245,7 @@ initCells(void)
 
 	curGen = 0;
 	curStatus = OK;
+	initNextState(bornRules, liveRules);
 	initTransit();
 	initImplic();
 }
@@ -1671,11 +1673,30 @@ initTransit(void)
 }
 
 
+static State unkRules[9 * ((int) UNK + 1)] = { UNK };
+
+static void
+initNextState(const State * bornRules, const State * liveRules)
+{
+    for (int i = 0 ; i < 9 ; i++)
+    {
+        unkRules[i + 9 * (int) OFF] = bornRules[i];
+        unkRules[i + 9 * (int) ON ] = liveRules[i];
+        unkRules[i + 9 * (int) UNK] = (bornRules[i] == liveRules[i]) ? bornRules[i] : UNK;
+    }
+}
+
+
+static State
+nextState(const State state, const int onCount)
+{
+    return unkRules[onCount + 9 * (int) state];
+}
 /*
  * Return the next state if all neighbors are known.
  */
 static State
-nextState(State state, int onCount)
+nextState2(State state, int onCount)
 {
 	switch (state)
 	{
