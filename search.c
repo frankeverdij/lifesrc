@@ -14,7 +14,6 @@
 
 #include "lifesrc.h"
 
-
 /*
  * IMPLIC flag values.
  */
@@ -36,7 +35,7 @@ typedef	unsigned char	Flags;
  * this table determines the state of the cell in the next generation.
  * The table is indexed by the descriptor value of a cell.
  */
-static	State	transit[256];
+static	State	transit[1024];
 
 
 /*
@@ -46,7 +45,7 @@ static	State	transit[256];
  * in the previous generation.
  * The table is indexed by the descriptor value of a cell.
  */
-static	Flags	implic[256];
+static	Flags	implic[1024];
 
 
 /*
@@ -92,7 +91,7 @@ static	int	getDesc(const Cell *);
 static	int	sumToDesc(State, int);
 static	int	orderSortFunc(const void * addr1, const void * addr2);
 static	Cell *	(*getUnknown)(void);
-static	State	nextState(State, int);
+static	State	nextState(const State, const int);
 
 
 /*
@@ -523,18 +522,17 @@ getDesc(const Cell * cell)
 	sum += cell->cdl->state + cell->cd->state + cell->cdr->state;
 	sum += cell->cl->state + cell->cr->state;
 
-	return ((sum & 0x88) ? (sum + cell->state * 2 + 0x11) :
-		(sum * 2 + cell->state));
+	return sumToDesc(cell->state, sum);
 }
 
 
 /*
  * Return the descriptor value for a cell and the sum of its neighbors.
  */
-static int
-sumToDesc(State state, int sum)
+static inline int
+sumToDesc(const State state, const int sum)
 {
-	return ((sum & 0x88) ? (sum + state * 2 + 0x11) : (sum * 2 + state));
+    return sum * 2 + state;
 }
 
 
