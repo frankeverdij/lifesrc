@@ -21,7 +21,7 @@
  * Build options
  */
 #ifndef DEBUG_FLAG
-#define	DEBUG_FLAG	0	/* nonzero for debugging features */
+#define	DEBUG_FLAG	1	/* nonzero for debugging features */
 #endif
 
 
@@ -30,7 +30,7 @@
  */
 #define	DUMP_VERSION	6		/* version of dump file */
 
-#define	ALLOC_SIZE	100		/* chunk size for cell allocation */
+#define	ALLOC_SIZE	50000		/* chunk size for cell allocation */
 #define	VIEW_MULT	1000		/* viewing frequency multiplier */
 #define	DUMP_MULT	1000		/* dumping frequency multiplier */
 #define	DUMP_FILE	"lifesrc.dmp"	/* default dump file name */
@@ -82,16 +82,6 @@ typedef	unsigned int	Status;
 #define	CONSISTENT	((Status) 2)
 #define	NOT_EXIST	((Status) 3)
 #define	FOUND		((Status) 4)
-
-
-/*
- * States of a cell
- */
-#define	OFF	((State) 0x00)		/* cell is known off */
-#define	ON	((State) 0x01)		/* cell is known on */
-#define	UNK	((State) 0x20)		/* cell is unknown */
-
-#define	nStates	3			/* number of states */
 
 
 /*

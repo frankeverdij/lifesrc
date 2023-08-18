@@ -13,21 +13,17 @@
 #define	EXTERN
 
 #include "lifesrc.h"
+#include "state.h"
+#include "flags.h"
+#include "transition.h"
+#include "implication.h"
+#include "nextstate.h"
+#include "description.h"
 
 /*
- * IMPLIC flag values.
+ * Table of state values.
  */
-typedef	unsigned char	Flags;
-
-#define	N0IC0	((Flags) 0x01)	/* new cell 0 ==> current cell 0 */
-#define	N0IC1	((Flags) 0x02)	/* new cell 0 ==> current cell 1 */
-#define	N1IC0	((Flags) 0x04)	/* new cell 1 ==> current cell 0 */
-#define	N1IC1	((Flags) 0x08)	/* new cell 1 ==> current cell 1 */
-#define	N0ICUN0	((Flags) 0x10)	/* new cell 0 ==> current unknown neighbors 0 */
-#define	N0ICUN1	((Flags) 0x20)	/* new cell 0 ==> current unknown neighbors 1 */
-#define	N1ICUN0	((Flags) 0x40)	/* new cell 1 ==> current unknown neighbors 0 */
-#define	N1ICUN1	((Flags) 0x80)	/* new cell 1 ==> current unknown neighbors 1 */
-
+static State states[nStates] = {OFF, ON, UNK};
 
 /*
  * Table of transitions.
@@ -49,12 +45,6 @@ static	Flags	implic[1024];
 
 
 /*
- * Table of state values.
- */
-static	State	states[nStates] = {OFF, ON, UNK};
-
-
-/*
  * Other local data.
  */
 static	int	newCellCount;		/* cells ready for allocation */
@@ -71,14 +61,9 @@ static	ColInfo	dummyColInfo;		/* dummy info for ignored cells */
 /*
  * Local procedures
  */
-static	void	initTransit(void);
-static	void	initImplic(void);
-static  void    initNextState(const State *,  const State *);
 static	void	initSearchOrder(void);
 static	void	linkCell(Cell *);
-static	State	transition(State, int, int);
 static	State	choose(const Cell *);
-static	Flags	implication(State, int, int);
 static	Cell *	symCell(const Cell *);
 static	Cell *	mapCell(const Cell *, Bool);
 static	Cell *	allocateCell(void);
@@ -89,10 +74,8 @@ static	Status	consistify10(Cell *);
 static	Status	examineNext(void);
 static	Bool	checkWidth(const Cell *);
 static	int	getDesc(const Cell *);
-static	int	sumToDesc(State, int);
 static	int	orderSortFunc(const void * addr1, const void * addr2);
 static	Cell *	(*getUnknown)(void);
-static	State	nextState(const State, const int);
 
 
 /*
@@ -246,8 +229,22 @@ initCells(void)
 	curGen = 0;
 	curStatus = OK;
 	initNextState(bornRules, liveRules);
-	initTransit();
-	initImplic();
+	initTransit(states, transit);
+	initImplic(states, implic);
+	/*
+	printf("Cell struct is: %zd\n", sizeof(Cell));
+	for (int i=0;i<576;i++) {
+	    if (i%32 == 0)
+	        printf("\n");
+	    printf(" %02x", transit[i]);
+	}
+	printf("\n---\n");
+	for (int i=0;i<576;i++) {
+	    if (i%32 == 0)
+	        printf("\n");
+	    printf(" %02x", implic[i]);
+	}
+	*/
 }
 
 
@@ -525,16 +522,6 @@ getDesc(const Cell * cell)
 	sum += cell->cl->state + cell->cr->state;
 
 	return sumToDesc(cell->state, sum);
-}
-
-
-/*
- * Return the descriptor value for a cell and the sum of its neighbors.
- */
-static inline int
-sumToDesc(const State state, const int sum)
-{
-    return sum * 2 + state;
 }
 
 
@@ -1606,279 +1593,6 @@ allocateCell(void)
 	cell->loop = NULL;
 
 	return cell;
-}
-
-
-/*
- * Initialize the implication table.
- */
-static void
-initImplic(void)
-{
-	State	state;
-	int	offCount;
-	int	onCount;
-	int	sum;
-	int	desc;
-	int	i;
-
-	for (i = 0; i < nStates; i++)
-	{
-		state = states[i];
-
-		for (offCount = 8; offCount >= 0; offCount--)
-		{
-			for (onCount = 0; onCount + offCount <= 8; onCount++)
-			{
-				sum = onCount + (8 - onCount - offCount) * UNK;
-				desc = sumToDesc(state, sum);
-
-				implic[desc] =
-					implication(state, offCount, onCount);
-			}
-		}
-	}
-}
-
-
-/*
- * Initialize the transition table.
- */
-static void
-initTransit(void)
-{
-	int	state;
-	int	offCount;
-	int	onCount;
-	int	sum;
-	int	desc;
-	int	i;
-
-	for (i = 0; i < nStates; i++)
-	{
-		state = states[i];
-
-		for (offCount = 8; offCount >= 0; offCount--)
-		{
-			for (onCount = 0; onCount + offCount <= 8; onCount++)
-			{
-				sum = onCount + (8 - onCount - offCount) * UNK;
-				desc = sumToDesc(state, sum);
-
-				transit[desc] =
-					transition(state, offCount, onCount);
-			}
-		}
-	}
-}
-
-
-static State unkRules[9 * ((int) UNK + 1)] = { UNK };
-
-static void
-initNextState(const State * bornRules, const State * liveRules)
-{
-    for (int i = 0 ; i < 9 ; i++)
-    {
-        unkRules[i + 9 * (int) OFF] = bornRules[i];
-        unkRules[i + 9 * (int) ON ] = liveRules[i];
-        unkRules[i + 9 * (int) UNK] = (bornRules[i] == liveRules[i]) ? bornRules[i] : UNK;
-    }
-}
-
-
-static State
-nextState(const State state, const int onCount)
-{
-    return unkRules[onCount + 9 * (int) state];
-}
-/*
- * Return the next state if all neighbors are known.
- */
-static State
-nextState2(State state, int onCount)
-{
-	switch (state)
-	{
-		case ON:
-			return liveRules[onCount];
-
-		case OFF:
-			return bornRules[onCount];
-
-		case UNK:
-			if (bornRules[onCount] == liveRules[onCount])
-				return bornRules[onCount];
-
-			/* fall into default case */
-
-		default:
-			return UNK;
-	}
-}
-
-
-/*
- * Determine the transition of a cell depending on its known neighbor counts.
- * The unknown neighbor count is implicit since there are eight neighbors.
- */
-static State
-transition(State state, int offCount, int onCount)
-{
-	Bool	onAlways;
-	Bool	offAlways;
-	int	unkCount;
- 	int	i;
-
- 	onAlways = TRUE;
-	offAlways = TRUE;
-	unkCount = 8 - offCount - onCount;
- 
-	for (i = 0; i <= unkCount; i++)
-	{
-		switch (nextState(state, onCount + i))
-		{
-			case ON:
-				offAlways = FALSE;
-				break;
-
-			case OFF:
-				onAlways = FALSE;
-				break;
-
-			default:
-				return UNK;
-		}
-	}
-
-	if (onAlways)
-		return ON;
-
-	if (offAlways)
-		return OFF;
-
-	return UNK;
-}
-
-
-/*
- * Determine the implications of a cell depending on its known neighbor counts.
- * The unknown neighbor count is implicit since there are eight neighbors.
- */
-static Flags
-implication(State state, int offCount, int onCount)
-{
-	Flags	flags;
-	State	next;
-	int	unkCount;
-	int	i;
-
-	unkCount = 8 - offCount - onCount;
-	flags = 0;
-
-	if (state == UNK)
-	{
-		/*
-		 * Set them all.
-		 */
-		flags |= (N0IC0 | N0IC1 | N1IC0 | N1IC1);
-
-		for (i = 0; i <= unkCount; i++)
-		{
-			/*
-			 * Look for contradictions.
-			 */
-			next = nextState(OFF, onCount + i);
-
-			if (next == ON)
-				flags &= ~N1IC1;
-			else if (next == OFF)
-				flags &= ~N0IC1;
-
-			next = nextState(ON, onCount + i);
-
-			if (next == ON)
-				flags &= ~N1IC0;
-			else if (next == OFF)
-				flags &= ~N0IC0;
-		}
-	}
-	
-	if (unkCount)
-	{
-		flags |= (N0ICUN0 | N0ICUN1 | N1ICUN0 | N1ICUN1);
-
-		if ((state == OFF) || (state == UNK))
-		{
-			/*
-			 * Try unknowns zero.
-			 */
-			next = nextState(OFF, onCount);
-
-			if (next == ON)
-				flags &= ~N1ICUN1;
-			else if (next == OFF)
-				flags &= ~N0ICUN1;
-
-			/*
-			 * Try all ones.
-			 */
-			next = nextState(OFF, onCount + unkCount);
-
-			if (next == ON)
-				flags &= ~N1ICUN0;
-			else if (next == OFF)
-				flags &= ~N0ICUN0;
-		}
-
-		if ((state == ON) || (state == UNK))
-		{
-			/*
-			 * Try unknowns zero.
-			 */
-			next = nextState(ON, onCount);
-
-			if (next == ON)
-				flags &= ~N1ICUN1;
-			else if (next == OFF)
-				flags &= ~N0ICUN1;
-
-			/*
-			 * Try all ones.
-			 */
-			next = nextState(ON, onCount + unkCount);
-
-			if (next == ON)
-				flags &= ~N1ICUN0;
-			else if (next == OFF)
-				flags &= ~N0ICUN0;
-		}
-
-		for (i = 1; i <= unkCount - 1; i++)
-		{
-			if ((state == OFF) || (state == UNK))
-			{
-				next = nextState(OFF, onCount + i);
-
-				if (next == ON)
-					flags &= ~(N1ICUN0 | N1ICUN1);
-				else if (next == OFF)
-					flags &= ~(N0ICUN0 | N0ICUN1);
-			}
-
-			if ((state == ON) || (state == UNK))
-			{
-				next = nextState(ON, onCount + i);
-
-				if (next == ON)
-					flags &= ~(N1ICUN0 | N1ICUN1);
-				else if (next == OFF)
-					flags &= ~(N0ICUN0 | N0ICUN1);
-			}
-		}
-	}
-  
-	return flags;
 }
 
 /* END CODE */

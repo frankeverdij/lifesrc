@@ -4,6 +4,7 @@
  */
 
 #include "lifesrc.h"
+#include "state.h"
 
 #define	VERSION	"3.8"
 
