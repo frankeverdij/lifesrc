@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 
 /*
@@ -64,14 +65,9 @@
 #define	isBlank(ch)	(((ch) == ' ') || ((ch) == '\t'))
 
 
-typedef	int		Bool;
-typedef	char		PackedBool;
+typedef	char		Packedbool;
 typedef	unsigned char	State;
 typedef	unsigned int	Status;
-
-
-#define	FALSE		((Bool) 0)
-#define	TRUE		((Bool) 1)
 
 
 /*
@@ -112,9 +108,9 @@ typedef	struct Cell Cell;
 struct Cell
 {
 	State		state;		/* current state */
-	PackedBool	free;		/* this cell still has free choice */
-	PackedBool	frozen;		/* this cell is frozen in all gens */
-	PackedBool	choose;		/* can choose this cell if unknown */
+	Packedbool	free;		/* this cell still has free choice */
+	Packedbool	frozen;		/* this cell is frozen in all gens */
+	Packedbool	choose;		/* can choose this cell if unknown */
 	short		gen;		/* generation number of this cell */
 	short		row;		/* row of this cell */
 	short		col;		/* column of this cell */
@@ -160,28 +156,28 @@ EXTERN	int	colMax;		/* maximum number of columns */
 EXTERN	int	genMax;		/* maximum number of generations */
 EXTERN	int	rowTrans;	/* translation of rows */
 EXTERN	int	colTrans;	/* translation of columns */
-EXTERN	Bool	rowSym;		/* enable row symmetry starting at column */
-EXTERN	Bool	colSym;		/* enable column symmetry starting at row */
-EXTERN	Bool	pointSym;	/* enable symmetry with central point */
-EXTERN	Bool	fwdSym;		/* enable forward diagonal symmetry */
-EXTERN	Bool	bwdSym;		/* enable backward diagonal symmetry */
-EXTERN	Bool	flipRows;	/* flip rows at column number from last to first generation */
-EXTERN	Bool	flipCols;	/* flip columns at row number from last to first generation */
-EXTERN	Bool	flipQuads;	/* flip quadrants from last to first gen */
-EXTERN	Bool	parent;		/* only look for parents */
-EXTERN	Bool	allObjects;	/* look for all objects including subPeriods */
-EXTERN	Bool	setDeep;	/* set cleared cells deeply from init file */
+EXTERN	bool	rowSym;		/* enable row symmetry starting at column */
+EXTERN	bool	colSym;		/* enable column symmetry starting at row */
+EXTERN	bool	pointSym;	/* enable symmetry with central point */
+EXTERN	bool	fwdSym;		/* enable forward diagonal symmetry */
+EXTERN	bool	bwdSym;		/* enable backward diagonal symmetry */
+EXTERN	bool	flipRows;	/* flip rows at column number from last to first generation */
+EXTERN	bool	flipCols;	/* flip columns at row number from last to first generation */
+EXTERN	bool	flipQuads;	/* flip quadrants from last to first gen */
+EXTERN	bool	parent;		/* only look for parents */
+EXTERN	bool	allObjects;	/* look for all objects including subPeriods */
+EXTERN	bool	setDeep;	/* set cleared cells deeply from init file */
 EXTERN	int	nearCols;	/* maximum distance to be near columns */
 EXTERN	int	maxCount;	/* maximum number of cells in generation 0 */
 EXTERN	int	useRow;		/* row that must have at least one ON cell */
 EXTERN	int	useCol;		/* column that must have at least one ON cell */
 EXTERN	int	colCells;	/* maximum cells in a column */
 EXTERN	int	colWidth;	/* maximum width of each column */
-EXTERN	Bool	follow;		/* follow average position of previous column */
-EXTERN	Bool	orderWide;	/* ordering tries to find wide objects */
-EXTERN	Bool	orderGens;	/* ordering tries all gens first */
-EXTERN	Bool	orderMiddle;	/* ordering tries middle columns first */
-EXTERN	Bool	followGens;	/* try to follow setting of other gens */
+EXTERN	bool	follow;		/* follow average position of previous column */
+EXTERN	bool	orderWide;	/* ordering tries to find wide objects */
+EXTERN	bool	orderGens;	/* ordering tries all gens first */
+EXTERN	bool	orderMiddle;	/* ordering tries middle columns first */
+EXTERN	bool	followGens;	/* try to follow setting of other gens */
 
 
 /*
@@ -189,10 +185,10 @@ EXTERN	Bool	followGens;	/* try to follow setting of other gens */
  * do not affect the status of a search in progress.
  * They are either setTable on the command line or are computed.
  */
-EXTERN	Bool	quiet;		/* don't output */
-EXTERN	Bool	debug;		/* enable debugging output (if compiled so) */
-EXTERN	Bool	quitOk;		/* ok to quit without confirming */
-EXTERN	Bool	inited;		/* initialization has been done */
+EXTERN	bool	quiet;		/* don't output */
+EXTERN	bool	debug;		/* enable debugging output (if compiled so) */
+EXTERN	bool	quitOk;		/* ok to quit without confirming */
+EXTERN	bool	inited;		/* initialization has been done */
 EXTERN	State	bornRules[9];	/* rules for whether a cell is to be born */
 EXTERN	State	liveRules[9];	/* rules for whether a live cell stays alive */
 EXTERN	int	curGen;		/* current generation for display */
@@ -226,21 +222,21 @@ EXTERN	int	fullColumns;	/* columns in gen 0 which are fully set */
 extern	void	getCommands(void);
 extern	void	initCells(void);
 extern	void	printGen(int);
-extern	void	writeGen(const char *, Bool);
+extern	void	writeGen(const char *, bool);
 extern	void	dumpState(const char *);
 extern	void	adjustNear(Cell *, int);
 extern	Status	search(void);
-extern	Status	proceed(Cell *, State, Bool);
-extern	Status	go(Cell *, State, Bool);
-extern	Status	setCell(Cell *, State, Bool);
+extern	Status	proceed(Cell *, State, bool);
+extern	Status	go(Cell *, State, bool);
+extern	Status	setCell(Cell *, State, bool);
 extern	Cell *	findCell(int, int, int);
 extern	Cell *	backup(void);
-extern	Bool	subPeriods(void);
+extern	bool	subPeriods(void);
 extern	void	loopCells(Cell *, Cell *);
 extern	void	fatal(const char *);
-extern	Bool	ttyOpen(void);
-extern	Bool	ttyCheck(void);
-extern	Bool	ttyRead(const char *, char *, int);
+extern	bool	ttyOpen(void);
+extern	bool	ttyCheck(void);
+extern	bool	ttyRead(const char *, char *, int);
 extern	void	ttyPrintf(const char *, ...);
 extern	void	ttyStatus(const char *, ...);
 extern	void	ttyWrite(const char *, int);

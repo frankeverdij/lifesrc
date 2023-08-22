@@ -9,21 +9,21 @@
 #include "lifesrc.h"
 
 
-static	Bool	inputready;		/* TRUE if input now ready */
+static	bool	inputready;		/* true if input now ready */
 
 static	void	gotinput(int);
 
 
 /*
  * Open the terminal and enable for detecting terminal input.
- * Returns TRUE if successful.
+ * Returns true if successful.
  */
-Bool
+bool
 ttyOpen(void)
 {
 	signal(SIGINT, gotinput);
 
-	return TRUE;
+	return true;
 }
 
 
@@ -31,7 +31,7 @@ static void
 gotinput(int signalNumber)
 {
 	signal(SIGINT, gotinput);
-	inputready = TRUE;
+	inputready = true;
 }
 
 
@@ -48,13 +48,13 @@ ttyClose(void)
  * Test to see if a keyboard character is ready.
  * Returns nonzero if so (and clears the ready flag).
  */
-Bool
+bool
 ttyCheck(void)
 {
-	Bool	result;
+	bool	result;
 
 	result = inputready;
-	inputready = FALSE;
+	inputready = false;
 
 	return result;
 }
@@ -132,10 +132,10 @@ ttyFlush(void)
 /*
  * Return a NULL terminated input line (without the final newline).
  * The specified string is printed as a prompt.
- * Returns TRUE on successful read, or FALSE (with an empty buffer)
+ * Returns true on successful read, or false (with an empty buffer)
  * on end of file or error.
  */
-Bool
+bool
 ttyRead(const char * prompt, char * buf, int buflen)
 {
 	int	len;
@@ -147,7 +147,7 @@ ttyRead(const char * prompt, char * buf, int buflen)
 	{
 		buf[0] = '\0';
 
-		return FALSE;
+		return false;
 	}
 
 	len = strlen(buf) - 1;
@@ -155,7 +155,7 @@ ttyRead(const char * prompt, char * buf, int buflen)
 	if ((len >= 0) && (buf[len] == '\n'))
 		buf[len] = '\0';
 
-	return TRUE;
+	return true;
 }
 
 /* END CODE */
