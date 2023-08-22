@@ -1,23 +1,20 @@
 # Makefile for life search program
 
-CFLAGS = -O -g -Wall -Wno-unused-result -fomit-frame-pointer -Iinclude -I. -I.. -I/usr/include/ncurses
+CFLAGS = -O3 -MP -MMD -Wall -Wno-unused-result -fomit-frame-pointer -Iinclude -I. -I.. -I/usr/include/ncurses
 
 SOURCES = $(wildcard src/*.c)
+SOURCES += search.c interact.c
 OBJECTS = $(SOURCES:.c=.o)
+DEPS = $(SOURCES:.c=.d) 
 
 all:	lifesrcdumb lifesrc
 
-lifesrcdumb:	search.o interact.o $(OBJECTS) dumbtty.o
-	$(CC) -o lifesrcdumb search.o interact.o $(OBJECTS) dumbtty.o
+lifesrcdumb:	$(OBJECTS) dumbtty.o
+	$(CC) -o lifesrcdumb $(OBJECTS) dumbtty.o
 
-lifesrc:	search.o interact.o $(OBJECTS) cursestty.o
-	$(CC) -o lifesrc search.o interact.o $(OBJECTS) cursestty.o -lncurses
-
+lifesrc:	$(OBJECTS) cursestty.o
+	$(CC) -o lifesrc $(OBJECTS) cursestty.o -lncurses
 clean:
-	rm -f search.o interact.o cursestty.o dumbtty.o $(OBJECTS)
+	rm -f cursestty.o dumbtty.o $(OBJECTS) $(DEPS)
 	rm -f lifesrc lifesrcdumb
-
-search.o:	lifesrc.h
-interact.o:	lifesrc.h
-cursestty.o:	lifesrc.h
-dumbtty.o:	lifesrc.h
+-include $(DEPS)
