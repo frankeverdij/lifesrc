@@ -3,6 +3,7 @@
  * Author: David I. Bell.
  */
 
+#include <ctype.h>
 #include "lifesrc.h"
 #include "state.h"
 
@@ -336,7 +337,7 @@ main(int argc, char ** argv)
 				/*
 				 * Set output columns or file name.
 				 */
-				if ((*str == '\0') || isDigit(*str))
+				if ((*str == '\0') || isdigit(*str))
 				{
 					/*
 					 * Output file name
@@ -717,7 +718,7 @@ getCommands(void)
 				/*
 				 * If a digit, set that cell.
 				 */
-				if (isDigit(*cmd))
+				if (isdigit(*cmd))
 				{
 					getSetting(cmd);
 					break;
@@ -1969,7 +1970,7 @@ getNum(const char ** cpp, int defnum)
 		isNeg = true;
 	}
 
-	if (!isDigit(*cp))
+	if (!isdigit(*cp))
 	{
 		*cpp = cp;
 
@@ -1978,7 +1979,7 @@ getNum(const char ** cpp, int defnum)
 
 	num = 0;
 
-	while (isDigit(*cp))
+	while (isdigit(*cp))
 		num = num * 10 + (*cp++ - '0');
 
 	if (isNeg)

@@ -50,7 +50,6 @@
 #define	DPRINTF(fmt, ...)
 #endif
 
-#define	isDigit(ch)	(((ch) >= '0') && ((ch) <= '9'))
 #define	isBlank(ch)	(((ch) == ' ') || ((ch) == '\t'))
 
 
