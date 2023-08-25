@@ -22,7 +22,7 @@
  * Build options
  */
 #ifndef DEBUG_FLAG
-#define	DEBUG_FLAG	1	/* nonzero for debugging features */
+#define	DEBUG_FLAG	0	/* nonzero for debugging features */
 #endif
 
 
@@ -45,21 +45,10 @@
  * Debugging macros
  */
 #if DEBUG_FLAG
-#define	DPRINTF0(fmt)			if (debug) printf(fmt)
-#define	DPRINTF1(fmt,a1)		if (debug) printf(fmt,a1)
-#define	DPRINTF2(fmt,a1,a2)		if (debug) printf(fmt,a1,a2)
-#define	DPRINTF3(fmt,a1,a2,a3)		if (debug) printf(fmt,a1,a2,a3)
-#define	DPRINTF4(fmt,a1,a2,a3,a4)	if (debug) printf(fmt,a1,a2,a3,a4)
-#define	DPRINTF5(fmt,a1,a2,a3,a4,a5)	if (debug) printf(fmt,a1,a2,a3,a4,a5)
+#define	DPRINTF(fmt, ...)   if (debug) printf(fmt, ##__VA_ARGS__ )
 #else
-#define	DPRINTF0(fmt)
-#define	DPRINTF1(fmt,a1)
-#define	DPRINTF2(fmt,a1,a2)
-#define	DPRINTF3(fmt,a1,a2,a3)
-#define	DPRINTF4(fmt,a1,a2,a3,a4)
-#define	DPRINTF5(fmt,a1,a2,a3,a4,a5)
+#define	DPRINTF(fmt, ...)
 #endif
-
 
 #define	isDigit(ch)	(((ch) >= '0') && ((ch) <= '9'))
 #define	isBlank(ch)	(((ch) == ' ') || ((ch) == '\t'))

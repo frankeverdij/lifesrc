@@ -433,7 +433,7 @@ setCell(Cell * cell, State state, bool free)
 {
 	if (cell->state == state)
 	{
-		DPRINTF4("setCell %d %d %d to state %s already set\n",
+		DPRINTF("setCell %d %d %d to state %s already set\n",
 			cell->row, cell->col, cell->gen,
 			(state == ON) ? "on" : "off");
 
@@ -442,7 +442,7 @@ setCell(Cell * cell, State state, bool free)
 
 	if (cell->state != UNK)
 	{
-		DPRINTF4("setCell %d %d %d to state %s inconsistent\n",
+		DPRINTF("setCell %d %d %d to state %s inconsistent\n",
 			cell->row, cell->col, cell->gen,
 			(state == ON) ? "on" : "off");
 
@@ -461,7 +461,7 @@ setCell(Cell * cell, State state, bool free)
 		{
 			if (maxCount && (cellCount >= maxCount))
 			{
-				DPRINTF2("setCell %d %d 0 on exceeds maxCount\n",
+				DPRINTF("setCell %d %d 0 on exceeds maxCount\n",
 					cell->row, cell->col);
 
 				return ERROR;
@@ -492,7 +492,7 @@ setCell(Cell * cell, State state, bool free)
 		}
 	}
 
-	DPRINTF5("setCell %d %d %d to %s, %s successful\n",
+	DPRINTF("setCell %d %d %d to %s, %s successful\n",
 		cell->row, cell->col, cell->gen,
 		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
@@ -573,7 +573,7 @@ consistify(Cell * cell)
 	if ((flags == 0) || (cell->state == UNK))
 		return OK;
 
-	DPRINTF1("Implication flags %x\n", flags);
+	DPRINTF("Implication flags %x\n", flags);
 
 	if ((flags & N0IC0) && (cell->state == OFF) &&
 		(setCell(prevCell, OFF, false) != OK))
@@ -615,7 +615,7 @@ consistify(Cell * cell)
 
 	if (state == UNK)
 	{
-		DPRINTF0("Implications successful\n");
+		DPRINTF("Implications successful\n");
 
 		return OK;
 	}
@@ -624,7 +624,7 @@ consistify(Cell * cell)
 	 * For each unknown neighbor, set its state as indicated.
 	 * Return an error if any neighbor is inconsistent.
 	 */
-	DPRINTF4("Forcing unknown neighbors of cell %d %d %d %s\n",
+	DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
 		prevCell->row, prevCell->col, prevCell->gen,
 		((state == ON) ? "on" : "off"));
 
@@ -676,7 +676,7 @@ consistify(Cell * cell)
 		return ERROR;
 	}
 
-	DPRINTF0("Implications successful\n");
+	DPRINTF("Implications successful\n");
 
 	return OK;
 }
@@ -744,7 +744,7 @@ examineNext(void)
 	 */
 	cell = *nextSet++;
 
-	DPRINTF4("Examining saved cell %d %d %d (%s) for consistency\n",
+	DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
 		cell->row, cell->col, cell->gen,
 		(cell->free ? "free" : "forced"));
 
@@ -798,7 +798,7 @@ backup(void)
 	{
 		cell = *--newSet;
 
-		DPRINTF5("backing up cell %d %d %d, was %s, %s\n",
+		DPRINTF("backing up cell %d %d %d, was %s, %s\n",
 			cell->row, cell->col, cell->gen,
 			((cell->state == ON) ? "on" : "off"),
 			(cell->free ? "free": "forced"));
