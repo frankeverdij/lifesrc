@@ -13,9 +13,9 @@
 /*
  * Local data.
  */
-static	bool	noWait;		/* don't wait for commands after loading */
-static	bool	setAll;		/* set all cells from initial file */
-static	bool	isLife;		/* whether the rules are for standard Life */
+static	Bool	noWait;		/* don't wait for commands after loading */
+static	Bool	setAll;		/* set all cells from initial file */
+static	Bool	isLife;		/* whether the rules are for standard Life */
 static	char	ruleString[20];	/* rule string for printouts */
 static	long	foundCount;	/* number of objects found */
 static	char *	initFile;	/* file containing initial cells */
@@ -35,8 +35,8 @@ static	void		excludeCone(int, int, int);
 static	void		freezeCell(int, int);
 static	Status		loadState(const char *);
 static	Status		readFile(const char *);
-static	bool		confirm(const char *);
-static	bool		setRules(const char *);
+static	Bool		confirm(const char *);
+static	Bool		setRules(const char *);
 static	long		getNum(const char **, int);
 static	const char *	getStr(const char *, const char *);
 
@@ -102,7 +102,7 @@ main(int argc, char ** argv)
 				/*
 				 * Don't output.
 				 */
-				quiet = true;
+				quiet = TRUE;
 				break;
 
 			case 'r':
@@ -169,15 +169,15 @@ main(int argc, char ** argv)
 						break;
 
 					case 'q':
-						flipQuads = true;
+						flipQuads = TRUE;
 						break;
 
 					case 'g':
-						followGens = true;
+						followGens = TRUE;
 						break;
 
 					case '\0':
-						follow = true;
+						follow = TRUE;
 						break;
 
 					default:
@@ -209,15 +209,15 @@ main(int argc, char ** argv)
 						break;
 
 					case 'p':
-						pointSym = true;
+						pointSym = TRUE;
 						break;
 
 					case 'f':
-						fwdSym = true;
+						fwdSym = TRUE;
 						break;
 
 					case 'b':
-						bwdSym = true;
+						bwdSym = TRUE;
 						break;
 
 					default:
@@ -305,7 +305,7 @@ main(int argc, char ** argv)
 				 * Load file.
 				 */
 				if (*str == 'n')
-					noWait = true;
+					noWait = TRUE;
 
 				if ((argc <= 0) || (**argv == '-'))
 					fatal("Missing load file name");
@@ -320,11 +320,11 @@ main(int argc, char ** argv)
 				 */
 				if (*str == 'd')
 				{
-					setAll = true;
-					setDeep = true;
+					setAll = TRUE;
+					setDeep = TRUE;
 				}
 				else if (*str != 'n')
-					setAll = true;
+					setAll = TRUE;
 
 				if ((argc <= 0) || (**argv == '-'))
 					fatal("Missing initial file name");
@@ -360,15 +360,15 @@ main(int argc, char ** argv)
 					switch (*str++)
 					{
 						case 'w':
-							orderWide = true;
+							orderWide = TRUE;
 							break;
 
 						case 'g':
-							orderGens = true;
+							orderGens = TRUE;
 							break;
 
 						case 'm':
-							orderMiddle = true;
+							orderMiddle = TRUE;
 							break;
 
 						default:
@@ -402,21 +402,21 @@ main(int argc, char ** argv)
 				/*
 				 * Find parents only.
 				 */
-				parent = true;
+				parent = TRUE;
 				break;
 
 			case 'a':
 				/*
 				 * Find all objects.
 				 */
-				allObjects = true;
+				allObjects = TRUE;
 				break;
 
 			case 'D':
 				/*
 				 * Turn on debugging output.
 				 */
-				debug = true;
+				debug = TRUE;
 				break;
 
 			case 'R':
@@ -506,12 +506,12 @@ main(int argc, char ** argv)
 	else
 		getCommands();
 
-	inited = true;
+	inited = TRUE;
 
 	/*
 	 * Initial commands are complete, now look for the object.
 	 */
-	while (true)
+	while (TRUE)
 	{
 		if (curStatus == OK)
 			curStatus = search();
@@ -558,7 +558,7 @@ main(int argc, char ** argv)
 				ttyStatus("Object %ld found.\n", ++foundCount);
 			}
 
-			writeGen(outputFile, true);
+			writeGen(outputFile, TRUE);
 			continue;
 		}
 
@@ -591,7 +591,7 @@ getCommands(void)
 	viewCount = 0;
 	printGen(curGen);
 
-	while (true)
+	while (TRUE)
 	{
 		if (!ttyRead("> ", buf, LINE_SIZE))
 		{
@@ -661,7 +661,7 @@ getCommands(void)
 				/*
 				 * Write generation to a file.
 				 */
-				writeGen(cp, false);
+				writeGen(cp, FALSE);
 				break;
 
 			case 'd':
@@ -779,7 +779,7 @@ getSetting(const char * cp)
 		return;
 	}
 
-	if (proceed(findCell(row, col, curGen), state, false) != OK)
+	if (proceed(findCell(row, col, curGen), state, FALSE) != OK)
 	{
 		ttyStatus("Inconsistent state for cell\n");
 
@@ -805,16 +805,16 @@ getBackup(const char * cp)
 	int	count;
 	int	blanksToo;
 
-	blanksToo = true;
+	blanksToo = TRUE;
 #if 0
 	/*
 	 * This doesn't work!
 	 */
-	blanksToo = false;
+	blanksToo = FALSE;
 
 	if (*cp == 'b')
 	{
-		blanksToo = true;
+		blanksToo = TRUE;
 		cp++;
 	}
 #endif
@@ -846,7 +846,7 @@ getBackup(const char * cp)
 
 		cell->state = UNK;
 
-		if (go(cell, state, false) != OK)
+		if (go(cell, state, FALSE) != OK)
 		{
 			printGen(curGen);
 			ttyStatus("Backed up over all possibilities\n");
@@ -935,7 +935,7 @@ getClear(const char * cp)
 				if (cell->state != UNK)
 					continue;
 
-				if (proceed(cell, OFF, false) != OK)
+				if (proceed(cell, OFF, FALSE) != OK)
 				{
 					ttyStatus("Inconsistent state for cell\n");
 
@@ -1026,7 +1026,7 @@ excludeCone(int row, int col, int gen)
 		{
 			for (tCol = col - dist; tCol <= col + dist; tCol++)
 			{
-				findCell(tRow, tCol, tGen)->choose = false;
+				findCell(tRow, tCol, tGen)->choose = FALSE;
 			}
 		}
 	}
@@ -1109,7 +1109,7 @@ freezeCell(int row, int col)
 	{
 		cell = findCell(row, col, gen);
 
-		cell->frozen = true;
+		cell->frozen = TRUE;
 
 		loopCells(cell0, cell);
 	}
@@ -1318,7 +1318,7 @@ printGen(int gen)
  * Filename of "." means write to stdout.
  */
 void
-writeGen(const char * file, bool append)
+writeGen(const char * file, Bool append)
 {
 	FILE *		fp;
 	const Cell *	cell;
@@ -1431,7 +1431,7 @@ writeGen(const char * file, bool append)
 	if (fp != stdout)
 		ttyStatus("\"%s\" written\n", file);
 
-	quitOk = true;
+	quitOk = TRUE;
 }
 
 
@@ -1541,7 +1541,7 @@ dumpState(const char * file)
 	}
 
 	ttyStatus("State dumped to \"%s\"\n", file);
-	quitOk = true;
+	quitOk = TRUE;
 }
 
 
@@ -1560,7 +1560,7 @@ loadState(const char * file)
 	int		gen;
 	int		len;
 	State		state;
-	bool		free;
+	Bool		free;
 	Cell *		cell;
 	int **		param;
 	char		buf[LINE_SIZE];
@@ -1695,7 +1695,7 @@ loadState(const char * file)
 		col = getNum(&cp, 0);
 		gen = getNum(&cp, 0);
 
-		findCell(row, col, gen)->choose = false;
+		findCell(row, col, gen)->choose = FALSE;
 
 		buf[0] = '\0';
 		fgets(buf, LINE_SIZE, fp);
@@ -1746,7 +1746,7 @@ loadState(const char * file)
 	}
 
 	ttyStatus("State loaded from \"%s\"\n", file);
-	quitOk = true;
+	quitOk = TRUE;
 
 	return OK;
 }
@@ -1754,8 +1754,8 @@ loadState(const char * file)
 
 /*
  * Read a file containing initial settings for either gen 0 or the last gen.
- * If setAll is true, both the ON and the OFF cells will be set.
- * If setDeep is true, then OFF cells will be set deeply (in all generations).
+ * If setAll is TRUE, both the ON and the OFF cells will be set.
+ * If setDeep is TRUE, then OFF cells will be set deeply (in all generations).
  * Returns OK on success, ERROR on error.
  */
 static Status
@@ -1874,7 +1874,7 @@ readFile(const char * file)
 			for (gen = minGen; gen <= maxGen; gen++)
 			{
 				if (proceed(findCell(row, col, gen),
-					state, false) != OK)
+					state, FALSE) != OK)
 				{
 					ttyStatus(
 					"Inconsistent state for cell %d %d\n",
@@ -1930,9 +1930,9 @@ getStr(const char * str, const char * prompt)
 
 /*
  * Confirm an action by prompting with the specified string and reading
- * an answer.  Entering 'y' or 'Y' indicates true, everything else false.
+ * an answer.  Entering 'y' or 'Y' indicates TRUE, everything else FALSE.
  */
-static bool
+static Bool
 confirm(const char * prompt)
 {
 	int	ch;
@@ -1940,9 +1940,9 @@ confirm(const char * prompt)
 	ch = *getStr(NULL, prompt);
 
 	if ((ch == 'y') || (ch == 'Y'))
-		return true;
+		return TRUE;
 
-	return false;
+	return FALSE;
 }
 
 
@@ -1956,9 +1956,9 @@ getNum(const char ** cpp, int defnum)
 {
 	const char *	cp;
 	long		num;
-	bool		isNeg;
+	Bool		isNeg;
 
-	isNeg = false;
+	isNeg = FALSE;
 	cp = *cpp;
 
 	while (isBlank(*cp))
@@ -1967,7 +1967,7 @@ getNum(const char ** cpp, int defnum)
 	if (*cp == '-')
 	{
 		cp++;
-		isNeg = true;
+		isNeg = TRUE;
 	}
 
 	if (!isdigit(*cp))
@@ -1996,11 +1996,11 @@ getNum(const char ** cpp, int defnum)
 
 /*
  * Parse a string and set the Life rules from it.
- * Returns true on success, or false on an error.
+ * Returns TRUE on success, or FALSE on an error.
  * The rules can be "mmm,nnn",  "mmm/nnn", "Bmmm,Snnn", "Bmmm/Snnn",
  * or a hex number in the Wolfram encoding.
  */
-static bool
+static Bool
 setRules(const char * cp)
 {
 	char *		cpTemp;
@@ -2014,7 +2014,7 @@ setRules(const char * cp)
 	}
 
 	if (*cp == '\0')
-		return false;
+		return FALSE;
 
 	/*
 	 * See if the string contains a comma or a slash.
@@ -2035,11 +2035,11 @@ setRules(const char * cp)
 			else if ((*cp >= 'A') && (*cp <= 'F'))
 				bits += *cp - 'A' + 10;
 			else
-				return false;
+				return FALSE;
 		}
 
 		if (i & ~0x3ff)
-			return false;
+			return FALSE;
 
 		for (i = 0; i < 9; i++)
 		{
@@ -2064,7 +2064,7 @@ setRules(const char * cp)
 			bornRules[*cp++ - '0'] = ON;
 
 		if ((*cp != ',') && (*cp != '/'))
-			return false;
+			return FALSE;
 
 		cp++;
 
@@ -2075,7 +2075,7 @@ setRules(const char * cp)
 			liveRules[*cp++ - '0'] = ON;
 
 		if (*cp)
-			return false;
+			return FALSE;
 	}
 
 	/*
@@ -2105,7 +2105,7 @@ setRules(const char * cp)
 
 	isLife = (strcmp(ruleString, "B3/S23") == 0);
 
-	return true;
+	return TRUE;
 }
 
 

@@ -65,14 +65,14 @@ static	void	initSearchOrder(void);
 static	void	linkCell(Cell *);
 static	State	choose(const Cell *);
 static	Cell *	symCell(const Cell *);
-static	Cell *	mapCell(const Cell *, bool);
+static	Cell *	mapCell(const Cell *, Bool);
 static	Cell *	allocateCell(void);
 static	Cell *	getNormalUnknown(void);
 static	Cell *	getAverageUnknown(void);
 static	Status	consistify(Cell *);
 static	Status	consistify10(Cell *);
 static	Status	examineNext(void);
-static	bool	checkWidth(const Cell *);
+static	Bool	checkWidth(const Cell *);
 static	int	getDesc(const Cell *);
 static	int	orderSortFunc(const void * addr1, const void * addr2);
 static	Cell *	(*getUnknown)(void);
@@ -90,7 +90,7 @@ initCells(void)
 	int	col;
 	int	gen;
 	int	i;
-	bool	edge;
+	Bool	edge;
 	Cell *	cell;
 	Cell *	cell2;
 
@@ -137,7 +137,7 @@ initCells(void)
 				cell->gen = gen;
 				cell->row = row;
 				cell->col = col;
-				cell->choose = true;
+				cell->choose = TRUE;
 				cell->rowInfo = &dummyRowInfo;
 				cell->colInfo = &dummyColInfo;
 
@@ -150,7 +150,7 @@ initCells(void)
 				{
 					linkCell(cell);
 					cell->state = UNK;
-					cell->free = true;
+					cell->free = TRUE;
 				}
 
 				/*
@@ -190,12 +190,12 @@ initCells(void)
 			for (col = 0; col <= colMax+1; col++)
 			{
 				cell = findCell(row, col, genMax - 1);
-				cell2 = mapCell(cell, true);
+				cell2 = mapCell(cell, TRUE);
 				cell->future = cell2;
 				cell2->past = cell;
 
 				cell = findCell(row, col, 0);
-				cell2 = mapCell(cell, false);
+				cell2 = mapCell(cell, FALSE);
 				cell->past = cell2;
 				cell2->future = cell;
 			}
@@ -429,7 +429,7 @@ orderSortFunc(const void * addr1, const void * addr2)
  * If the cell is newly set, then it is added to the set table.
  */
 Status
-setCell(Cell * cell, State state, bool free)
+setCell(Cell * cell, State state, Bool free)
 {
 	if (cell->state == state)
 	{
@@ -559,7 +559,7 @@ consistify(Cell * cell)
 
 	if ((state != UNK) && (state != cell->state))
 	{
-		if (setCell(cell, state, false) == ERROR)
+		if (setCell(cell, state, FALSE) == ERROR)
 			return ERROR;
 	}
 
@@ -576,25 +576,25 @@ consistify(Cell * cell)
 	DPRINTF("Implication flags %x\n", flags);
 
 	if ((flags & N0IC0) && (cell->state == OFF) &&
-		(setCell(prevCell, OFF, false) != OK))
+		(setCell(prevCell, OFF, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((flags & N1IC0) && (cell->state == ON) &&
-		(setCell(prevCell, OFF, false) != OK))
+		(setCell(prevCell, OFF, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((flags & N0IC1) && (cell->state == OFF) &&
-		(setCell(prevCell, ON, false) != OK))
+		(setCell(prevCell, ON, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((flags & N1IC1) && (cell->state == ON) &&
-		(setCell(prevCell, ON, false) != OK))
+		(setCell(prevCell, ON, FALSE) != OK))
 	{
 		return ERROR;
 	}
@@ -629,49 +629,49 @@ consistify(Cell * cell)
 		((state == ON) ? "on" : "off"));
 
 	if ((prevCell->cul->state == UNK) &&
-		(setCell(prevCell->cul, state, false) != OK))
+		(setCell(prevCell->cul, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((prevCell->cu->state == UNK) &&
-		(setCell(prevCell->cu, state, false) != OK))
+		(setCell(prevCell->cu, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((prevCell->cur->state == UNK) &&
-		(setCell(prevCell->cur, state, false) != OK))
+		(setCell(prevCell->cur, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((prevCell->cl->state == UNK) &&
-		(setCell(prevCell->cl, state, false) != OK))
+		(setCell(prevCell->cl, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((prevCell->cr->state == UNK) &&
-		(setCell(prevCell->cr, state, false) != OK))
+		(setCell(prevCell->cr, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((prevCell->cdl->state == UNK) &&
-		(setCell(prevCell->cdl, state, false) != OK))
+		(setCell(prevCell->cdl, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((prevCell->cd->state == UNK) &&
-		(setCell(prevCell->cd, state, false) != OK))
+		(setCell(prevCell->cd, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
 	if ((prevCell->cdr->state == UNK) &&
-		(setCell(prevCell->cdr, state, false) != OK))
+		(setCell(prevCell->cdr, state, FALSE) != OK))
 	{
 		return ERROR;
 	}
@@ -748,7 +748,7 @@ examineNext(void)
 		cell->row, cell->col, cell->gen,
 		(cell->free ? "free" : "forced"));
 
-	if (cell->loop && (setCell(cell->loop, cell->state, false) != OK))
+	if (cell->loop && (setCell(cell->loop, cell->state, FALSE) != OK))
 	{
 		return ERROR;
 	}
@@ -762,7 +762,7 @@ examineNext(void)
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
 Status
-proceed(Cell * cell, State state, bool free)
+proceed(Cell * cell, State state, Bool free)
 {
 	int	status;
 
@@ -820,7 +820,7 @@ backup(void)
 		if (!cell->free)
 		{
 			cell->state = UNK;
-			cell->free = true;
+			cell->free = TRUE;
 
 			continue;
 		}
@@ -840,11 +840,11 @@ backup(void)
  * Returns ERROR if an inconsistency was found.
  */
 Status
-go(Cell * cell, State state, bool free)
+go(Cell * cell, State state, Bool free)
 {
 	Status	status;
 
-	quitOk = false;
+	quitOk = FALSE;
 
 	for (;;)
 	{
@@ -858,7 +858,7 @@ go(Cell * cell, State state, bool free)
 		if (cell == NULL_CELL)
 			return ERROR;
 
-		free = false;
+		free = FALSE;
 		state = 1 - cell->state;
 		cell->state = UNK;
 	}
@@ -997,8 +997,8 @@ Status
 search(void)
 {
 	Cell *	cell;
-	bool	free;
-	bool	needWrite;
+	Bool	free;
+	Bool	needWrite;
 	State	state;
 
 	cell = (*getUnknown)();
@@ -1010,14 +1010,14 @@ search(void)
 		if (cell == NULL_CELL)
 			return ERROR;
 
-		free = false;
+		free = FALSE;
 		state = 1 - cell->state;
 		cell->state = UNK;
 	}
 	else
 	{
 		state = choose(cell);
-		free = true;
+		free = TRUE;
 	}
 
 	for (;;)
@@ -1042,13 +1042,13 @@ search(void)
 		 * write it to the output file.  Also keep the last
 		 * columns count values up to date.
 		 */
-		needWrite = false;
+		needWrite = FALSE;
 
 		if (outputCols &&
 			(fullColumns >= outputLastCols + outputCols))
 		{
 			outputLastCols = fullColumns;
-			needWrite = true;
+			needWrite = TRUE;
 		}
 
 		if (outputLastCols > fullColumns)
@@ -1069,7 +1069,7 @@ search(void)
 		 * message will stay visible for a while.
 		 */
 		if (needWrite)
-			writeGen(outputFile, true);
+			writeGen(outputFile, TRUE);
 
 		/*
 		 * Check for commands.
@@ -1086,7 +1086,7 @@ search(void)
 			return FOUND;
 
 		state = choose(cell);
-		free = true;
+		free = TRUE;
 	}
 }
 
@@ -1123,10 +1123,10 @@ adjustNear(Cell * cell, int inc)
 /*
  * Check to see if setting the specified cell ON would make the width of
  * the column exceed the allowed value.  For symmetric objects, the width
- * is only measured from the center to an edge.  Returns true if the cell
+ * is only measured from the center to an edge.  Returns TRUE if the cell
  * would exceed the value.
  */
-static bool
+static Bool
 checkWidth(const Cell * cell)
 {
 	int		left;
@@ -1137,15 +1137,15 @@ checkWidth(const Cell * cell)
 	int		srcMaxRow;
 	const Cell *	ucp;
 	const Cell *	dcp;
-	bool		full;
+	Bool		full;
 
 	if (!colWidth || !inited || cell->gen)
-		return false;
+		return FALSE;
 
 	left = cell->colInfo->onCount;
 
 	if (left <= 0)
-		return false;
+		return FALSE;
 
 	ucp = cell;
 	dcp = cell;
@@ -1154,12 +1154,12 @@ checkWidth(const Cell * cell)
 	maxRow = cell->row;
 	srcMinRow = 1;
 	srcMaxRow = rowMax;
-	full = true;
+	full = TRUE;
 
 	if ((rowSym && (cell->col >= rowSym)) ||
 		(flipRows && (cell->col >= flipRows)))
 	{
-		full = false;
+		full = FALSE;
 		srcMaxRow = (rowMax + 1) / 2;
 
 		if (cell->row > srcMaxRow)
@@ -1172,7 +1172,7 @@ checkWidth(const Cell * cell)
 	while (left > 0)
 	{
 		if (full && (--width <= 0))
-			return true;
+			return TRUE;
 
 		ucp = ucp->cu;
 		dcp = dcp->cd;
@@ -1195,9 +1195,9 @@ checkWidth(const Cell * cell)
 	}
 
 	if (maxRow - minRow >= colWidth)
-		return true;
+		return TRUE;
 
-	return false;
+	return FALSE;
 }
 
 
@@ -1205,9 +1205,9 @@ checkWidth(const Cell * cell)
  * Check to see if any other generation is identical to generation 0.
  * This is used to detect and weed out all objects with subPeriods.
  * (For example, stable objects or period 2 objects when using -g4.)
- * Returns true if there is an identical generation.
+ * Returns TRUE if there is an identical generation.
  */
-bool
+Bool
 subPeriods(void)
 {
 	int		row;
@@ -1233,11 +1233,11 @@ subPeriods(void)
 			}
 		}
 
-		return true;
+		return TRUE;
 nextGen:;
 	}
 
-	return false;
+	return FALSE;
 }
 
 
@@ -1248,7 +1248,7 @@ nextGen:;
  * called for cells belonging to those two generations.
  */
 static Cell *
-mapCell(const Cell * cell, bool forward)
+mapCell(const Cell * cell, Bool forward)
 {
 	int	row;
 	int	col;
@@ -1299,7 +1299,7 @@ void
 loopCells(Cell * cell1, Cell * cell2)
 {
 	Cell *	cell;
-	bool	frozen;
+	Bool	frozen;
 
 	/*
 	 * Check simple cases of equality, or of either cell
@@ -1351,15 +1351,15 @@ loopCells(Cell * cell1, Cell * cell2)
 	for (cell = cell1->loop; cell != cell1; cell = cell->loop)
 	{
 		if (cell->frozen)
-			frozen = true;
+			frozen = TRUE;
 	}
 
 	if (frozen)
 	{
-		cell1->frozen = true;
+		cell1->frozen = TRUE;
 
 		for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-			cell->frozen = true;
+			cell->frozen = TRUE;
 	}
 }
 
@@ -1574,9 +1574,9 @@ allocateCell(void)
 	 * Fill in the cell as if it was a boundary cell.
 	 */
 	cell->state = OFF;
-	cell->free = false;
-	cell->frozen = false;
-	cell->choose = true;
+	cell->free = FALSE;
+	cell->frozen = FALSE;
+	cell->choose = TRUE;
 	cell->gen = -1;
 	cell->row = -1;
 	cell->col = -1;

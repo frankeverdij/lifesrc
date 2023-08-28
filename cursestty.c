@@ -6,12 +6,16 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <curses.h>
+
+
+#undef	FALSE
+#undef	TRUE
 #undef	OK
 
 #include "lifesrc.h"
 
 
-static	bool	inputready;
+static	Bool	inputready;
 static	int	statusline;
 static	int	inputline;
 
@@ -21,9 +25,9 @@ static void	gotinput(int);
 
 /*
  * Open the terminal and enable for detecting terminal input.
- * Returns true if successful.
+ * Returns TRUE if successful.
  */
-bool
+Bool
 ttyOpen(void)
 {
 	initscr();
@@ -38,7 +42,7 @@ ttyOpen(void)
 	statusline = LINES - 1;
 	inputline = LINES - 1;
 
-	return true;
+	return TRUE;
 }
 
 
@@ -46,7 +50,7 @@ static void
 gotinput(int sigalNumber)
 {
 	signal(SIGINT, gotinput);
-	inputready = true;
+	inputready = TRUE;
 }
 
 
@@ -65,13 +69,13 @@ ttyClose(void)
  * Test to see if a keyboard character is ready.
  * Returns nonzero if so (and clears the ready flag).
  */
-bool
+Bool
 ttyCheck(void)
 {
-	bool	result;
+	Bool	result;
 
 	result = inputready;
-	inputready = false;
+	inputready = FALSE;
 
 	return result;
 }
@@ -151,10 +155,10 @@ ttyFlush(void)
 /*
  * Return a NULL terminated input line (without the final newline).
  * The specified string is printed as a prompt.
- * Returns true if a string was read, or false (and an empty buffer)
+ * Returns TRUE if a string was read, or FALSE (and an empty buffer)
  * on end of file or error.
  */
-bool
+Bool
 ttyRead(const char * prompt, char * buf, int buflen)
 {
 	int	c;
@@ -181,7 +185,7 @@ ttyRead(const char * prompt, char * buf, int buflen)
 			move(0, 0);
 			refresh();
 
-			return false;
+			return FALSE;
 
 		default:
 			*cp++ = c;
@@ -200,7 +204,7 @@ ttyRead(const char * prompt, char * buf, int buflen)
 			move(0, 0);
 			refresh();
 
-			return true;
+			return TRUE;
 
 		case '\b':
 			if (cp == buf)
@@ -214,7 +218,7 @@ ttyRead(const char * prompt, char * buf, int buflen)
 		}
 	}
 
-	return false;
+	return FALSE;
 }
 
 /* END CODE */
