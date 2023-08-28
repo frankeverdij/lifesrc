@@ -4,6 +4,11 @@
 # Prerequisites
 *.d
 
+# Profiling files
+*.gcov
+*.gcda
+*.gcno
+
 # Object files
 *.o
 *.ko
