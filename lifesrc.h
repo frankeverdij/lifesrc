@@ -220,7 +220,7 @@ extern	void	adjustNear(Cell *, int);
 extern	Status	search(void);
 extern	Status	proceed(Cell *, State, Bool);
 extern	Status	go(Cell *, State, Bool);
-extern	Status	setCell(Cell *, State, Bool);
+extern	Status	setCell(Cell * const , const State, const Bool);
 extern	Cell *	findCell(int, int, int);
 extern	Cell *	backup(void);
 extern	Bool	subPeriods(void);

@@ -69,11 +69,11 @@ static	Cell *	mapCell(const Cell *, Bool);
 static	Cell *	allocateCell(void);
 static	Cell *	getNormalUnknown(void);
 static	Cell *	getAverageUnknown(void);
-static	Status	consistify(Cell *);
-static	Status	consistify10(Cell *);
+static	Status	consistify(Cell * const);
+static	Status	consistify10(Cell * const);
 static	Status	examineNext(void);
 static	Bool	checkWidth(const Cell *);
-static	int	getDesc(const Cell *);
+static	int	getDesc(const Cell * const);
 static	int	orderSortFunc(const void * addr1, const void * addr2);
 static	Cell *	(*getUnknown)(void);
 
@@ -429,7 +429,7 @@ orderSortFunc(const void * addr1, const void * addr2)
  * If the cell is newly set, then it is added to the set table.
  */
 Status
-setCell(Cell * cell, State state, Bool free)
+setCell(Cell * const cell, const State state, const Bool free)
 {
 	if (cell->state == state)
 	{
@@ -448,7 +448,7 @@ setCell(Cell * cell, State state, Bool free)
 
 		return ERROR;
 	}
-
+/*
 	if (cell->gen == 0)
 	{
 		if (useCol && (colInfo[useCol].onCount == 0)
@@ -491,7 +491,7 @@ setCell(Cell * cell, State state, Bool free)
 			cellCount++;
 		}
 	}
-
+*/
 	DPRINTF("setCell %d %d %d to %s, %s successful\n",
 		cell->row, cell->col, cell->gen,
 		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
@@ -500,11 +500,11 @@ setCell(Cell * cell, State state, Bool free)
 
 	cell->state = state;
 	cell->free = free;
-	cell->colInfo->setCount++;
+/*	cell->colInfo->setCount++;
 
 	if ((cell->gen == 0) && (cell->colInfo->setCount == rowMax))
 		fullColumns++;
-
+*/
 	return OK;
 }
 
@@ -513,7 +513,7 @@ setCell(Cell * cell, State state, Bool free)
  * Calculate the current descriptor for a cell.
  */
 static int
-getDesc(const Cell * cell)
+getDesc(const Cell * const cell)
 {
 	int	sum;
 
@@ -532,7 +532,7 @@ getDesc(const Cell * cell)
  * current cell.  Returns ERROR if the cell is inconsistent.
  */
 static Status
-consistify(Cell * cell)
+consistify(Cell * const cell)
 {
 	Cell *	prevCell;
 	int	desc;
@@ -543,9 +543,9 @@ consistify(Cell * cell)
 	 * If we are searching for parents and this is generation 0, then
 	 * the cell is consistent with respect to the previous generation.
 	 */
-	if (parent && (cell->gen == 0))
+/*	if (parent && (cell->gen == 0))
 		return OK;
-
+*/
 	/*
 	 * First check the transit table entry for the previous
 	 * generation.  Make sure that this cell matches the ON or
@@ -557,11 +557,10 @@ consistify(Cell * cell)
 	desc = getDesc(prevCell);
 	state = transit[desc];
 
-	if ((state != UNK) && (state != cell->state))
-	{
-		if (setCell(cell, state, FALSE) == ERROR)
-			return ERROR;
-	}
+	if (state != UNK)
+	    if (state != cell->state)
+    		if (setCell(cell, state, FALSE) == ERROR)
+	    		return ERROR;
 
 	/*
 	 * Now look up the previous generation in the implic table.
@@ -575,29 +574,25 @@ consistify(Cell * cell)
 
 	DPRINTF("Implication flags %x\n", flags);
 
-	if ((flags & N0IC0) && (cell->state == OFF) &&
-		(setCell(prevCell, OFF, FALSE) != OK))
-	{
-		return ERROR;
-	}
+	if (flags & N0IC0)
+	    if (cell->state == OFF)
+	        if (setCell(prevCell, OFF, FALSE) != OK)
+		        return ERROR;
 
-	if ((flags & N1IC0) && (cell->state == ON) &&
-		(setCell(prevCell, OFF, FALSE) != OK))
-	{
-		return ERROR;
-	}
+	if (flags & N1IC0)
+	    if (cell->state == ON)
+	        if (setCell(prevCell, OFF, FALSE) != OK)
+		        return ERROR;
 
-	if ((flags & N0IC1) && (cell->state == OFF) &&
-		(setCell(prevCell, ON, FALSE) != OK))
-	{
-		return ERROR;
-	}
+	if (flags & N0IC1)
+	    if (cell->state == OFF)
+	        if (setCell(prevCell, ON, FALSE) != OK)
+		        return ERROR;
 
-	if ((flags & N1IC1) && (cell->state == ON) &&
-		(setCell(prevCell, ON, FALSE) != OK))
-	{
-		return ERROR;
-	}
+	if (flags & N1IC1)
+	    if (cell->state == ON)
+	        if (setCell(prevCell, ON, FALSE) != OK)
+		        return ERROR;
 
 	state = UNK;
 
@@ -687,7 +682,7 @@ consistify(Cell * cell)
  * neighbors in the next generation.
  */
 static Status
-consistify10(Cell * cell)
+consistify10(Cell * const cell)
 {
 	if (consistify(cell) != OK)
 		return ERROR;
@@ -803,7 +798,7 @@ backup(void)
 			((cell->state == ON) ? "on" : "off"),
 			(cell->free ? "free": "forced"));
 
-		if ((cell->state == ON) && (cell->gen == 0))
+/*		if ((cell->state == ON) && (cell->gen == 0))
 		{
 			cell->rowInfo->onCount--;
 			cell->colInfo->onCount--;
@@ -816,7 +811,7 @@ backup(void)
 			fullColumns--;
 
 		cell->colInfo->setCount--;
-
+*/
 		if (!cell->free)
 		{
 			cell->state = UNK;
@@ -1097,7 +1092,7 @@ search(void)
  * within the distance specified the nearCols value.  In this way, a
  * quick test can be made to see if a cell is within range of another one.
  */
-void
+/*void
 adjustNear(Cell * cell, int inc)
 {
 	Cell *	curCell;
@@ -1118,7 +1113,7 @@ adjustNear(Cell * cell, int inc)
 			curCell->near += inc;
 	}
 }
-
+*/
 
 /*
  * Check to see if setting the specified cell ON would make the width of
@@ -1529,9 +1524,9 @@ findCell(int row, int col, int gen)
 	cell->row = row;
 	cell->col = col;
 	cell->gen = gen;
-	cell->rowInfo = &dummyRowInfo;
+/*	cell->rowInfo = &dummyRowInfo;
 	cell->colInfo = &dummyColInfo;
-
+*/
 	auxTable[auxCellCount++] = cell;
 
 	return cell;
