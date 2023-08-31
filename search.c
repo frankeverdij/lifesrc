@@ -577,38 +577,33 @@ consistify(Cell * const cell)
 
 	DPRINTF("Implication flags %x\n", flags);
 
-	if (flags & N0IC0)
-	    if (cellState == OFF)
-	        if (setCell(prevCell, OFF, FALSE) != OK)
-		        return ERROR;
-
-	if (flags & N1IC0)
-	    if (cellState == ON)
-	        if (setCell(prevCell, OFF, FALSE) != OK)
-		        return ERROR;
-
-	if (flags & N0IC1)
-	    if (cellState == OFF)
-	        if (setCell(prevCell, ON, FALSE) != OK)
-		        return ERROR;
-
-	if (flags & N1IC1)
-	    if (cellState == ON)
-	        if (setCell(prevCell, ON, FALSE) != OK)
-		        return ERROR;
-
-	state = UNK;
-
-	if (((flags & N0ICUN0) && (cellState == OFF))
-		|| ((flags & N1ICUN0) && (cellState == ON)))
+	if (cellState == OFF)
 	{
-		state = OFF;
+	    if (flags & N0IC0)
+	        if (setCell(prevCell, OFF, FALSE) != OK)
+		    return ERROR;
+	    if (flags & N0IC1)
+	        if (setCell(prevCell, ON, FALSE) != OK)
+		    return ERROR;
+	    state = UNK;
+	    if (flags & N0ICUN0)
+	        state = OFF;
+	    if (flags & N0ICUN1)
+	        state = ON;
 	}
-
-	if (((flags & N0ICUN1) && (cellState == OFF))
-		|| ((flags & N1ICUN1) && (cellState == ON)))
+	else  /* cellState == ON */
 	{
-		state = ON;
+	    if (flags & N1IC0)
+	        if (setCell(prevCell, OFF, FALSE) != OK)
+		        return ERROR;
+	    if (flags & N1IC1)
+	        if (setCell(prevCell, ON, FALSE) != OK)
+		        return ERROR;
+	    state = UNK;
+	    if (flags & N1ICUN0)
+	        state = OFF;
+	    if (flags & N1ICUN1)
+	        state = ON;
 	}
 
 	if (state == UNK)
