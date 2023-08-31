@@ -536,7 +536,7 @@ consistify(Cell * const cell)
 {
 	Cell *	prevCell;
 	int	desc;
-	State	state;
+	State	state, cellState;
 	Flags	flags;
 
 	/*
@@ -561,6 +561,7 @@ consistify(Cell * const cell)
 	    if (state != cell->state)
     		if (setCell(cell, state, FALSE) == ERROR)
 	    		return ERROR;
+	cellState = cell->state;
 
 	/*
 	 * Now look up the previous generation in the implic table.
@@ -569,41 +570,41 @@ consistify(Cell * const cell)
 	 */
 	flags = implic[desc];
 
-	if ((flags == 0) || (cell->state == UNK))
+	if ((flags == 0) || (cellState == UNK))
 		return OK;
 
 	DPRINTF("Implication flags %x\n", flags);
 
 	if (flags & N0IC0)
-	    if (cell->state == OFF)
+	    if (cellState == OFF)
 	        if (setCell(prevCell, OFF, FALSE) != OK)
 		        return ERROR;
 
 	if (flags & N1IC0)
-	    if (cell->state == ON)
+	    if (cellState == ON)
 	        if (setCell(prevCell, OFF, FALSE) != OK)
 		        return ERROR;
 
 	if (flags & N0IC1)
-	    if (cell->state == OFF)
+	    if (cellState == OFF)
 	        if (setCell(prevCell, ON, FALSE) != OK)
 		        return ERROR;
 
 	if (flags & N1IC1)
-	    if (cell->state == ON)
+	    if (cellState == ON)
 	        if (setCell(prevCell, ON, FALSE) != OK)
 		        return ERROR;
 
 	state = UNK;
 
-	if (((flags & N0ICUN0) && (cell->state == OFF))
-		|| ((flags & N1ICUN0) && (cell->state == ON)))
+	if (((flags & N0ICUN0) && (cellState == OFF))
+		|| ((flags & N1ICUN0) && (cellState == ON)))
 	{
 		state = OFF;
 	}
 
-	if (((flags & N0ICUN1) && (cell->state == OFF))
-		|| ((flags & N1ICUN1) && (cell->state == ON)))
+	if (((flags & N0ICUN1) && (cellState == OFF))
+		|| ((flags & N1ICUN1) && (cellState == ON)))
 	{
 		state = ON;
 	}
