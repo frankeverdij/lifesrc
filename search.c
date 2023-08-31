@@ -562,6 +562,8 @@ consistify(Cell * const cell)
     		if (setCell(cell, state, FALSE) == ERROR)
 	    		return ERROR;
 	cellState = cell->state;
+	if (cellState == UNK)
+		return OK;
 
 	/*
 	 * Now look up the previous generation in the implic table.
@@ -570,7 +572,7 @@ consistify(Cell * const cell)
 	 */
 	flags = implic[desc];
 
-	if ((flags == 0) || (cellState == UNK))
+	if (flags == 0)
 		return OK;
 
 	DPRINTF("Implication flags %x\n", flags);
