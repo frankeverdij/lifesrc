@@ -978,7 +978,7 @@ choose(const Cell * cell)
 		}
 	}
 
-	return OFF;
+	return ON;
 }
 
 
