@@ -261,6 +261,7 @@ initSearchOrder(void)
 	int	col, colStart, colEnd, colStep;
 	int	gen;
 	int	count;
+	int reverse = 0;
 	Cell *	cell;
 	Cell *	table[MAX_CELLS];
 
@@ -270,27 +271,72 @@ initSearchOrder(void)
 	 */
 	count = 0;
 
-    colStart = 1; colEnd = colMax + 1; colStep = 1;
+    if  (colTrans >= 0)
+    {
+        colStart = 1; colEnd = colMax + 1; colStep = 1;
+    }
+    else
+    {
+        colStart = colMax; colEnd = 0; colStep = -1;
+    }
     if (colSym)
     {
-        colStart = 1; colEnd = (colMax + 1) / 2 + 1; colStep = 1;
+        if (reverse)
+        {
+            colStart = 1; colEnd = (colMax + 1) / 2 + 1; colStep = 1;
+        }
+        else
+        {
+            colStart = (colMax + 1) / 2 + 1; colEnd = 0; colStep = -1;
+        }
     }
     
-    rowStart = 1; rowEnd = rowMax + 1; rowStep = 1;
+    if (rowTrans >= 0)
+    {
+        rowStart = 1; rowEnd = rowMax + 1; rowStep = 1;
+    }
+    else
+    {
+        rowStart = rowMax; rowEnd = 0; rowStep = -1;
+    }
+    
     if (rowSym)
     {
-        rowStart = 1; rowEnd = (rowMax + 1) / 2 + 1; rowStep = 1;
+        if (reverse)
+        {
+            rowStart = 1; rowEnd = (rowMax + 1) / 2 + 1; rowStep = 1;
+        }
+        else
+        {
+            rowStart = (rowMax + 1) / 2 + 1; rowEnd = 0; rowStep = -1;
+        }
     }
     
-	for (gen = 0; gen < genMax; gen++)
-	{
-		for (col = colStart; col != colEnd; col += colStep)
-		{
-			for (row = rowStart; row != rowEnd; row += rowStep)
-	        {
-		        table[count++] = findCell(row, col, gen);
-		    }
-	    }
+    if (rowTrans)
+    {
+    	for (gen = 0; gen < genMax; gen++)
+	    {
+        	for (row = rowStart; row != rowEnd; row += rowStep)
+	    	{
+        		for (col = colStart; col != colEnd; col += colStep)
+	            {
+	    	        table[count++] = findCell(row, col, gen);
+	    	    }
+	        }
+        }
+    }
+    else
+    {
+	    for (gen = 0; gen < genMax; gen++)
+	    {
+	      	for (col = colStart; col != colEnd; col += colStep)
+	    	{
+	    		for (row = rowStart; row != rowEnd; row += rowStep)
+	            {
+	    	        table[count++] = findCell(row, col, gen);
+	    	    }
+	        }
+        }
     }
 	/*
 	 * Now sort the table based on our desired search order.
