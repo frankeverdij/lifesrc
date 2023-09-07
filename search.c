@@ -257,8 +257,8 @@ initCells(void)
 static void
 initSearchOrder(void)
 {
-	int	row;
-	int	col;
+	int	row, rowStart, rowEnd, rowStep;
+	int	col, colStart, colEnd, colStep;
 	int	gen;
 	int	count;
 	Cell *	cell;
@@ -270,24 +270,33 @@ initSearchOrder(void)
 	 */
 	count = 0;
 
+    colStart = 1; colEnd = colMax + 1; colStep = 1;
+    if (colSym)
+    {
+        colStart = 1; colEnd = (colMax + 1) / 2 + 1; colStep = 1;
+    }
+    
+    rowStart = 1; rowEnd = rowMax + 1; rowStep = 1;
+    if (rowSym)
+    {
+        rowStart = 1; rowEnd = (rowMax + 1) / 2 + 1; rowStep = 1;
+    }
+    
 	for (gen = 0; gen < genMax; gen++)
-		for (col = 1; col <= colMax; col++)
-			for (row = 1; row <= rowMax; row++)
 	{
-		if (rowSym && (col >= rowSym) && (row * 2 > rowMax + 1))
-			continue;
-
-		if (colSym && (row >= colSym) && (col * 2 > colMax + 1))
-			continue;
-
-		table[count++] = findCell(row, col, gen);
-	}
-
+		for (col = colStart; col != colEnd; col += colStep)
+		{
+			for (row = rowStart; row != rowEnd; row += rowStep)
+	        {
+		        table[count++] = findCell(row, col, gen);
+		    }
+	    }
+    }
 	/*
 	 * Now sort the table based on our desired search order.
 	 */
-	qsort((char *) table, count, sizeof(Cell *), orderSortFunc);
-
+/*	qsort((char *) table, count, sizeof(Cell *), orderSortFunc);
+*/
 	/*
 	 * Finally build the search list from the table elements in the
 	 * final order.
