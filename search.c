@@ -575,34 +575,36 @@ consistify(Cell * const cell)
 static Status
 consistify10(Cell * const cell)
 {
+    Cell * future = cell->future;
+    
 	if (consistify(cell) != OK)
 		return ERROR;
 
-	if (consistify(cell->future) != OK)
+	if (consistify(future) != OK)
 		return ERROR;
 
-	if (consistify(cell->cul->future) != OK)
+	if (consistify(future->cul) != OK)
 		return ERROR;
 
-	if (consistify(cell->cu->future) != OK)
+	if (consistify(future->cu) != OK)
 		return ERROR;
 
-	if (consistify(cell->cur->future) != OK)
+	if (consistify(future->cur) != OK)
 		return ERROR;
 
-	if (consistify(cell->cl->future) != OK)
+	if (consistify(future->cl) != OK)
 		return ERROR;
 
-	if (consistify(cell->cr->future) != OK)
+	if (consistify(future->cr) != OK)
 		return ERROR;
 
-	if (consistify(cell->cdl->future) != OK)
+	if (consistify(future->cdl) != OK)
 		return ERROR;
 
-	if (consistify(cell->cd->future) != OK)
+	if (consistify(future->cd) != OK)
 		return ERROR;
 
-	if (consistify(cell->cdr->future) != OK)
+	if (consistify(future->cdr) != OK)
 		return ERROR;
 
 	return OK;
