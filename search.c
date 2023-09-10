@@ -19,6 +19,7 @@
 #include "implication.h"
 #include "nextstate.h"
 #include "description.h"
+#include "sortorder.h"
 
 /*
  * Table of state values.
@@ -74,7 +75,6 @@ static	Status	consistify10(Cell * const);
 static	Status	examineNext(void);
 static	Bool	checkWidth(const Cell *);
 static	int	getDesc(const Cell * const);
-static	int	orderSortFunc(const void * addr1, const void * addr2);
 static	Cell *	(*getUnknown)(void);
 
 
@@ -263,7 +263,15 @@ initSearchOrder(void)
 	int	count;
 	Cell *	cell;
 	Cell *	table[MAX_CELLS];
-
+	globals_struct g;
+	
+	g.colMax = colMax;
+	g.rowMax = rowMax;
+	g.parent = parent;
+	g.orderGens = orderGens;
+	g.orderMiddle = orderMiddle;
+	g.orderWide = orderWide;
+    g.sortOrder = SORTORDER_TOPDOWN;
 	/*
 	 * Make a table of cells that will be searched.
 	 * Ignore cells that are not relevant to the search due to symmetry.
@@ -286,7 +294,7 @@ initSearchOrder(void)
 	/*
 	 * Now sort the table based on our desired search order.
 	 */
-	qsort((char *) table, count, sizeof(Cell *), orderSortFunc);
+	qsort_r((char *) table, count, sizeof(Cell *), orderSortFunc, &g);
 
 	/*
 	 * Finally build the search list from the table elements in the
@@ -305,121 +313,6 @@ initSearchOrder(void)
 }
 
 
-/*
- * The sort routine for searching.
- */
-static int
-orderSortFunc(const void * addr1, const void * addr2)
-{
-	const Cell **	cp1;
-	const Cell **	cp2;
-	const Cell *	c1;
-	const Cell *	c2;
-	int		midCol;
-	int		midRow;
-	int		dif1;
-	int		dif2;
-
-	cp1 = ((const Cell **) addr1);
-	cp2 = ((const Cell **) addr2);
-
-	c1 = *cp1;
-	c2 = *cp2;
-
-	/*
-	 * If we do not order by all generations, then put all of
-	 * generation zero ahead of the other generations.
-	 */
-	if (!orderGens)
-	{
-		if (c1->gen < c2->gen)
-			return -1;
-
-		if (c1->gen > c2->gen)
-			return 1;
-	}
-
-	/*
-	 * Sort on the column number.
-	 * By default this is from left to right.
-	 * But if middle ordering is set, the ordering is from the center
-	 * column outwards.
-	 */
-	if (orderMiddle)
-	{
-		midCol = (colMax + 1) / 2;
-
-		dif1 = c1->col - midCol;
-
-		if (dif1 < 0)
-			dif1 = -dif1;
-
-		dif2 = c2->col - midCol;
-
-		if (dif2 < 0)
-			dif2 = -dif2;
-
-		if (dif1 < dif2)
-			return -1;
-
-		if (dif1 > dif2)
-			return 1;
-	}
-	else
-	{
-		if (c1->col < c2->col)
-			return -1;
-
-		if (c1->col > c2->col)
-			return 1;
-	}
-
-	/*
-	 * Sort "even" positions ahead of "odd" positions.
-	 */
-	dif1 = (c1->row + c1->col + c1->gen) & 0x01;
-	dif2 = (c2->row + c2->col + c2->gen) & 0x01;
-
-	if (dif1 != dif2)
-		return dif1 - dif2;
-
-	/*
-	 * Sort on the row number.
-	 * By default, this is from the middle row outwards.
-	 * But if wide ordering is set, the ordering is from the edge
-	 * inwards.  Note that we actually set the ordering to be the
-	 * opposite of the desired order because the initial setting
-	 * for new cells is OFF.
-	 */
-	midRow = (rowMax + 1) / 2;
-
-	dif1 = c1->row - midRow;
-
-	if (dif1 < 0)
-		dif1 = -dif1;
-
-	dif2 = c2->row - midRow;
-
-	if (dif2 < 0)
-		dif2 = -dif2;
-
-	if (dif1 < dif2)
-		return (orderWide ? -1 : 1);
-
-	if (dif1 > dif2)
-		return (orderWide ? 1 : -1);
-
-	/*
-	 * Sort by the generation again if we didn't do it yet.
-	 */
-	if (c1->gen < c2->gen)
-		return -1;
-
-	if (c1->gen > c2->gen)
-		return 1;
-
-	return 0;
-}
 
 
 /*
