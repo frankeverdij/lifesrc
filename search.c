@@ -69,13 +69,13 @@ static	Cell *	symCell(const Cell *);
 static	Cell *	mapCell(const Cell *, Bool);
 static	Cell *	allocateCell(void);
 static	Cell *	getNormalUnknown(void);
-static	Cell *	getAverageUnknown(void);
+/*static	Cell *	getAverageUnknown(void);*/
 static	Status	consistify(Cell * const);
 static	Status	consistify10(Cell * const);
 static	Status	examineNext(void);
 static	Bool	checkWidth(const Cell *);
 static	int	getDesc(const Cell * const);
-static	Cell *	(*getUnknown)(void);
+/* static	Cell *	(*getUnknown)(void); */
 
 
 /*
@@ -217,11 +217,11 @@ initCells(void)
 
 	initSearchOrder();
 
-	if (follow)
+/*	if (follow)
 		getUnknown = getAverageUnknown;
 	else
 		getUnknown = getNormalUnknown;
-
+*/
 	newSet = setTable;
 	nextSet = setTable;
 	baseSet = setTable;
@@ -783,7 +783,7 @@ getNormalUnknown(void)
  * Find another unknown cell when averaging is done.
  * Returns NULL_CELL if there are no more unknown cells.
  */
-static Cell *
+/*static Cell *
 getAverageUnknown(void)
 {
 	Cell *	cell;
@@ -843,7 +843,7 @@ getAverageUnknown(void)
 
 	return NULL_CELL;
 }
-
+*/
 
 /*
  * Choose a state for an unknown cell, either OFF or ON.
@@ -889,7 +889,7 @@ search(void)
 	Bool	needWrite;
 	State	state;
 
-	cell = (*getUnknown)();
+	cell = getNormalUnknown();
 
 	if (cell == NULL_CELL)
 	{
@@ -968,7 +968,7 @@ search(void)
 		/*
 		 * Get the next unknown cell and choose its state.
 		 */
-		cell = (*getUnknown)();
+		cell = getNormalUnknown();
 
 		if (cell == NULL_CELL)
 			return FOUND;
