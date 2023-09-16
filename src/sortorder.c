@@ -4,7 +4,7 @@
 /*
  * The sort routine for searching->
  */
-int orderSortFunc(const void * addr1, const void * addr2, const void * gvars)
+int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 {
 	const Cell **	arg1;
 	const Cell **	arg2;

@@ -294,7 +294,7 @@ initSearchOrder(void)
 	/*
 	 * Now sort the table based on our desired search order.
 	 */
-	qsort_r((char *) table, count, sizeof(Cell *), orderSortFunc, &g);
+	qsort_r((char *) table, count, sizeof(Cell *), &orderSortFunc, &g);
 
 	/*
 	 * Finally build the search list from the table elements in the
