@@ -50,9 +50,11 @@ static	Flags	implic[1024];
  */
 static	int	newCellCount;		/* cells ready for allocation */
 static	int	auxCellCount;		/* cells in auxillary table */
+static  int searchIdx;
+static  int fullSearchIdx;
 static	Cell *	newCells;		/* cells ready for allocation */
 static	Cell *	deadCell;		/* boundary cell value */
-static	Cell *	searchList;		/* current list of cells to search */
+static	Cell **	searchList;		/* current list of cells to search */
 static	Cell *	cellTable[MAX_CELLS];	/* table of usual cells */
 static	Cell *	auxTable[AUX_CELLS];	/* table of auxillary cells */
 static	RowInfo	dummyRowInfo;		/* dummy info for ignored cells */
@@ -300,18 +302,14 @@ initSearchOrder(void)
 	 * Finally build the search list from the table elements in the
 	 * final order.
 	 */
-	searchList = NULL;
+	searchList = (Cell **) malloc(sizeof(Cell *) * (count + 1));
 
-	while (--count >= 0)
-	{
-		cell = table[count];
-		cell->search = searchList;
-		searchList = cell;
-	}
-	
-	fullSearchList = searchList;
+	for (int i = 0; i < count; i++)
+	    searchList[i] = table[i];
+	searchList[count] = NULL;
+    searchIdx = 0;
+	fullSearchIdx = searchIdx;
 }
-
 
 
 
@@ -680,7 +678,7 @@ backup(void)
 {
 	Cell *	cell;
 
-	searchList = fullSearchList;
+	searchIdx = fullSearchIdx;
 
 	while (newSet != baseSet)
 	{
@@ -762,14 +760,14 @@ getNormalUnknown(void)
 {
 	Cell *	cell;
 
-	for (cell = searchList; cell; cell = cell->search)
+	for (int i = searchIdx; cell = searchList[i]; i++)
 	{
 		if (!cell->choose)
 			continue;
 
 		if (cell->state == UNK)
 		{
-			searchList = cell;
+			searchIdx = i;
 
 			return cell;
 		}
