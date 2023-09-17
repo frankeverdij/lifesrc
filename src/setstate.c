@@ -4,7 +4,7 @@
 void setState(Cell * const cell, const State state)
 {
     /* backup previous state */
-    State diffState = state - cell->state;
+    int diffState = state - cell->state;
     /* set cell state */
     cell->state = state;
     /* correct the neighbor sum for cells touching this cell */
