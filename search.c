@@ -20,6 +20,7 @@
 #include "nextstate.h"
 #include "description.h"
 #include "sortorder.h"
+#include "setstate.h"
 
 /*
  * Table of state values.
@@ -151,7 +152,7 @@ initCells(void)
 				if (!edge)
 				{
 					linkCell(cell);
-					cell->state = UNK;
+					setState(cell, UNK);
 					cell->free = TRUE;
 				}
 
@@ -389,7 +390,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 
 	*newSet++ = cell;
 
-	cell->state = state;
+	setState(cell, state);
 	cell->free = free;
 /*	cell->colInfo->setCount++;
 
@@ -406,13 +407,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 static int
 getDesc(const Cell * const cell)
 {
-	int	sum;
-
-	sum = cell->cul->state + cell->cu->state + cell->cur->state;
-	sum += cell->cdl->state + cell->cd->state + cell->cdr->state;
-	sum += cell->cl->state + cell->cr->state;
-
-	return sumToDesc(cell->state, sum);
+	return sumToDesc(cell->state, cell->sumNear);
 }
 
 
@@ -705,7 +700,7 @@ backup(void)
 */
 		if (!cell->free)
 		{
-			cell->state = UNK;
+			setState(cell, UNK);
 			cell->free = TRUE;
 
 			continue;
@@ -746,7 +741,7 @@ go(Cell * cell, State state, Bool free)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		cell->state = UNK;
+		setState(cell, UNK);
 	}
 }
 
@@ -898,7 +893,7 @@ search(void)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		cell->state = UNK;
+		setState(cell, UNK);
 	}
 	else
 	{
@@ -1466,6 +1461,7 @@ allocateCell(void)
 	cell->gen = -1;
 	cell->row = -1;
 	cell->col = -1;
+	cell->sumNear = 0;
 	cell->past = deadCell;
 	cell->future = deadCell;
 	cell->cul = deadCell;

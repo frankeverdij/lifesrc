@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include "lifesrc.h"
 #include "state.h"
+#include "setstate.h"
 
 #define	VERSION	"3.8"
 
@@ -844,7 +845,7 @@ getBackup(const char * cp)
 		if (blanksToo || (state == ON))
 			count--;
 
-		cell->state = UNK;
+		setState(cell, UNK);
 
 		if (go(cell, state, FALSE) != OK)
 		{
