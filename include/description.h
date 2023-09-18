@@ -1,6 +1,6 @@
 #ifndef DESCRIPTION_H
 #define DESCRIPTION_H
 
-int sumToDesc(const State, const int);
+#define SUMTODESC(a, b)  ((a) + 2 * (b))
 
 #endif /* DESCRIPTION_H */

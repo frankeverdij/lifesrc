@@ -68,7 +68,7 @@ void initTransit(const State * states, State * transit)
 			for (onCount = 0; onCount + offCount <= 8; onCount++)
 			{
 				sum = onCount + (8 - onCount - offCount) * UNK;
-				desc = sumToDesc(state, sum);
+				desc = SUMTODESC(state, sum);
 
 				transit[desc] =
 					transition(state, offCount, onCount);

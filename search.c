@@ -440,7 +440,7 @@ consistify(Cell * const cell)
 	 * then set the now known state of the cell.
 	 */
 	prevCell = cell->past;
-	desc = getDesc(prevCell);
+	desc = SUMTODESC(prevCell->state, prevCell->sumNear);
 	state = transit[desc];
 
 	if (state != UNK)
