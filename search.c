@@ -606,20 +606,6 @@ backup(void)
 			((cell->state == ON) ? "on" : "off"),
 			(cell->free ? "free": "forced"));
 
-/*		if ((cell->state == ON) && (cell->gen == 0))
-		{
-			cell->rowInfo->onCount--;
-			cell->colInfo->onCount--;
-			cell->colInfo->sumPos -= cell->row;
-			cellCount--;
-			adjustNear(cell, -1);
-		}
-
-		if ((cell->gen == 0) && (cell->colInfo->setCount == rowMax))
-			fullColumns--;
-
-		cell->colInfo->setCount--;
-*/
 		if (!cell->free)
 		{
 			setState(cell, UNK);
@@ -827,35 +813,6 @@ search(void)
 	}
 }
 
-
-/*
- * Increment or decrement the near count in all the cells affected by
- * this cell.  This is done for all cells in the next columns which are
- * within the distance specified the nearCols value.  In this way, a
- * quick test can be made to see if a cell is within range of another one.
- */
-/*void
-adjustNear(Cell * cell, int inc)
-{
-	Cell *	curCell;
-	int	count;
-	int	colCount;
-
-	for (colCount = nearCols; colCount > 0; colCount--)
-	{
-		cell = cell->cr;
-		curCell = cell;
-
-		for (count = nearCols; count-- >= 0; curCell = curCell->cu)
-			curCell->near += inc;
-
-		curCell = cell->cd;
-
-		for (count = nearCols; count-- > 0; curCell = curCell->cd)
-			curCell->near += inc;
-	}
-}
-*/
 
 /*
  * Check to see if any other generation is identical to generation 0.
