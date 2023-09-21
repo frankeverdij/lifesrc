@@ -72,13 +72,10 @@ static	Cell *	symCell(const Cell *);
 static	Cell *	mapCell(const Cell *, Bool);
 static	Cell *	allocateCell(void);
 static	Cell *	getNormalUnknown(void);
-/*static	Cell *	getAverageUnknown(void);*/
 static	Status	consistify(Cell * const);
 static	Status	consistify10(Cell * const);
 static	Status	examineNext(void);
-static	Bool	checkWidth(const Cell *);
 static	int	getDesc(const Cell * const);
-/* static	Cell *	(*getUnknown)(void); */
 
 
 /*
@@ -220,11 +217,6 @@ initCells(void)
 
 	initSearchOrder();
 
-/*	if (follow)
-		getUnknown = getAverageUnknown;
-	else
-		getUnknown = getNormalUnknown;
-*/
 	newSet = setTable;
 	nextSet = setTable;
 	baseSet = setTable;
@@ -234,20 +226,6 @@ initCells(void)
 	initNextState(bornRules, liveRules);
 	initTransit(states, transit);
 	initImplic(states, implic);
-	/*
-	printf("Cell struct is: %zd\n", sizeof(Cell));
-	for (int i=0;i<576;i++) {
-	    if (i%32 == 0)
-	        printf("\n");
-	    printf(" %02x", transit[i]);
-	}
-	printf("\n---\n");
-	for (int i=0;i<576;i++) {
-	    if (i%32 == 0)
-	        printf("\n");
-	    printf(" %02x", implic[i]);
-	}
-	*/
 }
 
 
@@ -264,7 +242,6 @@ initSearchOrder(void)
 	int	col;
 	int	gen;
 	int	count;
-	Cell *	cell;
 	Cell *	table[MAX_CELLS];
 	globals_struct g;
 	
@@ -340,50 +317,6 @@ setCell(Cell * const cell, const State state, const Bool free)
 
 		return ERROR;
 	}
-/*
-	if (cell->gen == 0)
-	{
-		if (useCol && (colInfo[useCol].onCount == 0)
-			&& (colInfo[useCol].setCount == rowMax) && inited)
-		{
-			return ERROR;
-		}
-
-		if (state == ON)
-		{
-			if (maxCount && (cellCount >= maxCount))
-			{
-				DPRINTF("setCell %d %d 0 on exceeds maxCount\n",
-					cell->row, cell->col);
-
-				return ERROR;
-			}
-
-			if (nearCols && (cell->near <= 0) && (cell->col > 1)
-				&& inited)
-			{
-				return ERROR;
-			}
-
-			if (colCells && (cell->colInfo->onCount >= colCells)
-				&& inited)
-			{
-				return ERROR;
-			}
-
-			if (colWidth && inited && checkWidth(cell))
-				return ERROR;
-
-			if (nearCols)
-				adjustNear(cell, 1);
-
-			cell->rowInfo->onCount++;
-			cell->colInfo->onCount++;
-			cell->colInfo->sumPos += cell->row;
-			cellCount++;
-		}
-	}
-*/
 	DPRINTF("setCell %d %d %d to %s, %s successful\n",
 		cell->row, cell->col, cell->gen,
 		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
@@ -392,11 +325,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 
 	setState(cell, state);
 	cell->free = free;
-/*	cell->colInfo->setCount++;
 
-	if ((cell->gen == 0) && (cell->colInfo->setCount == rowMax))
-		fullColumns++;
-*/
 	return OK;
 }
 
@@ -407,7 +336,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 static int
 getDesc(const Cell * const cell)
 {
-	return sumToDesc(cell->state, cell->sumNear);
+	return SUMTODESC(cell->state, cell->sumNear);
 }
 
 
@@ -425,13 +354,6 @@ consistify(Cell * const cell)
 	State	state, cellState;
 	Flags	flags;
 
-	/*
-	 * If we are searching for parents and this is generation 0, then
-	 * the cell is consistent with respect to the previous generation.
-	 */
-/*	if (parent && (cell->gen == 0))
-		return OK;
-*/
 	/*
 	 * First check the transit table entry for the previous
 	 * generation.  Make sure that this cell matches the ON or
@@ -755,7 +677,7 @@ getNormalUnknown(void)
 {
 	Cell *	cell;
 
-	for (int i = searchIdx; cell = searchList[i]; i++)
+	for (int i = searchIdx; (cell = searchList[i]); i++)
 	{
 		if (!cell->choose)
 			continue;
@@ -771,72 +693,6 @@ getNormalUnknown(void)
 	return NULL_CELL;
 }
 
-
-/*
- * Find another unknown cell when averaging is done.
- * Returns NULL_CELL if there are no more unknown cells.
- */
-/*static Cell *
-getAverageUnknown(void)
-{
-	Cell *	cell;
-	Cell *	bestCell;
-	int	bestDist;
-	int	curDist;
-	int	wantRow;
-	int	curCol;
-	int	testCol;
-
-	bestCell = NULL_CELL;
-	bestDist = -1;
-
-	cell = searchList;
-
-	while (cell)
-	{
-		searchList = cell;
-		curCol = cell->col;
-
-		testCol = curCol - 1;
-
-		while ((testCol > 0) && (colInfo[testCol].onCount <= 0))
-			testCol--;
-
-		if (testCol > 0)
-		{
-			wantRow = colInfo[testCol].sumPos /
-				colInfo[testCol].onCount;
-		}
-		else
-			wantRow = (rowMax + 1) / 2;
-
-		for (; cell && (cell->col == curCol); cell = cell->search)
-		{
-			if (!cell->choose)
-				continue;
-
-			if (cell->state == UNK)
-			{
-				curDist = cell->row - wantRow;
-
-				if (curDist < 0)
-					curDist = -curDist;
-
-				if (curDist > bestDist)
-				{
-					bestCell = cell;
-					bestDist = curDist;
-				}
-			}
-		}
-
-		if (bestCell)
-			return bestCell;
-	}
-
-	return NULL_CELL;
-}
-*/
 
 /*
  * Choose a state for an unknown cell, either OFF or ON.
@@ -1000,87 +856,6 @@ adjustNear(Cell * cell, int inc)
 	}
 }
 */
-
-/*
- * Check to see if setting the specified cell ON would make the width of
- * the column exceed the allowed value.  For symmetric objects, the width
- * is only measured from the center to an edge.  Returns TRUE if the cell
- * would exceed the value.
- */
-static Bool
-checkWidth(const Cell * cell)
-{
-	int		left;
-	int		width;
-	int		minRow;
-	int		maxRow;
-	int		srcMinRow;
-	int		srcMaxRow;
-	const Cell *	ucp;
-	const Cell *	dcp;
-	Bool		full;
-
-	if (!colWidth || !inited || cell->gen)
-		return FALSE;
-
-	left = cell->colInfo->onCount;
-
-	if (left <= 0)
-		return FALSE;
-
-	ucp = cell;
-	dcp = cell;
-	width = colWidth;
-	minRow = cell->row;
-	maxRow = cell->row;
-	srcMinRow = 1;
-	srcMaxRow = rowMax;
-	full = TRUE;
-
-	if ((rowSym && (cell->col >= rowSym)) ||
-		(flipRows && (cell->col >= flipRows)))
-	{
-		full = FALSE;
-		srcMaxRow = (rowMax + 1) / 2;
-
-		if (cell->row > srcMaxRow)
-		{
-			srcMinRow = (rowMax / 2) + 1;
-			srcMaxRow = rowMax;
-		}
-	}
-
-	while (left > 0)
-	{
-		if (full && (--width <= 0))
-			return TRUE;
-
-		ucp = ucp->cu;
-		dcp = dcp->cd;
-
-		if (ucp->state == ON)
-		{
-			if (ucp->row >= srcMinRow)
-				minRow = ucp->row;
-
-			left--;
-		}
-
-		if (dcp->state == ON)
-		{
-			if (dcp->row <= srcMaxRow)
-				maxRow = dcp->row;
-
-			left--;
-		}
-	}
-
-	if (maxRow - minRow >= colWidth)
-		return TRUE;
-
-	return FALSE;
-}
-
 
 /*
  * Check to see if any other generation is identical to generation 0.
@@ -1410,9 +1185,6 @@ findCell(int row, int col, int gen)
 	cell->row = row;
 	cell->col = col;
 	cell->gen = gen;
-/*	cell->rowInfo = &dummyRowInfo;
-	cell->colInfo = &dummyColInfo;
-*/
 	auxTable[auxCellCount++] = cell;
 
 	return cell;
