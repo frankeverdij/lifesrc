@@ -52,7 +52,6 @@ static	Flags	implic[1024];
 static	int	newCellCount;		/* cells ready for allocation */
 static	int	auxCellCount;		/* cells in auxillary table */
 static  int searchIdx;
-static  int fullSearchIdx;
 static	Cell *	newCells;		/* cells ready for allocation */
 static	Cell *	deadCell;		/* boundary cell value */
 static	Cell **	searchList;		/* current list of cells to search */
@@ -286,7 +285,6 @@ initSearchOrder(void)
 	    searchList[i] = table[i];
 	searchList[count] = NULL;
     searchIdx = 0;
-	fullSearchIdx = searchIdx;
 }
 
 
@@ -595,7 +593,7 @@ backup(void)
 {
 	Cell *	cell;
 
-	searchIdx = fullSearchIdx;
+	searchIdx = 0;
 
 	while (newSet != baseSet)
 	{
