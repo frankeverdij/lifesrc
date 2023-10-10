@@ -93,6 +93,7 @@ initCells(void)
 	Cell *	cell;
 	Cell *	cell2;
 
+    printf("%zu \n",sizeof(Cell));
 	/*
 	 * Check whether valid parameters have been set.
 	 */
@@ -137,8 +138,8 @@ initCells(void)
 				cell->row = row;
 				cell->col = col;
 				cell->choose = TRUE;
-				cell->rowInfo = &dummyRowInfo;
-				cell->colInfo = &dummyColInfo;
+//				cell->rowInfo = &dummyRowInfo;
+//				cell->colInfo = &dummyColInfo;
 
 				/*
 				 * If this is not an edge cell, then its state
@@ -209,8 +210,8 @@ initCells(void)
 		for (col = 1; col <= colMax; col++)
 		{
 			cell = findCell(row, col, 0);
-			cell->rowInfo = &rowInfo[row];
-			cell->colInfo = &colInfo[col];
+//			cell->rowInfo = &rowInfo[row];
+//			cell->colInfo = &colInfo[col];
 		}
 	}
 
