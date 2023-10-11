@@ -517,12 +517,12 @@ main(int argc, char ** argv)
 		if (curStatus == OK)
 			curStatus = search();
 
-		if ((curStatus == FOUND) && useRow &&
-			(rowInfo[useRow].onCount == 0))
-		{
-			curStatus = OK;
-			continue;
-		}
+//		if ((curStatus == FOUND) && useRow &&
+//			(rowInfo[useRow].onCount == 0))
+//		{
+//			curStatus = OK;
+//			continue;
+//		}
 
 		if ((curStatus == FOUND) && !allObjects && subPeriods())
 		{
