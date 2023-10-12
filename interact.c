@@ -463,8 +463,8 @@ main(int argc, char ** argv)
 	if ((useCol < 0) || (useCol > colMax))
 		fatal("Bad column for -uc");
 
-	if (!ttyOpen())
-		fatal("Cannot initialize terminal");
+//	if (!ttyOpen())
+//		fatal("Cannot initialize terminal");
 
 	/*
 	 * Check for loading state from file or reading initial
@@ -502,10 +502,10 @@ main(int argc, char ** argv)
 	if (parent)
 		curGen = genMax - 1;
 
-	if (noWait && !quiet)
+	if (!quiet)
 		printGen(0);
-	else
-		getCommands();
+//	else
+//		getCommands();
 
 	inited = TRUE;
 
@@ -560,7 +560,8 @@ main(int argc, char ** argv)
 			}
 
 			writeGen(outputFile, TRUE);
-			continue;
+			if (allObjects)
+				continue;
 		}
 
 		if (foundCount == 0)

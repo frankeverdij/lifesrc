@@ -796,8 +796,8 @@ search(void)
 		/*
 		 * Check for commands.
 		 */
-		if (ttyCheck())
-			getCommands();
+//		if (ttyCheck())
+//			getCommands();
 
 		/*
 		 * Get the next unknown cell and choose its state.
