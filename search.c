@@ -705,7 +705,7 @@ choose(const Cell * cell)
 		}
 	}
 
-	return ON;
+	return chooseUnknown;
 }
 
 

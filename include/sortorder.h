@@ -42,6 +42,7 @@ struct globals_struct {
 	Bool	orderGens;	/* ordering tries all gens first */
 	Bool	orderMiddle;	/* ordering tries middle columns first */
 	Bool	followGens;	/* try to follow setting of other gens */
+	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
 
 #define SORTORDER_DEFAULT 0
 #define SORTORDER_DIAG    1

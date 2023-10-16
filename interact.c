@@ -57,7 +57,7 @@ static	int *	paramTable[] =
 	&flipRows, &flipCols, &flipQuads,
 	&parent, &allObjects, &nearCols, &maxCount,
 	&useRow, &useCol, &colCells, &colWidth, &follow,
-	&orderWide, &orderGens, &orderMiddle, &followGens,
+	&orderWide, &orderGens, &orderMiddle, &followGens, &chooseUnknown,
 	NULL
 };
 
@@ -175,6 +175,10 @@ main(int argc, char ** argv)
 
 					case 'g':
 						followGens = TRUE;
+						break;
+
+					case 'o':
+						chooseUnknown = ON;
 						break;
 
 					case '\0':
@@ -1226,6 +1230,9 @@ printGen(int gen)
 	if (followGens)
 		ttyPrintf(" -fg");
 
+	if (chooseUnknown)
+		ttyPrintf(" -fo");
+
 	if (parent)
 		ttyPrintf(" -p");
 
@@ -2161,6 +2168,7 @@ usage(void)
 	"   -uc  Force using at least one ON cell in the given column for generation 0",
 	"   -f   First follow the average location of the previous column's cells",
 	"   -fg  First follow settings of previous or next generation",
+	"   -fo  First choice for unknown cell should be ON instead of OFF",
 	"   -ow  Set search order to find wide objects first",
 	"   -og  Set search order to examine all gens in a column before next column",
 	"   -om  Set search order to examine from middle column outwards",

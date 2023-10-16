@@ -29,7 +29,7 @@
 /*
  * Other definitions
  */
-#define	DUMP_VERSION	6		/* version of dump file */
+#define	DUMP_VERSION	7		/* version of dump file */
 
 #define	ALLOC_SIZE	50000		/* chunk size for cell allocation */
 #define	VIEW_MULT	1000		/* viewing frequency multiplier */
@@ -168,6 +168,7 @@ EXTERN	Bool	orderWide;	/* ordering tries to find wide objects */
 EXTERN	Bool	orderGens;	/* ordering tries all gens first */
 EXTERN	Bool	orderMiddle;	/* ordering tries middle columns first */
 EXTERN	Bool	followGens;	/* try to follow setting of other gens */
+EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
 
 
 /*
