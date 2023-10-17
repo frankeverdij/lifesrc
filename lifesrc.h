@@ -169,6 +169,7 @@ EXTERN	Bool	orderGens;	/* ordering tries all gens first */
 EXTERN	Bool	orderMiddle;	/* ordering tries middle columns first */
 EXTERN	Bool	followGens;	/* try to follow setting of other gens */
 EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
+EXTERN  int stepConfl; /* step counter for one Proceed-Backup action */
 
 
 /*
