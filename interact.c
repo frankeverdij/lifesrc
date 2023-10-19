@@ -7,6 +7,7 @@
 #include "lifesrc.h"
 #include "state.h"
 #include "setstate.h"
+#include "printblk.h"
 
 #define	VERSION	"3.8"
 
@@ -1276,6 +1277,7 @@ printGen(int gen)
 
 	ttyPrintf("\n");
 
+    if (0) {
 	for (row = 1; row <= rowMax; row++)
 	{
 		for (col = 1; col <= colMax; col++)
@@ -1312,6 +1314,9 @@ printGen(int gen)
 		}
 
 		ttyWrite("\n", 1);
+	}
+	} else {
+        printBlk(gen);
 	}
 
 	ttyHome();

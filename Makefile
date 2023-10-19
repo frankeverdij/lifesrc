@@ -18,7 +18,7 @@ lifesrcdumb:	$(OBJECTS) dumbtty.o
 	$(CC) -o lifesrcdumb $(OBJECTS) dumbtty.o $(LDFLAGS)
 
 lifesrc:	$(OBJECTS) cursestty.o
-	$(CC) -o lifesrc $(OBJECTS) cursestty.o $(LDFLAGS) -lncurses
+	$(CC) -o lifesrc $(OBJECTS) cursestty.o $(LDFLAGS) -lncursesw
 clean:
 	rm -f cursestty.o dumbtty.o $(OBJECTS) $(DEPS)
 	rm -f lifesrc lifesrcdumb
