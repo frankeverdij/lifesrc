@@ -153,6 +153,8 @@ EXTERN	Bool	fwdSym;		/* enable forward diagonal symmetry */
 EXTERN	Bool	bwdSym;		/* enable backward diagonal symmetry */
 EXTERN	Bool	flipRows;	/* flip rows at column number from last to first generation */
 EXTERN	Bool	flipCols;	/* flip columns at row number from last to first generation */
+EXTERN	Bool	flipFwd;	/* flip forward diagonal (/) from last to first gen */
+EXTERN	Bool	flipBwd;	/* flip backward diagonal (\) from last to first gen */
 EXTERN	Bool	flipQuads;	/* flip quadrants from last to first gen */
 EXTERN	Bool	parent;		/* only look for parents */
 EXTERN	Bool	allObjects;	/* look for all objects including subPeriods */
