@@ -54,7 +54,7 @@ static	int *	paramTable[] =
 	&curStatus,
 	&rowMax, &colMax, &genMax, &rowTrans, &colTrans,
 	&rowSym, &colSym, &pointSym, &fwdSym, &bwdSym,
-	&flipRows, &flipCols, &flipQuads,
+	&flipRows, &flipCols, &flipFwd, &flipBwd, &flipQuads,
 	&parent, &allObjects, &nearCols, &maxCount,
 	&useRow, &useCol, &colCells, &colWidth, &follow,
 	&orderWide, &orderGens, &orderMiddle, &followGens, &chooseUnknown,
