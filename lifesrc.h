@@ -2,7 +2,8 @@
  * Life search program include file.
  * Author: David I. Bell.
  */
-
+ 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +29,7 @@
 /*
  * Other definitions
  */
-#define	DUMP_VERSION	6		/* version of dump file */
+#define	DUMP_VERSION	7		/* version of dump file */
 
 #define	ALLOC_SIZE	50000		/* chunk size for cell allocation */
 #define	VIEW_MULT	1000		/* viewing frequency multiplier */
@@ -106,8 +107,7 @@ struct Cell
 	short		gen;		/* generation number of this cell */
 	short		row;		/* row of this cell */
 	short		col;		/* column of this cell */
-	short		near;		/* count of cells this cell is near */
-	Cell *		search;		/* cell next to be searched */
+	int		sumNear;	/* sum of states of neighbor cells */
 	Cell *		past;		/* cell in past at this location */
 	Cell *		future;		/* cell in future at this location */
 	Cell *		cul;		/* cell to up and left */
@@ -119,8 +119,6 @@ struct Cell
 	Cell *		cd;		/* cell to down */
 	Cell *		cdr;		/* cell to down and right */
 	Cell *		loop;		/* next cell in this same loop */
-	RowInfo *	rowInfo;	/* info about this cell's row */
-	ColInfo *	colInfo;	/* info about this cell's column */
 };
 
 #define	NULL_CELL	((Cell *) 0)
@@ -155,6 +153,8 @@ EXTERN	Bool	fwdSym;		/* enable forward diagonal symmetry */
 EXTERN	Bool	bwdSym;		/* enable backward diagonal symmetry */
 EXTERN	Bool	flipRows;	/* flip rows at column number from last to first generation */
 EXTERN	Bool	flipCols;	/* flip columns at row number from last to first generation */
+EXTERN	Bool	flipFwd;	/* flip forward diagonal (/) from last to first gen */
+EXTERN	Bool	flipBwd;	/* flip backward diagonal (\) from last to first gen */
 EXTERN	Bool	flipQuads;	/* flip quadrants from last to first gen */
 EXTERN	Bool	parent;		/* only look for parents */
 EXTERN	Bool	allObjects;	/* look for all objects including subPeriods */
@@ -170,6 +170,8 @@ EXTERN	Bool	orderWide;	/* ordering tries to find wide objects */
 EXTERN	Bool	orderGens;	/* ordering tries all gens first */
 EXTERN	Bool	orderMiddle;	/* ordering tries middle columns first */
 EXTERN	Bool	followGens;	/* try to follow setting of other gens */
+EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
+EXTERN  int stepConfl; /* step counter for one Proceed-Backup action */
 
 
 /*
@@ -220,7 +222,7 @@ extern	void	adjustNear(Cell *, int);
 extern	Status	search(void);
 extern	Status	proceed(Cell *, State, Bool);
 extern	Status	go(Cell *, State, Bool);
-extern	Status	setCell(Cell *, State, Bool);
+extern	Status	setCell(Cell * const , const State, const Bool);
 extern	Cell *	findCell(int, int, int);
 extern	Cell *	backup(void);
 extern	Bool	subPeriods(void);

@@ -6,6 +6,8 @@
 #include <ctype.h>
 #include "lifesrc.h"
 #include "state.h"
+#include "setstate.h"
+#include "printblk.h"
 
 #define	VERSION	"3.8"
 
@@ -53,10 +55,10 @@ static	int *	paramTable[] =
 	&curStatus,
 	&rowMax, &colMax, &genMax, &rowTrans, &colTrans,
 	&rowSym, &colSym, &pointSym, &fwdSym, &bwdSym,
-	&flipRows, &flipCols, &flipQuads,
+	&flipRows, &flipCols, &flipFwd, &flipBwd, &flipQuads,
 	&parent, &allObjects, &nearCols, &maxCount,
 	&useRow, &useCol, &colCells, &colWidth, &follow,
-	&orderWide, &orderGens, &orderMiddle, &followGens,
+	&orderWide, &orderGens, &orderMiddle, &followGens, &chooseUnknown,
 	NULL
 };
 
@@ -168,12 +170,24 @@ main(int argc, char ** argv)
 
 						break;
 
+					case 'f':
+						flipFwd = TRUE;
+						break;
+
+					case 'b':
+						flipBwd = TRUE;
+						break;
+
 					case 'q':
 						flipQuads = TRUE;
 						break;
 
 					case 'g':
 						followGens = TRUE;
+						break;
+
+					case 'o':
+						chooseUnknown = ON;
 						break;
 
 					case '\0':
@@ -447,7 +461,7 @@ main(int argc, char ** argv)
 	if ((pointSym != 0) + (rowSym || colSym) + (fwdSym || bwdSym) > 1)
 		fatal("Conflicting symmetries specified");
 
-	if ((fwdSym || bwdSym || flipQuads) && (rowMax != colMax))
+	if ((fwdSym || bwdSym || flipFwd || flipBwd || flipQuads) && (rowMax != colMax))
 		fatal("Rows must equal cols with -sf, -sb, or -fq");
 
 	if ((rowTrans || colTrans) + (flipQuads != 0) > 1)
@@ -516,12 +530,12 @@ main(int argc, char ** argv)
 		if (curStatus == OK)
 			curStatus = search();
 
-		if ((curStatus == FOUND) && useRow &&
-			(rowInfo[useRow].onCount == 0))
-		{
-			curStatus = OK;
-			continue;
-		}
+//		if ((curStatus == FOUND) && useRow &&
+//			(rowInfo[useRow].onCount == 0))
+//		{
+//			curStatus = OK;
+//			continue;
+//		}
 
 		if ((curStatus == FOUND) && !allObjects && subPeriods())
 		{
@@ -844,7 +858,7 @@ getBackup(const char * cp)
 		if (blanksToo || (state == ON))
 			count--;
 
-		cell->state = UNK;
+		setState(cell, UNK);
 
 		if (go(cell, state, FALSE) != OK)
 		{
@@ -1153,7 +1167,7 @@ printGen(int gen)
 
 	if (isLife)
 	{
-		ttyPrintf("%s (gen %d, cells %d)", msg, gen, count);
+		ttyPrintf("%s (gen %d, cells %d confl %d)", msg, gen, count, stepConfl);
 	}
 	else
 	{
@@ -1180,6 +1194,12 @@ printGen(int gen)
 
 	if (flipCols > 1)
 		ttyPrintf(" -fc%d", flipCols);
+
+	if (flipFwd)
+		ttyPrintf(" -ff");
+
+	if (flipBwd)
+		ttyPrintf(" -fb");
 
 	if (flipQuads)
 		ttyPrintf(" -fq");
@@ -1225,6 +1245,9 @@ printGen(int gen)
 	if (followGens)
 		ttyPrintf(" -fg");
 
+	if (chooseUnknown)
+		ttyPrintf(" -fo");
+
 	if (parent)
 		ttyPrintf(" -p");
 
@@ -1268,6 +1291,7 @@ printGen(int gen)
 
 	ttyPrintf("\n");
 
+    if (0) {
 	for (row = 1; row <= rowMax; row++)
 	{
 		for (col = 1; col <= colMax; col++)
@@ -1304,6 +1328,9 @@ printGen(int gen)
 		}
 
 		ttyWrite("\n", 1);
+	}
+	} else {
+        printBlk(gen);
 	}
 
 	ttyHome();
@@ -2146,6 +2173,8 @@ usage(void)
 	"   -tc  Translate columns between last and first generation",
 	"   -fr  Flip rows between last and first generation",
 	"   -fc  Flip columns between last and first generation",
+	"   -ff  Flip forward diagonals (/) between last and first generation",
+	"   -fb  Flip backward diagonals (\\) between last and first generation",
 	"   -fq  Flip quadrants between last and first generation",
 	"   -sr  Enforce symmetry on rows",
 	"   -sc  Enforce symmetry on columns",
@@ -2160,6 +2189,7 @@ usage(void)
 	"   -uc  Force using at least one ON cell in the given column for generation 0",
 	"   -f   First follow the average location of the previous column's cells",
 	"   -fg  First follow settings of previous or next generation",
+	"   -fo  First choice for unknown cell should be ON instead of OFF",
 	"   -ow  Set search order to find wide objects first",
 	"   -og  Set search order to examine all gens in a column before next column",
 	"   -om  Set search order to examine from middle column outwards",

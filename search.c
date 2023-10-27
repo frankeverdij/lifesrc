@@ -19,6 +19,8 @@
 #include "implication.h"
 #include "nextstate.h"
 #include "description.h"
+#include "sortorder.h"
+#include "setstate.h"
 
 /*
  * Table of state values.
@@ -49,9 +51,10 @@ static	Flags	implic[1024];
  */
 static	int	newCellCount;		/* cells ready for allocation */
 static	int	auxCellCount;		/* cells in auxillary table */
+static  int searchIdx;
 static	Cell *	newCells;		/* cells ready for allocation */
 static	Cell *	deadCell;		/* boundary cell value */
-static	Cell *	searchList;		/* current list of cells to search */
+static	Cell **	searchList;		/* current list of cells to search */
 static	Cell *	cellTable[MAX_CELLS];	/* table of usual cells */
 static	Cell *	auxTable[AUX_CELLS];	/* table of auxillary cells */
 static	RowInfo	dummyRowInfo;		/* dummy info for ignored cells */
@@ -68,14 +71,10 @@ static	Cell *	symCell(const Cell *);
 static	Cell *	mapCell(const Cell *, Bool);
 static	Cell *	allocateCell(void);
 static	Cell *	getNormalUnknown(void);
-static	Cell *	getAverageUnknown(void);
-static	Status	consistify(Cell *);
-static	Status	consistify10(Cell *);
+static	Status	consistify(Cell * const);
+static	Status	consistify10(Cell * const);
 static	Status	examineNext(void);
-static	Bool	checkWidth(const Cell *);
-static	int	getDesc(const Cell *);
-static	int	orderSortFunc(const void * addr1, const void * addr2);
-static	Cell *	(*getUnknown)(void);
+static	int	getDesc(const Cell * const);
 
 
 /*
@@ -94,6 +93,7 @@ initCells(void)
 	Cell *	cell;
 	Cell *	cell2;
 
+    printf("%zu \n",sizeof(Cell));
 	/*
 	 * Check whether valid parameters have been set.
 	 */
@@ -138,8 +138,8 @@ initCells(void)
 				cell->row = row;
 				cell->col = col;
 				cell->choose = TRUE;
-				cell->rowInfo = &dummyRowInfo;
-				cell->colInfo = &dummyColInfo;
+//				cell->rowInfo = &dummyRowInfo;
+//				cell->colInfo = &dummyColInfo;
 
 				/*
 				 * If this is not an edge cell, then its state
@@ -149,7 +149,7 @@ initCells(void)
 				if (!edge)
 				{
 					linkCell(cell);
-					cell->state = UNK;
+					setState(cell, UNK);
 					cell->free = TRUE;
 				}
 
@@ -183,7 +183,7 @@ initCells(void)
 	 * and the first generation, then change the future and past pointers
 	 * to implement it.  This is for translations and flips.
 	 */
-	if (rowTrans || colTrans || flipRows || flipCols || flipQuads)
+	if (rowTrans || colTrans || flipRows || flipCols || flipFwd || flipBwd || flipQuads)
 	{
 		for (row = 0; row <= rowMax+1; row++)
 		{
@@ -210,17 +210,12 @@ initCells(void)
 		for (col = 1; col <= colMax; col++)
 		{
 			cell = findCell(row, col, 0);
-			cell->rowInfo = &rowInfo[row];
-			cell->colInfo = &colInfo[col];
+//			cell->rowInfo = &rowInfo[row];
+//			cell->colInfo = &colInfo[col];
 		}
 	}
 
 	initSearchOrder();
-
-	if (follow)
-		getUnknown = getAverageUnknown;
-	else
-		getUnknown = getNormalUnknown;
 
 	newSet = setTable;
 	nextSet = setTable;
@@ -231,20 +226,6 @@ initCells(void)
 	initNextState(bornRules, liveRules);
 	initTransit(states, transit);
 	initImplic(states, implic);
-	/*
-	printf("Cell struct is: %zd\n", sizeof(Cell));
-	for (int i=0;i<576;i++) {
-	    if (i%32 == 0)
-	        printf("\n");
-	    printf(" %02x", transit[i]);
-	}
-	printf("\n---\n");
-	for (int i=0;i<576;i++) {
-	    if (i%32 == 0)
-	        printf("\n");
-	    printf(" %02x", implic[i]);
-	}
-	*/
 }
 
 
@@ -261,9 +242,16 @@ initSearchOrder(void)
 	int	col;
 	int	gen;
 	int	count;
-	Cell *	cell;
 	Cell *	table[MAX_CELLS];
-
+	globals_struct g;
+	
+	g.colMax = colMax;
+	g.rowMax = rowMax;
+	g.parent = parent;
+	g.orderGens = orderGens;
+	g.orderMiddle = orderMiddle;
+	g.orderWide = orderWide;
+    g.sortOrder = SORTORDER_TOPDOWN;
 	/*
 	 * Make a table of cells that will be searched.
 	 * Ignore cells that are not relevant to the search due to symmetry.
@@ -280,146 +268,32 @@ initSearchOrder(void)
 		if (colSym && (row >= colSym) && (col * 2 > colMax + 1))
 			continue;
 
+		if (fwdSym && (colMax + 1 >= row + col))
+			continue;
+
+		if (bwdSym && (col >= row ))
+			continue;
+
 		table[count++] = findCell(row, col, gen);
 	}
 
 	/*
 	 * Now sort the table based on our desired search order.
 	 */
-	qsort((char *) table, count, sizeof(Cell *), orderSortFunc);
+	qsort_r((char *) table, count, sizeof(Cell *), &orderSortFunc, &g);
 
 	/*
 	 * Finally build the search list from the table elements in the
 	 * final order.
 	 */
-	searchList = NULL;
+	searchList = (Cell **) malloc(sizeof(Cell *) * (count + 1));
 
-	while (--count >= 0)
-	{
-		cell = table[count];
-		cell->search = searchList;
-		searchList = cell;
-	}
-	
-	fullSearchList = searchList;
+	for (int i = 0; i < count; i++)
+	    searchList[i] = table[i];
+	searchList[count] = NULL;
+    searchIdx = 0;
 }
 
-
-/*
- * The sort routine for searching.
- */
-static int
-orderSortFunc(const void * addr1, const void * addr2)
-{
-	const Cell **	cp1;
-	const Cell **	cp2;
-	const Cell *	c1;
-	const Cell *	c2;
-	int		midCol;
-	int		midRow;
-	int		dif1;
-	int		dif2;
-
-	cp1 = ((const Cell **) addr1);
-	cp2 = ((const Cell **) addr2);
-
-	c1 = *cp1;
-	c2 = *cp2;
-
-	/*
-	 * If we do not order by all generations, then put all of
-	 * generation zero ahead of the other generations.
-	 */
-	if (!orderGens)
-	{
-		if (c1->gen < c2->gen)
-			return -1;
-
-		if (c1->gen > c2->gen)
-			return 1;
-	}
-
-	/*
-	 * Sort on the column number.
-	 * By default this is from left to right.
-	 * But if middle ordering is set, the ordering is from the center
-	 * column outwards.
-	 */
-	if (orderMiddle)
-	{
-		midCol = (colMax + 1) / 2;
-
-		dif1 = c1->col - midCol;
-
-		if (dif1 < 0)
-			dif1 = -dif1;
-
-		dif2 = c2->col - midCol;
-
-		if (dif2 < 0)
-			dif2 = -dif2;
-
-		if (dif1 < dif2)
-			return -1;
-
-		if (dif1 > dif2)
-			return 1;
-	}
-	else
-	{
-		if (c1->col < c2->col)
-			return -1;
-
-		if (c1->col > c2->col)
-			return 1;
-	}
-
-	/*
-	 * Sort "even" positions ahead of "odd" positions.
-	 */
-	dif1 = (c1->row + c1->col + c1->gen) & 0x01;
-	dif2 = (c2->row + c2->col + c2->gen) & 0x01;
-
-	if (dif1 != dif2)
-		return dif1 - dif2;
-
-	/*
-	 * Sort on the row number.
-	 * By default, this is from the middle row outwards.
-	 * But if wide ordering is set, the ordering is from the edge
-	 * inwards.  Note that we actually set the ordering to be the
-	 * opposite of the desired order because the initial setting
-	 * for new cells is OFF.
-	 */
-	midRow = (rowMax + 1) / 2;
-
-	dif1 = c1->row - midRow;
-
-	if (dif1 < 0)
-		dif1 = -dif1;
-
-	dif2 = c2->row - midRow;
-
-	if (dif2 < 0)
-		dif2 = -dif2;
-
-	if (dif1 < dif2)
-		return (orderWide ? -1 : 1);
-
-	if (dif1 > dif2)
-		return (orderWide ? 1 : -1);
-
-	/*
-	 * Sort by the generation again if we didn't do it yet.
-	 */
-	if (c1->gen < c2->gen)
-		return -1;
-
-	if (c1->gen > c2->gen)
-		return 1;
-
-	return 0;
-}
 
 
 /*
@@ -429,7 +303,7 @@ orderSortFunc(const void * addr1, const void * addr2)
  * If the cell is newly set, then it is added to the set table.
  */
 Status
-setCell(Cell * cell, State state, Bool free)
+setCell(Cell * const cell, const State state, const Bool free)
 {
 	if (cell->state == state)
 	{
@@ -448,62 +322,14 @@ setCell(Cell * cell, State state, Bool free)
 
 		return ERROR;
 	}
-
-	if (cell->gen == 0)
-	{
-		if (useCol && (colInfo[useCol].onCount == 0)
-			&& (colInfo[useCol].setCount == rowMax) && inited)
-		{
-			return ERROR;
-		}
-
-		if (state == ON)
-		{
-			if (maxCount && (cellCount >= maxCount))
-			{
-				DPRINTF("setCell %d %d 0 on exceeds maxCount\n",
-					cell->row, cell->col);
-
-				return ERROR;
-			}
-
-			if (nearCols && (cell->near <= 0) && (cell->col > 1)
-				&& inited)
-			{
-				return ERROR;
-			}
-
-			if (colCells && (cell->colInfo->onCount >= colCells)
-				&& inited)
-			{
-				return ERROR;
-			}
-
-			if (colWidth && inited && checkWidth(cell))
-				return ERROR;
-
-			if (nearCols)
-				adjustNear(cell, 1);
-
-			cell->rowInfo->onCount++;
-			cell->colInfo->onCount++;
-			cell->colInfo->sumPos += cell->row;
-			cellCount++;
-		}
-	}
-
 	DPRINTF("setCell %d %d %d to %s, %s successful\n",
 		cell->row, cell->col, cell->gen,
 		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
 	*newSet++ = cell;
 
-	cell->state = state;
+	setState(cell, state);
 	cell->free = free;
-	cell->colInfo->setCount++;
-
-	if ((cell->gen == 0) && (cell->colInfo->setCount == rowMax))
-		fullColumns++;
 
 	return OK;
 }
@@ -513,15 +339,9 @@ setCell(Cell * cell, State state, Bool free)
  * Calculate the current descriptor for a cell.
  */
 static int
-getDesc(const Cell * cell)
+getDesc(const Cell * const cell)
 {
-	int	sum;
-
-	sum = cell->cul->state + cell->cu->state + cell->cur->state;
-	sum += cell->cdl->state + cell->cd->state + cell->cdr->state;
-	sum += cell->cl->state + cell->cr->state;
-
-	return sumToDesc(cell->state, sum);
+	return SUMTODESC(cell->state, cell->sumNear);
 }
 
 
@@ -532,19 +352,12 @@ getDesc(const Cell * cell)
  * current cell.  Returns ERROR if the cell is inconsistent.
  */
 static Status
-consistify(Cell * cell)
+consistify(Cell * const cell)
 {
 	Cell *	prevCell;
 	int	desc;
-	State	state;
+	State	state, cellState;
 	Flags	flags;
-
-	/*
-	 * If we are searching for parents and this is generation 0, then
-	 * the cell is consistent with respect to the previous generation.
-	 */
-	if (parent && (cell->gen == 0))
-		return OK;
 
 	/*
 	 * First check the transit table entry for the previous
@@ -554,14 +367,16 @@ consistify(Cell * cell)
 	 * then set the now known state of the cell.
 	 */
 	prevCell = cell->past;
-	desc = getDesc(prevCell);
+	desc = SUMTODESC(prevCell->state, prevCell->sumNear);
 	state = transit[desc];
 
-	if ((state != UNK) && (state != cell->state))
-	{
-		if (setCell(cell, state, FALSE) == ERROR)
-			return ERROR;
-	}
+	if (state != UNK)
+	    if (state != cell->state)
+    		if (setCell(cell, state, FALSE) == ERROR)
+	    		return ERROR;
+	cellState = cell->state;
+	if (cellState == UNK)
+		return OK;
 
 	/*
 	 * Now look up the previous generation in the implic table.
@@ -570,47 +385,38 @@ consistify(Cell * cell)
 	 */
 	flags = implic[desc];
 
-	if ((flags == 0) || (cell->state == UNK))
+	if (flags == 0)
 		return OK;
 
 	DPRINTF("Implication flags %x\n", flags);
 
-	if ((flags & N0IC0) && (cell->state == OFF) &&
-		(setCell(prevCell, OFF, FALSE) != OK))
+	if (cellState == OFF)
 	{
-		return ERROR;
+	    if (flags & N0IC0)
+	        if (setCell(prevCell, OFF, FALSE) != OK)
+		    return ERROR;
+	    if (flags & N0IC1)
+	        if (setCell(prevCell, ON, FALSE) != OK)
+		    return ERROR;
+	    state = UNK;
+	    if (flags & N0ICUN0)
+	        state = OFF;
+	    if (flags & N0ICUN1)
+	        state = ON;
 	}
-
-	if ((flags & N1IC0) && (cell->state == ON) &&
-		(setCell(prevCell, OFF, FALSE) != OK))
+	else  /* cellState == ON */
 	{
-		return ERROR;
-	}
-
-	if ((flags & N0IC1) && (cell->state == OFF) &&
-		(setCell(prevCell, ON, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((flags & N1IC1) && (cell->state == ON) &&
-		(setCell(prevCell, ON, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	state = UNK;
-
-	if (((flags & N0ICUN0) && (cell->state == OFF))
-		|| ((flags & N1ICUN0) && (cell->state == ON)))
-	{
-		state = OFF;
-	}
-
-	if (((flags & N0ICUN1) && (cell->state == OFF))
-		|| ((flags & N1ICUN1) && (cell->state == ON)))
-	{
-		state = ON;
+	    if (flags & N1IC0)
+	        if (setCell(prevCell, OFF, FALSE) != OK)
+		        return ERROR;
+	    if (flags & N1IC1)
+	        if (setCell(prevCell, ON, FALSE) != OK)
+		        return ERROR;
+	    state = UNK;
+	    if (flags & N1ICUN0)
+	        state = OFF;
+	    if (flags & N1ICUN1)
+	        state = ON;
 	}
 
 	if (state == UNK)
@@ -687,7 +493,7 @@ consistify(Cell * cell)
  * neighbors in the next generation.
  */
 static Status
-consistify10(Cell * cell)
+consistify10(Cell * const cell)
 {
 	if (consistify(cell) != OK)
 		return ERROR;
@@ -792,7 +598,7 @@ backup(void)
 {
 	Cell *	cell;
 
-	searchList = fullSearchList;
+	searchIdx = 0;
 
 	while (newSet != baseSet)
 	{
@@ -803,23 +609,9 @@ backup(void)
 			((cell->state == ON) ? "on" : "off"),
 			(cell->free ? "free": "forced"));
 
-		if ((cell->state == ON) && (cell->gen == 0))
-		{
-			cell->rowInfo->onCount--;
-			cell->colInfo->onCount--;
-			cell->colInfo->sumPos -= cell->row;
-			cellCount--;
-			adjustNear(cell, -1);
-		}
-
-		if ((cell->gen == 0) && (cell->colInfo->setCount == rowMax))
-			fullColumns--;
-
-		cell->colInfo->setCount--;
-
 		if (!cell->free)
 		{
-			cell->state = UNK;
+			setState(cell, UNK);
 			cell->free = TRUE;
 
 			continue;
@@ -848,6 +640,7 @@ go(Cell * cell, State state, Bool free)
 
 	for (;;)
 	{
+	    ++stepConfl;
 		status = proceed(cell, state, free);
 
 		if (status == OK)
@@ -860,7 +653,7 @@ go(Cell * cell, State state, Bool free)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		cell->state = UNK;
+		setState(cell, UNK);
 	}
 }
 
@@ -874,83 +667,17 @@ getNormalUnknown(void)
 {
 	Cell *	cell;
 
-	for (cell = searchList; cell; cell = cell->search)
+	for (int i = searchIdx; (cell = searchList[i]); i++)
 	{
 		if (!cell->choose)
 			continue;
 
 		if (cell->state == UNK)
 		{
-			searchList = cell;
+			searchIdx = i;
 
 			return cell;
 		}
-	}
-
-	return NULL_CELL;
-}
-
-
-/*
- * Find another unknown cell when averaging is done.
- * Returns NULL_CELL if there are no more unknown cells.
- */
-static Cell *
-getAverageUnknown(void)
-{
-	Cell *	cell;
-	Cell *	bestCell;
-	int	bestDist;
-	int	curDist;
-	int	wantRow;
-	int	curCol;
-	int	testCol;
-
-	bestCell = NULL_CELL;
-	bestDist = -1;
-
-	cell = searchList;
-
-	while (cell)
-	{
-		searchList = cell;
-		curCol = cell->col;
-
-		testCol = curCol - 1;
-
-		while ((testCol > 0) && (colInfo[testCol].onCount <= 0))
-			testCol--;
-
-		if (testCol > 0)
-		{
-			wantRow = colInfo[testCol].sumPos /
-				colInfo[testCol].onCount;
-		}
-		else
-			wantRow = (rowMax + 1) / 2;
-
-		for (; cell && (cell->col == curCol); cell = cell->search)
-		{
-			if (!cell->choose)
-				continue;
-
-			if (cell->state == UNK)
-			{
-				curDist = cell->row - wantRow;
-
-				if (curDist < 0)
-					curDist = -curDist;
-
-				if (curDist > bestDist)
-				{
-					bestCell = cell;
-					bestDist = curDist;
-				}
-			}
-		}
-
-		if (bestCell)
-			return bestCell;
 	}
 
 	return NULL_CELL;
@@ -985,7 +712,7 @@ choose(const Cell * cell)
 		}
 	}
 
-	return OFF;
+	return chooseUnknown;
 }
 
 
@@ -1001,7 +728,7 @@ search(void)
 	Bool	needWrite;
 	State	state;
 
-	cell = (*getUnknown)();
+	cell = getNormalUnknown();
 
 	if (cell == NULL_CELL)
 	{
@@ -1012,7 +739,7 @@ search(void)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		cell->state = UNK;
+		setState(cell, UNK);
 	}
 	else
 	{
@@ -1080,7 +807,7 @@ search(void)
 		/*
 		 * Get the next unknown cell and choose its state.
 		 */
-		cell = (*getUnknown)();
+		cell = getNormalUnknown();
 
 		if (cell == NULL_CELL)
 			return FOUND;
@@ -1088,116 +815,6 @@ search(void)
 		state = choose(cell);
 		free = TRUE;
 	}
-}
-
-
-/*
- * Increment or decrement the near count in all the cells affected by
- * this cell.  This is done for all cells in the next columns which are
- * within the distance specified the nearCols value.  In this way, a
- * quick test can be made to see if a cell is within range of another one.
- */
-void
-adjustNear(Cell * cell, int inc)
-{
-	Cell *	curCell;
-	int	count;
-	int	colCount;
-
-	for (colCount = nearCols; colCount > 0; colCount--)
-	{
-		cell = cell->cr;
-		curCell = cell;
-
-		for (count = nearCols; count-- >= 0; curCell = curCell->cu)
-			curCell->near += inc;
-
-		curCell = cell->cd;
-
-		for (count = nearCols; count-- > 0; curCell = curCell->cd)
-			curCell->near += inc;
-	}
-}
-
-
-/*
- * Check to see if setting the specified cell ON would make the width of
- * the column exceed the allowed value.  For symmetric objects, the width
- * is only measured from the center to an edge.  Returns TRUE if the cell
- * would exceed the value.
- */
-static Bool
-checkWidth(const Cell * cell)
-{
-	int		left;
-	int		width;
-	int		minRow;
-	int		maxRow;
-	int		srcMinRow;
-	int		srcMaxRow;
-	const Cell *	ucp;
-	const Cell *	dcp;
-	Bool		full;
-
-	if (!colWidth || !inited || cell->gen)
-		return FALSE;
-
-	left = cell->colInfo->onCount;
-
-	if (left <= 0)
-		return FALSE;
-
-	ucp = cell;
-	dcp = cell;
-	width = colWidth;
-	minRow = cell->row;
-	maxRow = cell->row;
-	srcMinRow = 1;
-	srcMaxRow = rowMax;
-	full = TRUE;
-
-	if ((rowSym && (cell->col >= rowSym)) ||
-		(flipRows && (cell->col >= flipRows)))
-	{
-		full = FALSE;
-		srcMaxRow = (rowMax + 1) / 2;
-
-		if (cell->row > srcMaxRow)
-		{
-			srcMinRow = (rowMax / 2) + 1;
-			srcMaxRow = rowMax;
-		}
-	}
-
-	while (left > 0)
-	{
-		if (full && (--width <= 0))
-			return TRUE;
-
-		ucp = ucp->cu;
-		dcp = dcp->cd;
-
-		if (ucp->state == ON)
-		{
-			if (ucp->row >= srcMinRow)
-				minRow = ucp->row;
-
-			left--;
-		}
-
-		if (dcp->state == ON)
-		{
-			if (dcp->row <= srcMaxRow)
-				maxRow = dcp->row;
-
-			left--;
-		}
-	}
-
-	if (maxRow - minRow >= colWidth)
-		return TRUE;
-
-	return FALSE;
 }
 
 
@@ -1272,6 +889,19 @@ mapCell(const Cell * cell, Bool forward)
 
 	if (forward)
 	{
+		if (flipFwd)
+		{       /* For Glide Symmetry */
+			tmp = col;
+			col = rowMax + 1 - col;
+			row = colMax + 1 - tmp;
+		}
+		if (flipBwd)
+		{
+			tmp = col;
+			col = row;
+			row = tmp;
+		}
+
 		row += rowTrans;
 		col += colTrans;
 	}
@@ -1279,6 +909,19 @@ mapCell(const Cell * cell, Bool forward)
 	{
 		row -= rowTrans;
 		col -= colTrans;
+
+		if (flipFwd)
+		{       /* For Glide Symmetry */
+			tmp = col;
+			col = rowMax + 1 - col;
+			row = colMax + 1 - tmp;
+		}
+		if (flipBwd)
+		{
+			tmp = col;
+			col = row;
+			row = tmp;
+		}
 	}
 
 	if (forward)
@@ -1392,6 +1035,18 @@ symCell(const Cell * cell)
 	 */
 	if (pointSym)
 		return findCell(nRow, nCol, cell->gen);
+
+	/*
+	 * If this is forward diagonal symmetry, then this is easy.
+	 */
+	if (fwdSym)
+		return findCell(nCol, nRow, cell->gen);
+
+	/*
+	 * If this is backward diagonal symmetry, then this is easy.
+	 */
+	if (bwdSym)
+		return findCell(col, row, cell->gen);
 
 	/*
 	 * If there is symmetry on only one axis, then this is easy.
@@ -1529,9 +1184,6 @@ findCell(int row, int col, int gen)
 	cell->row = row;
 	cell->col = col;
 	cell->gen = gen;
-	cell->rowInfo = &dummyRowInfo;
-	cell->colInfo = &dummyColInfo;
-
 	auxTable[auxCellCount++] = cell;
 
 	return cell;
@@ -1580,6 +1232,7 @@ allocateCell(void)
 	cell->gen = -1;
 	cell->row = -1;
 	cell->col = -1;
+	cell->sumNear = 0;
 	cell->past = deadCell;
 	cell->future = deadCell;
 	cell->cul = deadCell;

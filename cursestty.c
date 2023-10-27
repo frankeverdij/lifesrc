@@ -5,7 +5,8 @@
 
 #include <stdarg.h>
 #include <signal.h>
-#include <curses.h>
+#include <ncursesw/ncurses.h>
+#include <locale.h>
 
 
 #undef	FALSE
@@ -30,6 +31,7 @@ static void	gotinput(int);
 Bool
 ttyOpen(void)
 {
+	setlocale(LC_ALL, "");
 	initscr();
 	cbreak();
 	noecho();
