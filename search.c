@@ -183,7 +183,7 @@ initCells(void)
 	 * and the first generation, then change the future and past pointers
 	 * to implement it.  This is for translations and flips.
 	 */
-	if (rowTrans || colTrans || flipRows || flipCols || flipQuads)
+	if (rowTrans || colTrans || flipRows || flipCols || flipFwd || flipBwd || flipQuads)
 	{
 		for (row = 0; row <= rowMax+1; row++)
 		{
@@ -266,6 +266,12 @@ initSearchOrder(void)
 			continue;
 
 		if (colSym && (row >= colSym) && (col * 2 > colMax + 1))
+			continue;
+
+		if (fwdSym && (colMax + 1 >= row + col))
+			continue;
+
+		if (bwdSym && (col >= row ))
 			continue;
 
 		table[count++] = findCell(row, col, gen);
@@ -883,6 +889,19 @@ mapCell(const Cell * cell, Bool forward)
 
 	if (forward)
 	{
+		if (flipFwd)
+		{       /* For Glide Symmetry */
+			tmp = col;
+			col = rowMax + 1 - col;
+			row = colMax + 1 - tmp;
+		}
+		if (flipBwd)
+		{
+			tmp = col;
+			col = row;
+			row = tmp;
+		}
+
 		row += rowTrans;
 		col += colTrans;
 	}
@@ -890,6 +909,19 @@ mapCell(const Cell * cell, Bool forward)
 	{
 		row -= rowTrans;
 		col -= colTrans;
+
+		if (flipFwd)
+		{       /* For Glide Symmetry */
+			tmp = col;
+			col = rowMax + 1 - col;
+			row = colMax + 1 - tmp;
+		}
+		if (flipBwd)
+		{
+			tmp = col;
+			col = row;
+			row = tmp;
+		}
 	}
 
 	if (forward)
@@ -1003,6 +1035,18 @@ symCell(const Cell * cell)
 	 */
 	if (pointSym)
 		return findCell(nRow, nCol, cell->gen);
+
+	/*
+	 * If this is forward diagonal symmetry, then this is easy.
+	 */
+	if (fwdSym)
+		return findCell(nCol, nRow, cell->gen);
+
+	/*
+	 * If this is backward diagonal symmetry, then this is easy.
+	 */
+	if (bwdSym)
+		return findCell(col, row, cell->gen);
 
 	/*
 	 * If there is symmetry on only one axis, then this is easy.

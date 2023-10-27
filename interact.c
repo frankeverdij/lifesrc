@@ -55,7 +55,7 @@ static	int *	paramTable[] =
 	&curStatus,
 	&rowMax, &colMax, &genMax, &rowTrans, &colTrans,
 	&rowSym, &colSym, &pointSym, &fwdSym, &bwdSym,
-	&flipRows, &flipCols, &flipQuads,
+	&flipRows, &flipCols, &flipFwd, &flipBwd, &flipQuads,
 	&parent, &allObjects, &nearCols, &maxCount,
 	&useRow, &useCol, &colCells, &colWidth, &follow,
 	&orderWide, &orderGens, &orderMiddle, &followGens, &chooseUnknown,
@@ -168,6 +168,14 @@ main(int argc, char ** argv)
 						if (*str)
 							flipCols = atoi(str);
 
+						break;
+
+					case 'f':
+						flipFwd = TRUE;
+						break;
+
+					case 'b':
+						flipBwd = TRUE;
 						break;
 
 					case 'q':
@@ -453,7 +461,7 @@ main(int argc, char ** argv)
 	if ((pointSym != 0) + (rowSym || colSym) + (fwdSym || bwdSym) > 1)
 		fatal("Conflicting symmetries specified");
 
-	if ((fwdSym || bwdSym || flipQuads) && (rowMax != colMax))
+	if ((fwdSym || bwdSym || flipFwd || flipBwd || flipQuads) && (rowMax != colMax))
 		fatal("Rows must equal cols with -sf, -sb, or -fq");
 
 	if ((rowTrans || colTrans) + (flipQuads != 0) > 1)
@@ -1186,6 +1194,12 @@ printGen(int gen)
 
 	if (flipCols > 1)
 		ttyPrintf(" -fc%d", flipCols);
+
+	if (flipFwd)
+		ttyPrintf(" -ff");
+
+	if (flipBwd)
+		ttyPrintf(" -fb");
 
 	if (flipQuads)
 		ttyPrintf(" -fq");
@@ -2159,6 +2173,8 @@ usage(void)
 	"   -tc  Translate columns between last and first generation",
 	"   -fr  Flip rows between last and first generation",
 	"   -fc  Flip columns between last and first generation",
+	"   -ff  Flip forward diagonals (/) between last and first generation",
+	"   -fb  Flip backward diagonals (\\) between last and first generation",
 	"   -fq  Flip quadrants between last and first generation",
 	"   -sr  Enforce symmetry on rows",
 	"   -sc  Enforce symmetry on columns",
