@@ -1167,7 +1167,7 @@ printGen(int gen)
 
 	if (isLife)
 	{
-		ttyPrintf("%s (gen %d, cells %d confl %d)", msg, gen, count, stepConfl);
+		ttyPrintf("%s (gen %d, cells %d confl %ld)", msg, gen, count, stepConfl);
 	}
 	else
 	{

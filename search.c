@@ -221,6 +221,7 @@ initCells(void)
 	nextSet = setTable;
 	baseSet = setTable;
 
+	stepConfl = 0;
 	curGen = 0;
 	curStatus = OK;
 	initNextState(bornRules, liveRules);
