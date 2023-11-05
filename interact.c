@@ -1330,7 +1330,7 @@ printGen(int gen)
 		ttyWrite("\n", 1);
 	}
 	} else {
-        printBlk(gen);
+        printBlk(gen, FALSE);
 	}
 
 	ttyHome();
