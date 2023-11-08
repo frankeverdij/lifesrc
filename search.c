@@ -252,7 +252,7 @@ initSearchOrder(void)
 	g.orderGens = orderGens;
 	g.orderMiddle = orderMiddle;
 	g.orderWide = orderWide;
-    g.sortOrder = SORTORDER_TOPDOWN;
+    g.sortOrder = sortOrder;
 	/*
 	 * Make a table of cells that will be searched.
 	 * Ignore cells that are not relevant to the search due to symmetry.

@@ -8,6 +8,7 @@
 #include "state.h"
 #include "setstate.h"
 #include "printblk.h"
+#include "sortorder.h"
 
 #define	VERSION	"3.8"
 
@@ -59,7 +60,7 @@ static	int *	paramTable[] =
 	&parent, &allObjects, &nearCols, &maxCount,
 	&useRow, &useCol, &colCells, &colWidth, &follow,
 	&orderWide, &orderGens, &orderMiddle, &followGens, &chooseUnknown,
-	NULL
+	&sortOrder, NULL
 };
 
 
@@ -385,8 +386,24 @@ main(int argc, char ** argv)
 							orderMiddle = TRUE;
 							break;
 
+						case 'r':
+							sortOrder = SORTORDER_TOPDOWN;
+							break;
+
+						case 'c':
+							sortOrder = SORTORDER_LEFTRIGHT;
+							break;
+
+						case 'f':
+							sortOrder = SORTORDER_DIAG;
+							break;
+
+						case 'b':
+							sortOrder = SORTORDER_BACKDIAG;
+							break;
+
 						default:
-							fatal("Bad ordering option");
+							fatal("Bad ordering or sorting option");
 					}
 				}
 
@@ -1225,7 +1242,7 @@ printGen(int gen)
 	if (bwdSym)
 		ttyPrintf(" -sb");
 
-	if (orderGens || orderWide || orderMiddle)
+	if (orderGens || orderWide || orderMiddle || (sortOrder != SORTORDER_DEFAULT))
 	{
 		ttyPrintf(" -o");
 
@@ -1237,6 +1254,15 @@ printGen(int gen)
 
 		if (orderMiddle)
 			ttyPrintf("m");
+
+		if (sortOrder == SORTORDER_DIAG)
+			ttyPrintf("f");
+		else if (sortOrder == SORTORDER_BACKDIAG)
+			ttyPrintf("b");
+		else if (sortOrder == SORTORDER_TOPDOWN)
+			ttyPrintf("r");
+		else if (sortOrder == SORTORDER_LEFTRIGHT)
+			ttyPrintf("c");
 	}
 
 	if (follow)
@@ -2193,6 +2219,10 @@ usage(void)
 	"   -ow  Set search order to find wide objects first",
 	"   -og  Set search order to examine all gens in a column before next column",
 	"   -om  Set search order to examine from middle column outwards",
+	"   -or  Set search order to examine from top to bottom",
+	"   -oc  Set search order to examine from left to right",
+	"   -of  Set search order to examine from top left forward diagonal",
+	"   -ob  Set search order to examine from top right backward diagonal",
 	"   -p   Only look for parents of last generation",
 	"   -a   Find all objects (even those with subPeriods)",
 	"   -v   View object every N thousand searches",
