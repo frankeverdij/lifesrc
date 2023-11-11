@@ -108,7 +108,6 @@ void printRLE(const int gen, const char *rule)
                 { 
                     /* print and reset the linebreaks */
                     printState(255, &lineCounter, &colCounter);
-                    lineCounter = 0;
                 }
 
                 printState(prevState, &stateCounter, &colCounter);
@@ -122,14 +121,10 @@ void printRLE(const int gen, const char *rule)
         if (state)
         {
             printState(prevState, &stateCounter, &colCounter);
-            stateCounter = 0;
             printState(255, &lineCounter, &colCounter);
-            lineCounter = 0;
         }
         else
-        {
             stateCounter = 0;
-        }
     }
     ttyPrintf("!\n");
     
