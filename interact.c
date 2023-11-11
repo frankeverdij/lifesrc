@@ -8,6 +8,7 @@
 #include "state.h"
 #include "setstate.h"
 #include "printblk.h"
+#include "printrle.h"
 #include "sortorder.h"
 
 #define	VERSION	"3.8"
@@ -1357,6 +1358,7 @@ printGen(int gen)
 	}
 	} else {
         printBlk(gen, FALSE);
+        printRLE(gen, ruleString);
 	}
 
 	ttyHome();
