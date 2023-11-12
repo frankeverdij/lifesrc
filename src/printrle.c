@@ -42,13 +42,12 @@ void printState(const State state, int * stateCounter, int * colCounter)
         ttyPrintf("\n");
         *colCounter = 0;
     }
+    
+    return;
 }
 
-void printRLE(const int gen, const char *rule)
+void engineRLE(const char *rule)
 {
-    int row;
-    int col;
-    
     int rmin = rowMax + 1;
     int rmax = 0;
     int cmin = colMax + 1;
@@ -58,19 +57,13 @@ void printRLE(const int gen, const char *rule)
     int colCounter = 0;
     int stateCounter = 0;
     int lineCounter = -1;
-    const Cell *cell;
-    
-    /* initialize buffer */
     
     /* first determine pattern limits */
-    for (row = 1; row <= rowMax; row ++)
+    for (int row = 1; row <= rowMax; row ++)
     {
-        for (col = 1; col <= colMax; col++)
+        for (int col = 1; col <= colMax; col++)
         {
-            cell = findCell(row , col, gen);
-            buffer[col + row * colMax] = cell->state;
-            
-            if (cell->state != OFF)
+            if (buffer[col + row * colMax] != OFF)
             {
                 rmin = min(rmin, row);
                 rmax = max(rmax, row);
@@ -84,9 +77,9 @@ void printRLE(const int gen, const char *rule)
     ttyPrintf("x = %d, y = %d, rule = %s\n", cmax - cmin + 1, rmax - rmin + 1, rule);
     
     /* start coding the pattern */
-    for (row = rmin; row <= rmax; row ++)
+    for (int row = rmin; row <= rmax; row ++)
     {
-        for (col = cmin; col <= cmax; col++)
+        for (int col = cmin; col <= cmax; col++)
         {
             state = buffer[col + row * colMax];
             
@@ -129,4 +122,23 @@ void printRLE(const int gen, const char *rule)
     ttyPrintf("!\n");
     
     return;   
+}
+
+void printRLE(const int gen, const char *rule)
+{
+    const Cell *cell;
+
+    /* initialize buffer */
+    for (int row = 1; row <= rowMax; row ++)
+    {
+        for (int col = 1; col <= colMax; col++)
+        {
+            cell = findCell(row , col, gen);
+            buffer[col + row * colMax] = cell->state;
+        }
+    }
+    
+    engineRLE(rule);
+    
+    return;
 }
