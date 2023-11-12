@@ -79,20 +79,18 @@ void engineRLE(const char *rule)
     /* start coding the pattern */
     for (int row = rmin; row <= rmax; row ++)
     {
+        stateCounter = 0;
         for (int col = cmin; col <= cmax; col++)
         {
             state = buffer[col + row * colMax];
             
-            if (col == cmin)
+            /* set prevState only at the very beginning of the pattern evaluation */
+            if (lineCounter < 0)
             {
-                stateCounter = 0;
-                /* set prevState only at the very beginning of the pattern evaluation */
-                if (lineCounter < 0)
-                {
-                    lineCounter = 0;
-                    prevState = state;
-                }
+                lineCounter = 0;
+                prevState = state;
             }
+
             /* state change? */
             if (prevState != state)
             {
@@ -116,8 +114,6 @@ void engineRLE(const char *rule)
             printState(prevState, &stateCounter, &colCounter);
             prevState = 0;
         }
-        else
-            stateCounter = 0;
     }
     ttyPrintf("!\n");
     
