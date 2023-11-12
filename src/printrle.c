@@ -121,7 +121,7 @@ void printRLE(const int gen, const char *rule)
         if (state)
         {
             printState(prevState, &stateCounter, &colCounter);
-            printState(255, &lineCounter, &colCounter);
+            prevState = 0;
         }
         else
             stateCounter = 0;
