@@ -1157,7 +1157,7 @@ printGen(int gen)
 {
 	int		row;
 	int		col;
-	int		count;
+	int		count = 0, unkCount = 0;
 	const Cell *	cell;
 	const char *	msg;
 
@@ -1170,13 +1170,13 @@ printGen(int gen)
 		default:	msg = ""; break;
 	}
 
-	count = 0;
-
 	for (row = 1; row <= rowMax; row++)
 	{
 		for (col = 1; col <= colMax; col++)
 		{
-			count += (findCell(row, col, gen)->state == ON);
+		    cell = findCell(row, col, gen);
+			count += (cell->state == ON);
+			unkCount += (cell->state == UNK);
 		}
 	}
 
@@ -1185,12 +1185,12 @@ printGen(int gen)
 
 	if (isLife)
 	{
-		ttyPrintf("%s (gen %d, cells %d confl %ld)", msg, gen, count, stepConfl);
+		ttyPrintf("%s (gen %d, cells %d unk %d confl %ld)", msg, gen, count, unkCount, stepConfl);
 	}
 	else
 	{
-		ttyPrintf("%s (rule %s, gen %d, cells %d)",
-			msg, ruleString, gen, count);
+		ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld)",
+			msg, ruleString, gen, count, unkCount, stepConfl);
 	}
 
 	ttyPrintf(" -r%d -c%d -g%d", rowMax, colMax, genMax);

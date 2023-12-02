@@ -93,7 +93,6 @@ initCells(void)
 	Cell *	cell;
 	Cell *	cell2;
 
-    printf("%zu \n",sizeof(Cell));
 	/*
 	 * Check whether valid parameters have been set.
 	 */
