@@ -24,6 +24,8 @@ static	char	ruleString[20];	/* rule string for printouts */
 static	long	foundCount;	/* number of objects found */
 static	char *	initFile;	/* file containing initial cells */
 static	char *	loadFile;	/* file to load state from */
+static  Bool    blockOutput; /* print Unicode blocks instead of character */
+static  Bool    RLEOutput;  /* print additional RLE code */
 
 
 /*
@@ -313,7 +315,21 @@ main(int argc, char ** argv)
 				/*
 				 * Set view frequency.
 				 */
-				viewFreq = atol(str) * VIEW_MULT;
+				while ((*str) && !isdigit(*str))
+				{
+					switch (*str++)
+					{
+					    case 'b':
+							blockOutput = TRUE;
+							break;
+					    case 'r':
+					        RLEOutput = TRUE;
+					        break;
+					}
+			    }
+				if (*str)
+					viewFreq = atol(str) * VIEW_MULT;
+
 				break;
 
 			case 'l':
@@ -1318,48 +1334,52 @@ printGen(int gen)
 
 	ttyPrintf("\n");
 
-    if (0) {
-	for (row = 1; row <= rowMax; row++)
+    if (!blockOutput) {
+	    for (row = 1; row <= rowMax; row++)
+	    {
+		    for (col = 1; col <= colMax; col++)
+		    {
+		    	cell = findCell(row, col, gen);
+
+		    	switch (cell->state)
+		    	{
+		    		case OFF:
+		    			msg = ". ";
+		    			break;
+
+		    		case ON:
+		    			msg = "O ";
+		    			break;
+
+		    		case UNK:
+		    			msg = "? ";
+
+		    			if (cell->frozen)
+		    				msg = "+ ";
+
+		    			if (!cell->choose)
+		    				msg = "X ";
+
+		    			break;
+		    	}
+
+		    	/*
+		    	 * If wide output, print only one character,
+		    	 * else print both characters.
+		    	 */
+		    	ttyWrite(msg, (colMax < 40) + 1);
+		    }
+
+		    ttyWrite("\n", 1);
+	    }
+	}
+	else
 	{
-		for (col = 1; col <= colMax; col++)
-		{
-			cell = findCell(row, col, gen);
-
-			switch (cell->state)
-			{
-				case OFF:
-					msg = ". ";
-					break;
-
-				case ON:
-					msg = "O ";
-					break;
-
-				case UNK:
-					msg = "? ";
-
-					if (cell->frozen)
-						msg = "+ ";
-
-					if (!cell->choose)
-						msg = "X ";
-
-					break;
-			}
-
-			/*
-			 * If wide output, print only one character,
-			 * else print both characters.
-			 */
-			ttyWrite(msg, (colMax < 40) + 1);
-		}
-
-		ttyWrite("\n", 1);
-	}
-	} else {
         printBlk(gen, FALSE);
-        printRLE(gen, ruleString);
 	}
+
+    if (RLEOutput)
+        printRLE(gen, ruleString);
 
 	ttyHome();
 	ttyFlush();
