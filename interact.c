@@ -1078,6 +1078,7 @@ excludeCone(int row, int col, int gen)
 			}
 		}
 	}
+	semNoChosen = TRUE;
 }
 
 
@@ -1771,7 +1772,7 @@ loadState(const char * file)
 		gen = getNum(&cp, 0);
 
 		findCell(row, col, gen)->choose = FALSE;
-
+        semNoChosen = TRUE;
 		buf[0] = '\0';
 		fgets(buf, LINE_SIZE, fp);
 	}

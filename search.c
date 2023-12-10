@@ -669,9 +669,6 @@ getNormalUnknown(void)
 
 	for (int i = searchIdx; (cell = searchList[i]); i++)
 	{
-		if (!cell->choose)
-			continue;
-
 		if (cell->state == UNK)
 		{
 			searchIdx = i;
@@ -727,6 +724,26 @@ search(void)
 	Bool	free;
 	Bool	needWrite;
 	State	state;
+	int tally = -1;
+
+    /*
+     * Filter out cells from searchList which cannot be chosen.
+     * Note: This is an in-place remove-and-shift operation.
+     */
+    if (semNoChosen)
+    {
+        for (int i = 0; (cell = searchList[i]); i++)
+        {
+            if (cell->choose == TRUE)
+            {
+                tally++;
+                if (i > tally)
+                    searchList[tally] = searchList[i];
+            }
+        }
+        searchList[tally+1] = NULL_CELL;
+        semNoChosen = FALSE;
+    }
 
 	cell = getNormalUnknown();
 

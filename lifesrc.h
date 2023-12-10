@@ -173,6 +173,7 @@ EXTERN	Bool	followGens;	/* try to follow setting of other gens */
 EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
 EXTERN  long stepConfl; /* step counter for one Proceed-Backup action */
 EXTERN  int sortOrder; /* sort direction */
+EXTERN  Bool    semNoChosen; /* Flag if cells in the searchList have choose == FALSE */
 
 /*
  * These values are not affected when dumping and loading since they
