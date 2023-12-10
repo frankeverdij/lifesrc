@@ -1,7 +1,10 @@
 # Makefile for life search program
 
 CFLAGS = -Ofast -MP -MMD -Wall -Wno-unused-result -fomit-frame-pointer -Iinclude -I. -I.. -I/usr/include/ncurses
+
 #CFLAGS = -O -g -pg -MP -MMD -fno-inline -Wall -Wno-unused-result -Iinclude -I. -I.. -I/usr/include/ncurses
+#LDFLAGS = -pg
+
 #CFLAGS = -O -g --coverage -MP -MMD -Wall -Wno-unused-result -Iinclude -I. -I.. -I/usr/include/ncurses
 #LDFLAGS = -lgcov
 
