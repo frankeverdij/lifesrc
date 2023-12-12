@@ -47,29 +47,29 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 	}
 
 	if(g->sortOrder==SORTORDER_DIAG) {
-		if(c1->col+c1->row > c2->col+c2->row) return 1;
-		if(c1->col+c1->row < c2->col+c2->row) return -1;
+		if(c1->col+c1->row > c2->col+c2->row) return (g->orderInvert)?(-1):1;
+		if(c1->col+c1->row < c2->col+c2->row) return (g->orderInvert)?1:(-1);
 		if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (g->orderWide)?1:(-1);
 		if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
 	if(g->sortOrder==SORTORDER_BACKDIAG) {
-		if(colMax-c1->col+c1->row > colMax-c2->col+c2->row) return 1;
-		if(colMax-c1->col+c1->row < colMax-c2->col+c2->row) return -1;
+		if(colMax-c1->col+c1->row > colMax-c2->col+c2->row) return (g->orderInvert)?(-1):1;
+		if(colMax-c1->col+c1->row < colMax-c2->col+c2->row) return (g->orderInvert)?1:(-1);
 		if(abs(colMax-c1->col-c1->row) > abs(colMax-c2->col-c2->row)) return (g->orderWide)?1:(-1);
 		if(abs(colMax-c1->col-c1->row) < abs(colMax-c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
 	else if(g->sortOrder==SORTORDER_KNIGHT) {
-		if(c1->col*2+c1->row > c2->col*2+c2->row) return 1;
-		if(c1->col*2+c1->row < c2->col*2+c2->row) return -1;
+		if(c1->col*2+c1->row > c2->col*2+c2->row) return (g->orderInvert)?(-1):1;
+		if(c1->col*2+c1->row < c2->col*2+c2->row) return (g->orderInvert)?1:(-1);
 		if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (g->orderWide)?1:(-1);
 		if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
 	else if(g->sortOrder==SORTORDER_TOPDOWN) {
-		if(c1->row > c2->row) return 1;
-		if(c1->row < c2->row) return -1;
+		if(c1->row > c2->row) return (g->orderInvert)?(-1):1;
+		if(c1->row < c2->row) return (g->orderInvert)?1:(-1);
 		midcol = (g->colMax + 1) / 2;
 		dif1 = abs(c1->col - midcol);
 		dif2 = abs(c2->col - midcol);
@@ -78,8 +78,8 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 		return gen_diff;
 	}
 	else if(g->sortOrder==SORTORDER_LEFTRIGHT) {
-		if(c1->col > c2->col) return 1;
-		if(c1->col < c2->col) return -1;
+		if(c1->col > c2->col) return (g->orderInvert)?(-1):1;
+		if(c1->col < c2->col) return (g->orderInvert)?1:(-1);
 		midrow = (g->rowMax + 1) / 2;
 		dif1 = abs(c1->row - midrow);
 		dif2 = abs(c2->row - midrow);

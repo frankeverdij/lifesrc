@@ -168,6 +168,7 @@ EXTERN	int	colWidth;	/* maximum width of each column */
 EXTERN	Bool	follow;		/* follow average position of previous column */
 EXTERN	Bool	orderWide;	/* ordering tries to find wide objects */
 EXTERN	Bool	orderGens;	/* ordering tries all gens first */
+EXTERN	Bool	orderInvert;	/* Inverts direction of non-wide orderings */
 EXTERN	Bool	orderMiddle;	/* ordering tries middle columns first */
 EXTERN	Bool	followGens;	/* try to follow setting of other gens */
 EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */

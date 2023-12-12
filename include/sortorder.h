@@ -40,6 +40,7 @@ struct globals_struct {
 	Bool	follow;		/* follow average position of previous column */
 	Bool	orderWide;	/* ordering tries to find wide objects */
 	Bool	orderGens;	/* ordering tries all gens first */
+	Bool	orderInvert;	/* Inverts direction of non-wide orderings */
 	Bool	orderMiddle;	/* ordering tries middle columns first */
 	Bool	followGens;	/* try to follow setting of other gens */
 	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */

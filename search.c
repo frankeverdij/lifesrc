@@ -249,6 +249,7 @@ initSearchOrder(void)
 	g.rowMax = rowMax;
 	g.parent = parent;
 	g.orderGens = orderGens;
+	g.orderInvert = orderInvert;
 	g.orderMiddle = orderMiddle;
 	g.orderWide = orderWide;
     g.sortOrder = sortOrder;

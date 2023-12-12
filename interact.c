@@ -62,8 +62,8 @@ static	int *	paramTable[] =
 	&flipRows, &flipCols, &flipFwd, &flipBwd, &flipQuads,
 	&parent, &allObjects, &nearCols, &maxCount,
 	&useRow, &useCol, &colCells, &colWidth, &follow,
-	&orderWide, &orderGens, &orderMiddle, &followGens, &chooseUnknown,
-	&sortOrder, NULL
+	&orderWide, &orderGens, &orderInvert, &orderMiddle, &followGens,
+	&chooseUnknown,	&sortOrder, NULL
 };
 
 
@@ -397,6 +397,10 @@ main(int argc, char ** argv)
 
 						case 'g':
 							orderGens = TRUE;
+							break;
+
+						case 'i':
+							orderInvert = TRUE;
 							break;
 
 						case 'm':
@@ -1260,7 +1264,7 @@ printGen(int gen)
 	if (bwdSym)
 		ttyPrintf(" -sb");
 
-	if (orderGens || orderWide || orderMiddle || (sortOrder != SORTORDER_DEFAULT))
+	if (orderGens || orderWide || orderInvert || orderMiddle || (sortOrder != SORTORDER_DEFAULT))
 	{
 		ttyPrintf(" -o");
 
@@ -1269,6 +1273,9 @@ printGen(int gen)
 
 		if (orderWide)
 			ttyPrintf("w");
+
+		if (orderInvert)
+			ttyPrintf("i");
 
 		if (orderMiddle)
 			ttyPrintf("m");
