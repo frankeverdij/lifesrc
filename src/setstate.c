@@ -8,7 +8,8 @@ void setState(Cell * const cell, const State state, State * stateIndex)
     /* set cell state */
     cell->state = state;
     if (stateIndex)
-        stateIndex[cell->index] = state;
+        if (cell->index >= 0)
+            stateIndex[cell->index] = state;
     /* correct the neighbor sum for cells touching this cell */
     cell->cul->sumNear += diffState;
     cell->cu->sumNear += diffState;

@@ -1244,6 +1244,7 @@ allocateCell(void)
 	cell->row = -1;
 	cell->col = -1;
 	cell->sumNear = 0;
+	cell->index = -1;
 	cell->past = deadCell;
 	cell->future = deadCell;
 	cell->cul = deadCell;
