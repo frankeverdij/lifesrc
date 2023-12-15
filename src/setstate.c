@@ -1,12 +1,14 @@
 #include "lifesrc.h"
 #include "state.h"
 
-void setState(Cell * const cell, const State state)
+void setState(Cell * const cell, const State state, State * stateIndex)
 {
     /* backup previous state */
     int diffState = state - cell->state;
     /* set cell state */
     cell->state = state;
+    if (stateIndex)
+        stateIndex[cell->index] = state;
     /* correct the neighbor sum for cells touching this cell */
     cell->cul->sumNear += diffState;
     cell->cu->sumNear += diffState;

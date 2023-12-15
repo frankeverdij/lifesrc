@@ -896,7 +896,7 @@ getBackup(const char * cp)
 		if (blanksToo || (state == ON))
 			count--;
 
-		setState(cell, UNK);
+		setState(cell, UNK, NULL);
 
 		if (go(cell, state, FALSE) != OK)
 		{

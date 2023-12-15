@@ -108,6 +108,7 @@ struct Cell
 	short		row;		/* row of this cell */
 	short		col;		/* column of this cell */
 	int		sumNear;	/* sum of states of neighbor cells */
+	int     index;
 	Cell *		past;		/* cell in past at this location */
 	Cell *		future;		/* cell in future at this location */
 	Cell *		cul;		/* cell to up and left */

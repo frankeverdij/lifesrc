@@ -3,6 +3,6 @@
 
 #include "state.h"
 
-void setState(Cell * const cell, const State state);
+void setState(Cell * const cell, const State state, State * stateIndex);
 
 #endif /* SETSTATE_H */

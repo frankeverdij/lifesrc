@@ -52,9 +52,11 @@ static	Flags	implic[1024];
 static	int	newCellCount;		/* cells ready for allocation */
 static	int	auxCellCount;		/* cells in auxillary table */
 static  int searchIdx;
+static  int searchCount;
 static	Cell *	newCells;		/* cells ready for allocation */
 static	Cell *	deadCell;		/* boundary cell value */
 static	Cell **	searchList;		/* current list of cells to search */
+static  State * stateList;
 static	Cell *	cellTable[MAX_CELLS];	/* table of usual cells */
 static	Cell *	auxTable[AUX_CELLS];	/* table of auxillary cells */
 static	RowInfo	dummyRowInfo;		/* dummy info for ignored cells */
@@ -148,7 +150,7 @@ initCells(void)
 				if (!edge)
 				{
 					linkCell(cell);
-					setState(cell, UNK);
+					setState(cell, UNK, stateList);
 					cell->free = TRUE;
 				}
 
@@ -257,7 +259,7 @@ initSearchOrder(void)
 	 * Make a table of cells that will be searched.
 	 * Ignore cells that are not relevant to the search due to symmetry.
 	 */
-	count = 0;
+	searchCount = 0;
 
 	for (gen = 0; gen < genMax; gen++)
 		for (col = 1; col <= colMax; col++)
@@ -275,23 +277,29 @@ initSearchOrder(void)
 		if (bwdSym && (col >= row ))
 			continue;
 
-		table[count++] = findCell(row, col, gen);
+		table[searchCount++] = findCell(row, col, gen);
 	}
 
 	/*
 	 * Now sort the table based on our desired search order.
 	 */
-	qsort_r((char *) table, count, sizeof(Cell *), &orderSortFunc, &g);
+	qsort_r((char *) table, searchCount, sizeof(Cell *), &orderSortFunc, &g);
 
 	/*
 	 * Finally build the search list from the table elements in the
 	 * final order.
 	 */
-	searchList = (Cell **) malloc(sizeof(Cell *) * (count + 1));
+	searchList = (Cell **) malloc(sizeof(Cell *) * (searchCount + 1));
+	stateList = (State *) malloc(sizeof(State) * (searchCount + 1));
 
-	for (int i = 0; i < count; i++)
+	for (int i = 0; i < searchCount; i++)
+	{
 	    searchList[i] = table[i];
-	searchList[count] = NULL;
+	    searchList[i]->index = i;
+	    stateList[i] = searchList[i]->state;
+	}
+	searchList[searchCount] = NULL;
+	stateList[searchCount] = ON + UNK;
     searchIdx = 0;
 }
 
@@ -329,7 +337,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 
 	*newSet++ = cell;
 
-	setState(cell, state);
+	setState(cell, state, stateList);
 	cell->free = free;
 
 	return OK;
@@ -599,7 +607,6 @@ backup(void)
 {
 	Cell *	cell;
 
-	searchIdx = 0;
 
 	while (newSet != baseSet)
 	{
@@ -612,18 +619,21 @@ backup(void)
 
 		if (!cell->free)
 		{
-			setState(cell, UNK);
+			setState(cell, UNK, stateList);
 			cell->free = TRUE;
 
 			continue;
 		}
 
 		nextSet = newSet;
+        searchIdx = cell->index;
 
 		return cell;
 	}
 
 	nextSet = baseSet;
+	searchIdx = 0;
+
 	return NULL_CELL;
 }
 
@@ -654,7 +664,7 @@ go(Cell * cell, State state, Bool free)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		setState(cell, UNK);
+		setState(cell, UNK, stateList);
 	}
 }
 
@@ -673,7 +683,7 @@ getNormalUnknown(void)
 		if (!cell->choose)
 			continue;
 
-		if (cell->state == UNK)
+		if (stateList[i] == UNK)
 		{
 			searchIdx = i;
 
@@ -740,7 +750,7 @@ search(void)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		setState(cell, UNK);
+		setState(cell, UNK, stateList);
 	}
 	else
 	{
