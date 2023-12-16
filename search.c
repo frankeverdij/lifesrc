@@ -678,16 +678,17 @@ getNormalUnknown(void)
 {
 	Cell *	cell;
 
-	for (int i = searchIdx; (cell = searchList[i]); i++)
+	for (int i = searchIdx; i < searchCount; i++)
 	{
-		if (!cell->choose)
-			continue;
-
 		if (stateList[i] == UNK)
 		{
-			searchIdx = i;
+		    cell = searchList[i];
+		    if (cell->choose)
+		    {
+		    	searchIdx = i;
 
-			return cell;
+			    return cell;
+			}
 		}
 	}
 
