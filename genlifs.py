@@ -139,7 +139,7 @@ class Partials:
             dirpath = str(j[0]) + '/' + str(j[1])
             futureGen = str(j[2]) + '_' + str(j[3])
             if (not path.exists(dirpath)):
-                makedirs(dirpath)
+                makedirs(dirpath, exist_ok=True)
 
             # write the lif
             with open(dirpath + '/' + futureGen + ".lif", 'w') as fh:
