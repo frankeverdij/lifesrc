@@ -149,46 +149,32 @@ class Partials:
                 fh.close()
 
             # write shell script for this pattern
-            with open(dirpath + '/' + str(i) + ".sh", 'w') as fh:
-                script = "#!/bin/sh\nset -x\ncd " + dirpath + "\n" \
-                    + "if [ \! $( grep -sqE 'object|Inconsistent' " \
-                    + str(i) + ".log ; echo $? ) -eq 0 ] ; then\n" \
-                    + "  if [ -f " + str(i) + ".dmp ] ; then\n" \
-                    + "    $LIFESRCDUMB -l " + str(i) + ".dmp" \
-                    + " -d100000 " + str(i) + ".dmp" \
-                    + " -o " + str(i) + ".out > " + str(i) + ".log 2>&1\n" \
-                    + "  else\n" \
-                    + "    $LIFESRCDUMB" \
-                    + " -r" + str(len(self.patterns[i])) \
-                    + " -c" + str(len(self.patterns[i][0])) \
-                    + " -g" + str(self.period) \
-                    + " -i " + futureGen + ".lif" \
-                    + " -d100000 " + str(i) + ".dmp" \
-                    + " -o " + str(i) + ".out > " \
-                    + str(i) + ".log 2>&1\n  fi\nfi\n"
-                fh.write(script)
-                fh.close()
-
-            # create an extra script for the symmetric case
+            self.write_script(dirpath, futureGen, i, str(i), '')
             if ((j[1] % self.period == 0) and (j[2] == j[3])):
-                with open(dirpath + "/s.sh", 'w') as fh:
-                    script = "#!/bin/sh\ncd " + dirpath + "\n" \
-                        + "if [ \! $( grep -sqE 'object|Inconsistent' " \
-                        + "s.log ; echo $? ) -eq 0 ] ; then\n" \
-                        + "  if [ -f s.dmp ] ; then\n" \
-                        + "    $LIFESRCDUMB -l s.dmp -d100000 s.dmp" \
-                        + " -o s.out >> s.log 2>&1\n" \
-                        + "  else\n" \
-                        + "    $LIFESRCDUMB" \
-                        + " -r" + str(len(self.patterns[i])) \
-                        + " -c" + str(len(self.patterns[i][0])) \
-                        + " -g" + str(self.period) \
-                        + " -sc" \
-                        + " -i " + futureGen + ".lif" \
-                        + " -d100000 s.dmp" \
-                        + " -o s.out > s.log 2>&1\n  fi\nfi\n"
-                    fh.write(script)
-                    fh.close()
+                # create an extra script for the symmetric case
+                self.write_script(dirpath, futureGen, i, 's', " -sc")
+            
+    def write_script(self, dirpath, lif, i, base, sym):
+        with open(dirpath + '/' + base + ".sh", 'w') as fh:
+            script = "#!/bin/sh\nset -x\ncd " + dirpath + "\n" \
+                + "if [ \! $( grep -sqE 'object|Inconsistent' " \
+                + base + ".log ; echo $? ) -eq 0 ] ; then\n" \
+                + "  if [ -f " + base + ".dmp ] ; then\n" \
+                + "    $LIFESRCDUMB -l " + base + ".dmp" \
+                + " -d100000 " + base + ".dmp" \
+                + " -o " + base + ".out >> " + base + ".log 2>&1\n" \
+                + "  else\n" \
+                + "    $LIFESRCDUMB" \
+                + " -r" + str(len(self.patterns[i])) \
+                + " -c" + str(len(self.patterns[i][0])) \
+                + " -g" + str(self.period) \
+                + " -i " + lif + ".lif" \
+                + sym \
+                + " -d100000 " + base + ".dmp" \
+                + " -o " + base + ".out >> " \
+                + base + ".log 2>&1\n  fi\nfi\n"
+            fh.write(script)
+            fh.close()
 
 def main():
     p = Partials()
