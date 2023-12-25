@@ -9,11 +9,18 @@ while IFS=  read -r -d $'\0'; do
     array+=("$REPLY")
 done < <(find . -name "*.sh" -print0)
 
+echo "${#array[@]}"
+let cpus=$@-2
+echo "$cpus"
+
 for i in "${array[@]}"
 do
   :
-  while [[ `jobs -r | wc -l | tr -d " "` > "$@" ]]; do
+  while [[ `jobs -r | wc -l | tr -d " "` -gt "$cpus" ]]; do
     sleep 1
   done
-  sh $i &
+  jobs -r | wc -l | tr -d " "
+  bash $i &
 done
+echo waiting for completion...
+wait
