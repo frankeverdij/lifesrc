@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 from os import path, makedirs
+import copy
+import argparse
+import sys
 
 """
 what does this program do?
@@ -26,82 +29,110 @@ what does this program do?
 7) Write script in directory.
 """
 
+def dimension_and_handedness(p):
+    start = 0
+    stop = 0
+    leftright = ''
+    for j,r in enumerate(p):
+        if r[0] == '?':
+            leftright = 'r'
+            start = j
+            break
+        if r[-1] == '?':
+            leftright = 'l'
+            start = j
+            break
+    for j,r in reversed(list(enumerate(p))):
+        if r[0] == '?':
+           stop = j
+           break
+        if r[-1] == '?':
+           stop = j
+           break
+    return list([len(p[0]), len(p), leftright, start, stop])
+
+def partial_mirrors(partial):
+    mp = []
+    for p in partial:
+        rr = []
+        for r in p:
+            rr.append(list(reversed(list(r))))
+        mp.append(rr)
+    return mp
+
+def read_lif(lif_filename):
+    with open(lif_filename, 'r') as fh:
+        a = []
+        for line_str in fh:
+            a.append(list(line_str.rstrip('\n')))
+        b = [x for x in a if x]
+    return b
+
 class Partials:
-    def __init__(self):
+    def __init__(self, rows = 0):
         self.period = 0
+        self.basePartials = []
+        self.basePartialInfo = []
         self.partials = []
         self.partialInfo = []
         self.patterns = []
         self.patternInfo = []
+        self.symmetry = False
+        self.rows = rows
 
     def read_partials(self):
         while (path.exists(str(self.period)+".lif")):
-            file_lif = open(str(self.period)+".lif", 'r')
-            a = []
-            for line_str in file_lif:
-                a.append(list(line_str.rstrip('\n')))
-            b = [x for x in a if x]
-            self.partials.append(b)
+            p = read_lif(str(self.period)+".lif")
+            self.partials.append(p)
             self.period += 1
 
+        if (path.exists("base.lif")):
+            p = read_lif("base.lif")
+            self.basePartials.append(p)
+        else:
+            self.symmetry = True
+            self.basePartials.append(copy.deepcopy(self.partials[0]))
+
     def create_mirrors(self):
-        mp = []
-        for p in self.partials:
-            rr = []
-            for r in p:
-                rr.append(list(reversed(list(r))))
-            mp.append(rr)
+        mp = partial_mirrors(self.partials)
         self.partials.extend(mp)
+        mq = partial_mirrors(self.basePartials)
+        self.basePartials.extend(mq)
 
     def get_dimensions(self):
         for i,p in enumerate(self.partials):
-            a = [len(p[0]), len(p)]
-            start = 0
-            stop = 0
-            leftright = ''
-            for j,r in enumerate(p):
-                if r[0] == '?':
-                    leftright = 'l'
-                    start = j
-                    break
-                if r[-1] == '?':
-                    leftright = 'r'
-                    start = j
-                    break
-            for j,r in reversed(list(enumerate(p))):
-                if r[0] == '?':
-                    stop = j
-                    break
-                if r[-1] == '?':
-                    stop = j
-                    break
-            self.partialInfo.append(a + [leftright, start, stop])
+            self.partialInfo.append(dimension_and_handedness(p))
+        for i,p in enumerate(self.basePartials):
+            self.basePartialInfo.append(dimension_and_handedness(p))
 
     def create_patterns(self, ncol = 0):
         self.patterns = []
         self.patternInfo = []
-        base = (0 if self.partialInfo[0][2] == 'r' else self.period)
+        baseHanded = (0 if self.basePartialInfo[0][2] == 'l' else 1)
+        partialHanded = (0 if self.partialInfo[0][2] == 'r' else self.period)
 
-        # loop over all left patterns, including its own mirror
+        # loop over all right patterns, including its own mirror
         for i in range(self.period):
-            j = (base + i + self.period) % (2 * self.period)
-            minOffset = self.partialInfo[base][3] - self.partialInfo[j][4]
-            maxOffset = self.partialInfo[base][4] - self.partialInfo[j][3]
+            j = partialHanded + i
+            minOffset = self.basePartialInfo[baseHanded][3] \
+                        - self.partialInfo[j][4]
+            maxOffset = self.basePartialInfo[baseHanded][4] \
+                        - self.partialInfo[j][3]
 
-            # loop over all possible left pattern offsets having at least
-            #   one row with unknown cells from both patterns
+            # loop over all possible right pattern offsets having at least
+            #   one shared row with unknown cells from the left pattern
             for k in range(minOffset, maxOffset + 1):
-                width = self.partialInfo[base][0] + ncol + \
+                width = self.basePartialInfo[baseHanded][0] + ncol + \
                     self.partialInfo[j][0]
                 offset = ([-k, 0] if k < 0 else [0, k])
                 # discard the negative translations of mirror images,
                 #   since they will be the mirror image of the positive
                 #   translations.
-                if ((j % self.period == 0) and (k < 0)):
+                if (self.symmetry and (j % self.period == 0) and (k < 0)):
                     continue
-                height = max(self.partialInfo[base][1] + offset[0],
-                    self.partialInfo[j][1] + offset[1]) + self.period
-                unkRow = min(self.partialInfo[base][3] + offset[0],
+                height = max(self.basePartialInfo[baseHanded][1] + offset[0],
+                    self.partialInfo[j][1] + offset[1]) + self.rows
+                unkRow = min(self.basePartialInfo[baseHanded][3] + offset[0],
                     self.partialInfo[j][3] + offset[1])
                 # draw background
                 bg = []
@@ -111,12 +142,13 @@ class Partials:
                 # add in the unknown background field starting from row unkRow
                 for m in range(unkRow, height):
                     for n in range(ncol + 2):
-                        bg[m][self.partialInfo[base][0] - 1 + n] = '?'
+                        bg[m][self.basePartialInfo[baseHanded][0] - 1 + n] = '?'
 
                 # add left partial on top of the background
-                for m in range(self.partialInfo[base][1]):
-                    for n in range(self.partialInfo[base][0]):
-                        bg[m + offset[0]][n] = self.partials[base][m][n]
+                for m in range(self.basePartialInfo[baseHanded][1]):
+                    for n in range(self.basePartialInfo[baseHanded][0]):
+                        bg[m + offset[0]][n] \
+                            = self.basePartials[baseHanded][m][n]
 
                 # add right partial on top of the background, right aligned
                 for m in range(self.partialInfo[j][1]):
@@ -125,14 +157,9 @@ class Partials:
                             = self.partials[j][m][n]
 
                 # save pattern and pattern info
-                self.patternInfo.append([ncol, j, offset[0], offset[1]])
+                self.patternInfo.append([ncol, j % self.period, offset[0],
+                                        offset[1]])
                 self.patterns.append(bg)
-
-    def print_partialInfo(self, period = 0):
-        print(self.partialInfo[period])
-
-    def print_partials(self, period = 0):
-        print(self.partials[period])
 
     def write_patterns(self):
         for i,j in enumerate(self.patternInfo):
@@ -149,8 +176,9 @@ class Partials:
                 fh.close()
 
             # write shell script for this pattern
-            self.write_script(dirpath, futureGen, i, str(i), '')
-            if ((j[1] % self.period == 0) and (j[2] == j[3])):
+            self.write_script(dirpath, futureGen, i,
+                                str(i) + "_" + futureGen, '')
+            if (self.symmetry and (j[1] % self.period == 0) and (j[2] == j[3])):
                 # create an extra script for the symmetric case
                 self.write_script(dirpath, futureGen, i, 's', " -sc")
             
@@ -174,14 +202,24 @@ class Partials:
                 + " -o " + base + ".out >> " \
                 + base + ".log 2>&1\n  fi\nfi\n"
             fh.write(script)
-            fh.close()
 
 def main():
-    p = Partials()
+    parser = argparse.ArgumentParser(
+        description = 'Create LIF output files of left- and right- collection '
+                      'of partials arranged by middle column spacing and '
+                      'right partial pattern phase ',
+        formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-cr', '--columnrange', type = int, default = 5,
+        help = 'range of columns added to the center of the pattern')
+    parser.add_argument('-r', '--rows', type = int, default = 0,
+        help = 'number of extra rows with unknown cells appended')
+    args = parser.parse_args(sys.argv[1:])
+
+    p = Partials(args.rows)
     p.read_partials()
     p.create_mirrors()
     p.get_dimensions()
-    for i in range(5):
+    for i in range(args.columnrange):
         p.create_patterns(i)
         p.write_patterns()
 
