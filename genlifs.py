@@ -69,8 +69,9 @@ def read_lif(lif_filename):
     return b
 
 class Partials:
-    def __init__(self, rows = 0):
+    def __init__(self, rows = 0, wantPeriod = 0):
         self.period = 0
+        self.wantPeriod = wantPeriod
         self.basePartials = []
         self.basePartialInfo = []
         self.partials = []
@@ -195,8 +196,8 @@ class Partials:
                 + "    $LIFESRCDUMB" \
                 + " -r" + str(len(self.patterns[i])) \
                 + " -c" + str(len(self.patterns[i][0])) \
-                + " -g" + str(self.period) \
-                + " -i " + lif + ".lif" \
+                + " -g" + str(self.wantPeriod if self.wantPeriod > 0 \
+                            else self.period) + " -i " + lif + ".lif" \
                 + sym \
                 + " -d100000 " + base + ".dmp" \
                 + " -o " + base + ".out >> " \
@@ -213,9 +214,11 @@ def main():
         help = 'range of columns added to the center of the pattern')
     parser.add_argument('-r', '--rows', type = int, default = 0,
         help = 'number of extra rows with unknown cells appended')
+    parser.add_argument('-p', '--period', type = int, default = 0,
+        help = 'override period of ship in script creation')
     args = parser.parse_args(sys.argv[1:])
 
-    p = Partials(args.rows)
+    p = Partials(args.rows, args.period)
     p.read_partials()
     p.create_mirrors()
     p.get_dimensions()
