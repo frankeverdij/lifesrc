@@ -69,7 +69,7 @@ def read_lif(lif_filename):
     return b
 
 class Partials:
-    def __init__(self, rows = 0, wantPeriod = 0):
+    def __init__(self, rows = 0, wantPeriod = 0, unkCols = 1):
         self.period = 0
         self.wantPeriod = wantPeriod
         self.basePartials = []
@@ -80,6 +80,7 @@ class Partials:
         self.patternInfo = []
         self.symmetry = False
         self.rows = rows
+        self.unkCols = unkCols
 
     def read_partials(self):
         while (path.exists(str(self.period)+".lif")):
@@ -142,8 +143,9 @@ class Partials:
 
                 # add in the unknown background field starting from row unkRow
                 for m in range(unkRow, height):
-                    for n in range(ncol + 2):
-                        bg[m][self.basePartialInfo[baseHanded][0] - 1 + n] = '?'
+                    for n in range(ncol + 2 * self.unkCols):
+                        bg[m][self.basePartialInfo[baseHanded][0] \
+                            - self.unkCols + n] = '?'
 
                 # add left partial on top of the background
                 for m in range(self.basePartialInfo[baseHanded][1]):
@@ -212,13 +214,15 @@ def main():
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-cr', '--columnrange', type = int, default = 5,
         help = 'range of columns added to the center of the pattern')
+    parser.add_argument('-uk', '--unknowncolumns', type = int, default = 1,
+        help = 'extra columns added to the center of the background')
     parser.add_argument('-r', '--rows', type = int, default = 0,
         help = 'number of extra rows with unknown cells appended')
     parser.add_argument('-p', '--period', type = int, default = 0,
         help = 'override period of ship in script creation')
     args = parser.parse_args(sys.argv[1:])
 
-    p = Partials(args.rows, args.period)
+    p = Partials(args.rows, args.period, args.unknowncolumns)
     p.read_partials()
     p.create_mirrors()
     p.get_dimensions()
