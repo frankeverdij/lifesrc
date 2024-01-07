@@ -191,17 +191,15 @@ class Partials:
                 + "if [ \! $( grep -sqE 'object|Inconsistent' " \
                 + base + ".log ; echo $? ) -eq 0 ] ; then\n" \
                 + "  if [ -f " + base + ".dmp ] ; then\n" \
-                + "    $LIFESRCDUMB -l " + base + ".dmp" \
-                + " -d100000 " + base + ".dmp" \
+                + "    $LIFESRCDUMB " + base + ".dmp -l " + base + ".dmp" \
                 + " -o " + base + ".out >> " + base + ".log 2>&1\n" \
                 + "  else\n" \
-                + "    $LIFESRCDUMB" \
+                + "    $LIFESRCDUMB " + base + ".dmp" \
                 + " -r" + str(len(self.patterns[i])) \
                 + " -c" + str(len(self.patterns[i][0])) \
                 + " -g" + str(self.wantPeriod if self.wantPeriod > 0 \
                             else self.period) + " -i " + lif + ".lif" \
                 + sym \
-                + " -d100000 " + base + ".dmp" \
                 + " -o " + base + ".out >> " \
                 + base + ".log 2>&1\n  fi\nfi\n"
             fh.write(script)

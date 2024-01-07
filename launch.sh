@@ -1,16 +1,12 @@
 #!/bin/bash
 
-export LIFESRCDUMB="${HOME}/Documents/GOL/lifesrc/lifesrcdumb -tr1 -ogr -vb5000"
+export LIFESRCDUMB="${HOME}/Documents/GOL/lifesrc/lifesrcdumb -tr1 -ogc -vb20000 -d200000"
 
-# mapfile -d $'\0' array < <(find . -name "*.sh" -print0)
-
-array=()
-while IFS=  read -r -d $'\0'; do
-    array+=("$REPLY")
-done < <(find . -name "*.sh" -print0)
+find . -name "*.sh" -a \! -name "launch.sh" -print | sort -t / -n -k 2,3 > scriptlist
+readarray -t array < scriptlist
 
 echo "${#array[@]}"
-let cpus=$@-2
+cpus="$0"
 echo "$cpus"
 
 for i in "${array[@]}"
