@@ -1,12 +1,12 @@
 #!/bin/bash
 
-export LIFESRCDUMB="${HOME}/Documents/GOL/lifesrc/lifesrcdumb -tr1 -ogc -vb20000 -d200000"
+export LIFESRCDUMB="${HOME}/Documents/GOL/lifesrc/lifesrcdumb -tr1 -ogr -vb20000 -d1000000"
 
 find . -name "*.sh" -a \! -name "launch.sh" -print | sort -t / -n -k 2,3 > scriptlist
 readarray -t array < scriptlist
 
 echo "${#array[@]}"
-cpus="$0"
+cpus="$@"-1
 echo "$cpus"
 
 for i in "${array[@]}"
