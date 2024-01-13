@@ -4,12 +4,14 @@
  */
 
 #include <ctype.h>
+#include <time.h>
 #include "lifesrc.h"
 #include "state.h"
 #include "setstate.h"
 #include "printblk.h"
 #include "printrle.h"
 #include "sortorder.h"
+#include "sectohms.h"
 
 #define	VERSION	"3.8"
 
@@ -26,7 +28,8 @@ static	char *	initFile;	/* file containing initial cells */
 static	char *	loadFile;	/* file to load state from */
 static  Bool    blockOutput; /* print Unicode blocks instead of character */
 static  Bool    RLEOutput;  /* print additional RLE code */
-
+static time_t startTime;
+static char timeBuf[256] = {0};
 
 /*
  * Local procedures
@@ -70,6 +73,8 @@ static	int *	paramTable[] =
 int
 main(int argc, char ** argv)
 {
+    time_t end;
+    long dif = 0;
 	const char *	str;
 
 	if (--argc <= 0)
@@ -566,7 +571,13 @@ main(int argc, char ** argv)
 	while (TRUE)
 	{
 		if (curStatus == OK)
+		{
+			time(&startTime);
 			curStatus = search();
+			time(&end);
+			dif = end - startTime;
+			secToHMS(dif, timeBuf);
+        }
 
 //		if ((curStatus == FOUND) && useRow &&
 //			(rowInfo[useRow].onCount == 0))
@@ -607,7 +618,7 @@ main(int argc, char ** argv)
 			if (!quiet)
 			{
 				printGen(0);
-				ttyStatus("Object %ld found.\n", ++foundCount);
+				ttyStatus("Object %ld found in%s.\n", ++foundCount, timeBuf);
 			}
 
 			writeGen(outputFile, TRUE);
@@ -615,14 +626,17 @@ main(int argc, char ** argv)
 		}
 
 		if (foundCount == 0)
-			fatal("No objects found");
-
+		{
+		    printf("Total time searched%s.", timeBuf);
+			fatal("No objects found.");
+        }
 		ttyClose();
 
 		if (!quiet)
+		{
 			printf("Search completed, file \"%s\" contains %ld object%s\n",
 				outputFile, foundCount, (foundCount == 1) ? "" : "s");
-
+        }
 		exit(0);
 	}
 }
@@ -1180,14 +1194,25 @@ printGen(int gen)
 	int		count = 0, unkCount = 0;
 	const Cell *	cell;
 	const char *	msg;
+	time_t mark;
+	long dif;
 
 	curGen = gen;
 
 	switch (curStatus)
 	{
-		case NOT_EXIST:	msg = "No such object"; break;
-		case FOUND:	msg = "Found object"; break;
-		default:	msg = ""; break;
+		case NOT_EXIST:
+		    msg = "No such object";
+		    break;
+		case FOUND:
+		    time(&mark);
+		    dif = mark - startTime;
+		    secToHMS(dif, timeBuf);
+		    msg = "Found object";
+		    break;
+		default:
+		    msg = "";
+		    break;
 	}
 
 	for (row = 1; row <= rowMax; row++)
@@ -1205,12 +1230,27 @@ printGen(int gen)
 
 	if (isLife)
 	{
-		ttyPrintf("%s (gen %d, cells %d unk %d confl %ld)", msg, gen, count, unkCount, stepConfl);
+	    if (curStatus == FOUND)
+	    {
+	        ttyPrintf("%s%s (gen %d, cells %d unk %d confl %ld)", msg, timeBuf, gen, count, unkCount, stepConfl);
+	    }
+	    else
+	    {
+	        ttyPrintf("%s (gen %d, cells %d unk %d confl %ld)", msg, gen, count, unkCount, stepConfl);
+	    }
 	}
 	else
 	{
-		ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld)",
+		if (curStatus == FOUND)
+	    {
+	        ttyPrintf("%s%s (rule %s, gen %d, cells %d unk %d confl %ld)",
+			msg, timeBuf, ruleString, gen, count, unkCount, stepConfl);
+	    }
+	    else
+	    {
+		    ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld)",
 			msg, ruleString, gen, count, unkCount, stepConfl);
+		}
 	}
 
 	ttyPrintf(" -r%d -c%d -g%d", rowMax, colMax, genMax);
@@ -1386,7 +1426,9 @@ printGen(int gen)
 	}
 
     if (RLEOutput)
+    {
         printRLE(gen, ruleString);
+    }
 
 	ttyHome();
 	ttyFlush();
