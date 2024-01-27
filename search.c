@@ -138,7 +138,7 @@ initCells(void)
 				cell->gen = gen;
 				cell->row = row;
 				cell->col = col;
-				cell->choose = TRUE;
+				cell->flags |= CHOOSECELL;
 //				cell->rowInfo = &dummyRowInfo;
 //				cell->colInfo = &dummyColInfo;
 
@@ -151,7 +151,7 @@ initCells(void)
 				{
 					linkCell(cell);
 					setState(cell, UNK, stateList);
-					cell->free = TRUE;
+					cell->flags |= FREECELL;
 				}
 
 				/*
@@ -338,7 +338,10 @@ setCell(Cell * const cell, const State state, const Bool free)
 	*newSet++ = cell;
 
 	setState(cell, state, stateList);
-	cell->free = free;
+	if (free)
+	    cell->flags |= FREECELL;
+	else
+	    cell->flags &= ~FREECELL;
 
 	return OK;
 }
@@ -561,7 +564,7 @@ examineNext(void)
 
 	DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
 		cell->row, cell->col, cell->gen,
-		(cell->free ? "free" : "forced"));
+		((cell->flags & FREECELL) ? "free" : "forced"));
 
 	if (cell->loop && (setCell(cell->loop, cell->state, FALSE) != OK))
 	{
@@ -615,12 +618,12 @@ backup(void)
 		DPRINTF("backing up cell %d %d %d, was %s, %s\n",
 			cell->row, cell->col, cell->gen,
 			((cell->state == ON) ? "on" : "off"),
-			(cell->free ? "free": "forced"));
+			((cell->flags & FREECELL) ? "free": "forced"));
 
-		if (!cell->free)
+		if (!(cell->flags & FREECELL))
 		{
 			setState(cell, UNK, stateList);
-			cell->free = TRUE;
+			cell->flags |= FREECELL;
 
 			continue;
 		}
@@ -683,7 +686,7 @@ getNormalUnknown(void)
 		if (stateList[i] == UNK)
 		{
 		    cell = searchList[i];
-		    if (cell->choose)
+		    if (cell->flags & CHOOSECELL)
 		    {
 		    	searchIdx = i;
 
@@ -1001,20 +1004,20 @@ loopCells(Cell * cell1, Cell * cell2)
 	 * since they effectively are anyway.  This lets the
 	 * user see that fact.
 	 */
-	frozen = cell1->frozen;
+	frozen = cell1->flags & FROZENCELL;
 
 	for (cell = cell1->loop; cell != cell1; cell = cell->loop)
 	{
-		if (cell->frozen)
+		if (cell->flags & FROZENCELL)
 			frozen = TRUE;
 	}
 
 	if (frozen)
 	{
-		cell1->frozen = TRUE;
+		cell1->flags |= FROZENCELL;
 
 		for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-			cell->frozen = TRUE;
+			cell->flags |= FROZENCELL;
 	}
 }
 
@@ -1238,9 +1241,7 @@ allocateCell(void)
 	 * Fill in the cell as if it was a boundary cell.
 	 */
 	cell->state = OFF;
-	cell->free = FALSE;
-	cell->frozen = FALSE;
-	cell->choose = TRUE;
+	cell->flags = CHOOSECELL;
 	cell->gen = -1;
 	cell->row = -1;
 	cell->col = -1;

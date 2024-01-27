@@ -40,6 +40,12 @@
 #define	MAX_CELLS	((COL_MAX + 2) * (ROW_MAX + 2) * GEN_MAX)
 #define	AUX_CELLS	(TRANS_MAX * (COL_MAX + ROW_MAX + 4) * 2)
 
+/*
+ * Flags
+ */
+#define FREECELL 0x1
+#define FROZENCELL 0x2
+#define CHOOSECELL 0x4
 
 /*
  * Debugging macros
@@ -101,9 +107,7 @@ typedef	struct Cell Cell;
 struct Cell
 {
 	State		state;		/* current state */
-	PackedBool	free;		/* this cell still has free choice */
-	PackedBool	frozen;		/* this cell is frozen in all gens */
-	PackedBool	choose;		/* can choose this cell if unknown */
+    short flags;
 	short		gen;		/* generation number of this cell */
 	short		row;		/* row of this cell */
 	short		col;		/* column of this cell */
