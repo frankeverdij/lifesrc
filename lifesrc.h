@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "state.h"
 
 
 /*
@@ -41,11 +42,13 @@
 #define	AUX_CELLS	(TRANS_MAX * (COL_MAX + ROW_MAX + 4) * 2)
 
 /*
- * Flags
+ * Flag bits
  */
-#define FREECELL 0x1
-#define FROZENCELL 0x2
-#define CHOOSECELL 0x4
+typedef unsigned short cellFlags;
+
+#define FREECELL	((cellFlags) 0x01) /* this cell still has free choice */
+#define FROZENCELL	((cellFlags) 0x02) /* this cell is frozen in all gens */
+#define CHOOSECELL	((cellFlags) 0x04) /* can choose this cell if unknown */
 
 /*
  * Debugging macros
@@ -58,12 +61,10 @@
 
 #define	isBlank(ch)	(((ch) == ' ') || ((ch) == '\t'))
 
-
+/*
+ * Bool type
+ */
 typedef	int		Bool;
-typedef	char		PackedBool;
-typedef	unsigned char	State;
-typedef	unsigned int	Status;
-
 
 #define	FALSE		((Bool) 0)
 #define	TRUE		((Bool) 1)
@@ -72,6 +73,8 @@ typedef	unsigned int	Status;
 /*
  * Status returned by routines
  */
+typedef	unsigned int	Status;
+
 #define	OK		((Status) 0)
 #define	ERROR		((Status) 1)
 #define	CONSISTENT	((Status) 2)
@@ -107,12 +110,13 @@ typedef	struct Cell Cell;
 struct Cell
 {
 	State		state;		/* current state */
-    short flags;
+    cellFlags	flags;		/* the (C)hoose, fro(Z)en, and (F)ree flags */
+							/*  in a bitfield : 0x00000CZF */
 	short		gen;		/* generation number of this cell */
 	short		row;		/* row of this cell */
 	short		col;		/* column of this cell */
-	int		sumNear;	/* sum of states of neighbor cells */
-	int     index;
+	int			sumNear;	/* sum of states of neighbor cells */
+	int			index;
 	Cell *		past;		/* cell in past at this location */
 	Cell *		future;		/* cell in future at this location */
 	Cell *		cul;		/* cell to up and left */
