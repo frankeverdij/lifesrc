@@ -314,7 +314,12 @@ initSearchOrder(void)
 Status
 setCell(Cell * const cell, const State state, const Bool free)
 {
-	if (cell->state == state)
+    /*
+     * If cell->state is the first element in the struct (which it now is),
+     * the *(short *)cell expression is equivalent to cell->state .
+     * This reduces the execution time by about 3%.
+     */
+	if (*(short *)cell == state)
 	{
 		DPRINTF("setCell %d %d %d to state %s already set\n",
 			cell->row, cell->col, cell->gen,
@@ -323,7 +328,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 		return OK;
 	}
 
-	if (cell->state != UNK)
+	if (*(short *)cell != UNK)
 	{
 		DPRINTF("setCell %d %d %d to state %s inconsistent\n",
 			cell->row, cell->col, cell->gen,
