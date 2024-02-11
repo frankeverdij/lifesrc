@@ -1083,6 +1083,7 @@ excludeCone(int row, int col, int gen)
 	int	tRow;
 	int	tCol;
 	int	dist;
+	Cell * cell;
 
 	for (tGen = genMax; tGen >= gen; tGen--)
 	{
@@ -1092,7 +1093,8 @@ excludeCone(int row, int col, int gen)
 		{
 			for (tCol = col - dist; tCol <= col + dist; tCol++)
 			{
-				findCell(tRow, tCol, tGen)->choose = FALSE;
+				cell = findCell(tRow, tCol, tGen);
+				cell->flags &= ~CHOOSECELL;
 			}
 		}
 	}
@@ -1175,7 +1177,7 @@ freezeCell(int row, int col)
 	{
 		cell = findCell(row, col, gen);
 
-		cell->frozen = TRUE;
+		cell->flags |= FROZENCELL;
 
 		loopCells(cell0, cell);
 	}
@@ -1401,10 +1403,10 @@ printGen(int gen)
 		    		case UNK:
 		    			msg = "? ";
 
-		    			if (cell->frozen)
+		    			if (cell->flags & FROZENCELL)
 		    				msg = "+ ";
 
-		    			if (!cell->choose)
+		    			if (!(cell->flags & CHOOSECELL))
 		    				msg = "X ";
 
 		    			break;
@@ -1527,7 +1529,7 @@ writeGen(const char * file, Bool append)
 				case OFF:	ch = '.'; break;
 				case ON:	ch = '*'; break;
 				case UNK:	ch =
-						(cell->choose ? '?' : 'X');
+						((cell->flags & CHOOSECELL) ? '?' : 'X');
 						break;
 				default:
 					ttyStatus("Bad cell state");
@@ -1619,7 +1621,7 @@ dumpState(const char * file)
 		cell = *set++;
 
 		fprintf(fp, "S %d %d %d %d %d\n", cell->row, cell->col,
-			cell->gen, cell->state, cell->free);
+			cell->gen, cell->state, (cell->flags & FREECELL) ? 1 : 0);
 	}
 
 	/*
@@ -1631,7 +1633,7 @@ dumpState(const char * file)
 	{
 		cell = findCell(row, col, gen);
 
-		if (cell->choose)
+		if (cell->flags & CHOOSECELL)
 			continue;
 
 		fprintf(fp, "X %d %d %d\n", row, col, gen);
@@ -1647,7 +1649,7 @@ dumpState(const char * file)
 	{
 		cell = findCell(row, col, 0);
 
-		if (cell->frozen)
+		if (cell->flags & FROZENCELL)
 			fprintf(fp, "F %d %d\n", row, col);
 	}
 
@@ -1819,7 +1821,8 @@ loadState(const char * file)
 		col = getNum(&cp, 0);
 		gen = getNum(&cp, 0);
 
-		findCell(row, col, gen)->choose = FALSE;
+		cell = findCell(row, col, gen);
+		cell->flags &= ~CHOOSECELL;
 
 		buf[0] = '\0';
 		fgets(buf, LINE_SIZE, fp);

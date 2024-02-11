@@ -76,9 +76,9 @@ void printBlk(const int gen, const Bool color)
                 if (twoStates == UNK)
                 {
                     twoStates = COLORUNK;
-                    if (!up->choose)
+                    if (!(up->flags & CHOOSECELL))
                         twoStates = COLORUCHK;
-                    if (up->frozen)
+                    if (up->flags & FROZENCELL)
                         twoStates = COLORFRZ;
                 }
 
@@ -89,9 +89,9 @@ void printBlk(const int gen, const Bool color)
                     if (second == UNK)
                     {
                         second = COLORUNK;
-                        if (!down->choose)
+                        if (!(down->flags & CHOOSECELL))
                             second = COLORUCHK;
-                        if (down->frozen)
+                        if (down->flags & FROZENCELL)
                             second = COLORFRZ;
                     }
 
