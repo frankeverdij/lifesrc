@@ -109,6 +109,13 @@ main(int argc, char ** argv)
 
 		switch (*str++)
 		{
+			case 'b':
+				/*
+				 * Don't enter command mode.
+				 */
+				noWait = TRUE;
+				break;
+
 			case 'q':
 				/*
 				 * Don't output.
@@ -519,8 +526,11 @@ main(int argc, char ** argv)
 	if ((useCol < 0) || (useCol > colMax))
 		fatal("Bad column for -uc");
 
-	if (!ttyOpen())
-		fatal("Cannot initialize terminal");
+    if (!noWait)
+    {
+	    if (!ttyOpen())
+		    fatal("Cannot initialize terminal");
+    }
 
 	/*
 	 * Check for loading state from file or reading initial
@@ -558,8 +568,11 @@ main(int argc, char ** argv)
 	if (parent)
 		curGen = genMax - 1;
 
-	if (noWait && !quiet)
-		printGen(0);
+	if (noWait)
+	{
+	    if (!quiet)
+		    printGen(0);
+    }
 	else
 		getCommands();
 
@@ -573,7 +586,7 @@ main(int argc, char ** argv)
 		if (curStatus == OK)
 		{
 			time(&startTime);
-			curStatus = search();
+			curStatus = search(noWait);
 			time(&end);
 			dif = end - startTime;
 			secToHMS(dif, timeBuf);
@@ -622,7 +635,13 @@ main(int argc, char ** argv)
 			}
 
 			writeGen(outputFile, TRUE);
-			continue;
+			if (noWait)
+			{
+			    if (allObjects)
+			        continue;
+			}
+			else
+			    continue;
 		}
 
 		if (foundCount == 0)
@@ -2303,6 +2322,7 @@ usage(void)
 	"   -d   Dump status to file every N thousand searches",
 	"   -l   Load status from file",
 	"   -ln  Load status without entering command mode",
+	"   -b   Batch. Don't enter command mode",
 	"   -i   Read initial object setting both ON and OFF cells",
 	"   -in  Read initial object from file setting only ON cells",
 	"   -id  Read initial object setting OFF cells deeply (all gens)",

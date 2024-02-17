@@ -741,7 +741,7 @@ choose(const Cell * cell)
  * Returns if an object is found, or is impossible.
  */
 Status
-search(void)
+search(const Bool batch)
 {
 	Cell *	cell;
 	Bool	free;
@@ -821,8 +821,11 @@ search(void)
 		/*
 		 * Check for commands.
 		 */
-		if (ttyCheck())
-			getCommands();
+		if (!batch)
+		{
+		    if (ttyCheck())
+			    getCommands();
+	    }
 
 		/*
 		 * Get the next unknown cell and choose its state.
