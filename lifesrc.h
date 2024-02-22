@@ -8,13 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "state.h"
+#include "cell.h"
 
 
 /*
  * Maximum dimensions of the search
  */
-#define	ROW_MAX		49	/* maximum rows for search rectangle */
-#define	COL_MAX		132	/* maximum columns for search rectangle */
+#define	ROW_MAX		62	/* maximum rows for search rectangle */
+#define	COL_MAX		62	/* maximum columns for search rectangle */
 #define	GEN_MAX		8	/* maximum number of generations */
 #define	TRANS_MAX	4	/* largest translation value allowed */
 
@@ -23,7 +24,7 @@
  * Build options
  */
 #ifndef DEBUG_FLAG
-#define	DEBUG_FLAG	0	/* nonzero for debugging features */
+#define	DEBUG_FLAG	1	/* nonzero for debugging features */
 #endif
 
 
@@ -38,17 +39,7 @@
 #define	DUMP_FILE	"lifesrc.dmp"	/* default dump file name */
 #define	LINE_SIZE	132		/* size of input lines */
 
-#define	MAX_CELLS	((COL_MAX + 2) * (ROW_MAX + 2) * GEN_MAX)
-#define	AUX_CELLS	(TRANS_MAX * (COL_MAX + ROW_MAX + 4) * 2)
-
-/*
- * Flag bits
- */
-typedef unsigned short cellFlags;
-
-#define FREECELL	((cellFlags) 0x01) /* this cell still has free choice */
-#define FROZENCELL	((cellFlags) 0x02) /* this cell is frozen in all gens */
-#define CHOOSECELL	((cellFlags) 0x04) /* can choose this cell if unknown */
+#define	MAX_CELLS	((COL_MAX + 2) * (ROW_MAX + 2) * GEN_MAX + 1)
 
 /*
  * Debugging macros
@@ -80,57 +71,6 @@ typedef	unsigned int	Status;
 #define	CONSISTENT	((Status) 2)
 #define	NOT_EXIST	((Status) 3)
 #define	FOUND		((Status) 4)
-
-
-/*
- * Information about a row.
- */
-typedef	struct
-{
-	int	onCount;	/* number of cells which are set on */
-} RowInfo;
-
-
-/*
- * Information about a column.
- */
-typedef struct
-{
-	int	setCount;	/* number of cells which are set */
-	int	onCount;	/* number of cells which are set on */
-	int	sumPos;		/* sum of row positions for on cells */
-} ColInfo;
-
-
-/*
- * Information about one cell of the search.
- */
-typedef	struct Cell Cell;
-
-struct Cell
-{
-	State		state;		/* current state */
-    cellFlags	flags;		/* the (C)hoose, fro(Z)en, and (F)ree flags */
-							/*  in a bitfield : 0x00000CZF */
-	short		gen;		/* generation number of this cell */
-	short		row;		/* row of this cell */
-	short		col;		/* column of this cell */
-	int			sumNear;	/* sum of states of neighbor cells */
-	int			index;
-	Cell *		past;		/* cell in past at this location */
-	Cell *		future;		/* cell in future at this location */
-	Cell *		cul;		/* cell to up and left */
-	Cell *		cu;		/* cell to up */
-	Cell *		cur;		/* cell to up and right */
-	Cell *		cl;		/* cell to left */
-	Cell *		cr;		/* cell to right */
-	Cell *		cdl;		/* cell to down and left */
-	Cell *		cd;		/* cell to down */
-	Cell *		cdr;		/* cell to down and right */
-	Cell *		loop;		/* next cell in this same loop */
-};
-
-#define	NULL_CELL	((Cell *) 0)
 
 
 /*
@@ -198,7 +138,6 @@ EXTERN	State	liveRules[9];	/* rules for whether a live cell stays alive */
 EXTERN	int	curGen;		/* current generation for display */
 EXTERN	int	outputCols;	/* number of columns to save for output */
 EXTERN	int	outputLastCols;	/* last number of columns output */
-EXTERN	int	cellCount;	/* number of live cells in generation 0 */
 EXTERN	long	dumpFreq;	/* how often to perform dumps */
 EXTERN	long	dumpcount;	/* counter for dumps */
 EXTERN	long	viewFreq;	/* how often to view results */
@@ -210,14 +149,12 @@ EXTERN	char *	outputFile;	/* file to output results to */
 /*
  * Data about all of the cells.
  */
-EXTERN	Cell *	setTable[MAX_CELLS];	/* table of cells whose value is set */
-EXTERN	Cell **	newSet;		/* where to add new cells into setting table */
-EXTERN	Cell **	nextSet;	/* next cell in setting table to examine */
-EXTERN	Cell **	baseSet;	/* base of changeable part of setting table */
-EXTERN	Cell *	fullSearchList;	/* complete list of cells to search */
-EXTERN	RowInfo	rowInfo[ROW_MAX];	/* information about rows of gen 0 */
-EXTERN	ColInfo	colInfo[COL_MAX];	/* information about columns of gen 0 */
-EXTERN	int	fullColumns;	/* columns in gen 0 which are fully set */
+EXTERN	int*	cellTable;	/* table of usual cells */
+EXTERN	int	setTable[MAX_CELLS];	/* table of cells whose value is set */
+EXTERN	int*	newSet;		/* where to add new cells into setting table */
+EXTERN	int*	nextSet;	/* next cell in setting table to examine */
+EXTERN	int*	baseSet;	/* base of changeable part of setting table */
+EXTERN	int	fullSearchList;	/* complete list of cells to search */
 
 
 /*
@@ -228,15 +165,15 @@ extern	void	initCells(void);
 extern	void	printGen(int);
 extern	void	writeGen(const char *, Bool);
 extern	void	dumpState(const char *);
-extern	void	adjustNear(Cell *, int);
+extern	void	adjustNear(int, int);
 extern	Status	search(const Bool);
-extern	Status	proceed(Cell *, State, Bool);
-extern	Status	go(Cell *, State, Bool);
-extern	Status	setCell(Cell * const , const State, const Bool);
-extern	Cell *	findCell(int, int, int);
-extern	Cell *	backup(void);
+extern	Status	proceed(int, State, Bool);
+extern	Status	go(int, State, Bool);
+extern	Status	setCell(int const , const State, const Bool);
+extern	int	findCell(int, int, int);
+extern	int	backup(void);
 extern	Bool	subPeriods(void);
-extern	void	loopCells(Cell *, Cell *);
+extern	void	loopCells(int, int);
 extern	void	fatal(const char *);
 extern	Bool	ttyOpen(void);
 extern	Bool	ttyCheck(void);

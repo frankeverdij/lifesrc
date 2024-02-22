@@ -1,7 +1,7 @@
 #ifndef STATE_H
 #define STATE_H
 
-typedef unsigned char State;
+typedef unsigned int State;
 
 /*
  * States of a cell

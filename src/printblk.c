@@ -1,5 +1,4 @@
-#include "lifesrc.h"
-#include "state.h"
+#include "printblk.h"
 
 static const char *colorBlockGfx[256] =
     {" ", "\u2580", "\u2584", "\u2588", "\033[32m\u2580\033[0m", " ", "\033[32;47m\u2580\033[0m", " ",
@@ -63,7 +62,7 @@ void printBlk(const int gen, const Bool color)
     int row;
     int col;
     int twoStates, second;
-    const Cell *up, *down;
+    int up, down;
     
     for (row = 0; row < rowMax; row += 2)
     {
@@ -72,26 +71,26 @@ void printBlk(const int gen, const Bool color)
             if (color)
             {
                 up = findCell(row + 1, col, gen);
-                twoStates = up->state;
+                twoStates = cellTable[up];
                 if (twoStates == UNK)
                 {
                     twoStates = COLORUNK;
-                    if (!(up->flags & CHOOSECELL))
+                    if (!(cellTable[up] & CHOOSECELL))
                         twoStates = COLORUCHK;
-                    if (up->flags & FROZENCELL)
+                    if (cellTable[up] & FROZENCELL)
                         twoStates = COLORFRZ;
                 }
 
                 if (row + 1 < rowMax)
                 {
                     down = findCell(row + 2, col, gen);
-                    second = down->state;
+                    second = cellTable[down];
                     if (second == UNK)
                     {
                         second = COLORUNK;
-                        if (!(down->flags & CHOOSECELL))
+                        if (!(cellTable[down + O_FLAGS] & CHOOSECELL))
                             second = COLORUCHK;
-                        if (down->flags & FROZENCELL)
+                        if (cellTable[down + O_FLAGS] & FROZENCELL)
                             second = COLORFRZ;
                     }
 
@@ -102,11 +101,11 @@ void printBlk(const int gen, const Bool color)
 
             } else {
                 up = findCell(row + 1, col, gen);
-                twoStates = up->state;
+                twoStates = cellTable[up];
                 if (row + 1 < rowMax)
                 {
                     down = findCell(row + 2, col, gen);
-                    twoStates += 2 * down->state;
+                    twoStates += 2 * cellTable[down];
                 }
             
                 ttyPrintf("%s", blockGfx[twoStates]);

@@ -1,24 +1,23 @@
-#include "lifesrc.h"
-#include "state.h"
+#include "setstate.h"
 
-void setState(Cell * const cell, const State state, State * stateIndex)
+void setState(const int idx, const State state, State * stateIndex)
 {
     /* backup previous state */
-    int diffState = state - cell->state;
+    int diffState = state - cellTable[idx];
     /* set cell state */
-    cell->state = state;
+    cellTable[idx] = state;
     if (stateIndex)
-        if (cell->index >= 0)
-            stateIndex[cell->index] = state;
+        if (cellTable[idx + O_INDEX] >= 0)
+            stateIndex[cellTable[idx + O_INDEX]] = state;
     /* correct the neighbor sum for cells touching this cell */
-    cell->cul->sumNear += diffState;
-    cell->cu->sumNear += diffState;
-    cell->cur->sumNear += diffState;
-    cell->cl->sumNear += diffState;
-    cell->cr->sumNear += diffState;
-    cell->cdl->sumNear += diffState;
-    cell->cd->sumNear += diffState;
-    cell->cdr->sumNear += diffState;
+    cellTable[idx + O_CUL + O_SUMNEAR] += diffState;
+    cellTable[idx + O_CU  + O_SUMNEAR] += diffState;
+    cellTable[idx + O_CUR + O_SUMNEAR] += diffState;
+    cellTable[idx + O_CL  + O_SUMNEAR] += diffState;
+    cellTable[idx + O_CR  + O_SUMNEAR] += diffState;
+    cellTable[idx + O_CDL + O_SUMNEAR] += diffState;
+    cellTable[idx + O_CD  + O_SUMNEAR] += diffState;
+    cellTable[idx + O_CDR + O_SUMNEAR] += diffState;
 
     return;
 }

@@ -12,6 +12,7 @@
 #include "printrle.h"
 #include "sortorder.h"
 #include "sectohms.h"
+#include "cell.h"
 
 #define	VERSION	"3.8"
 
@@ -885,7 +886,7 @@ getSetting(const char * cp)
 static void
 getBackup(const char * cp)
 {
-	Cell *	cell;
+	int	cell;
 	State	state;
 	int	count;
 	int	blanksToo;
@@ -924,7 +925,7 @@ getBackup(const char * cp)
 			return;
 		}
 
-		state = 1 - cell->state;
+		state = 1 - cellTable[cell];
 
 		if (blanksToo || (state == ON))
 			count--;
@@ -961,7 +962,7 @@ getClear(const char * cp)
 	int	gen;
 	int	row;
 	int	col;
-	Cell *	cell;
+	int	cell;
 
 	/*
 	 * Assume we are doing just this generation, but if the 'cg'
@@ -1017,7 +1018,7 @@ getClear(const char * cp)
 			{
 				cell = findCell(row, col, gen);
 
-				if (cell->state != UNK)
+				if (cellTable[cell] != UNK)
 					continue;
 
 				if (proceed(cell, OFF, FALSE) != OK)
@@ -1102,7 +1103,7 @@ excludeCone(int row, int col, int gen)
 	int	tRow;
 	int	tCol;
 	int	dist;
-	Cell * cell;
+	int cell;
 
 	for (tGen = genMax; tGen >= gen; tGen--)
 	{
@@ -1113,7 +1114,7 @@ excludeCone(int row, int col, int gen)
 			for (tCol = col - dist; tCol <= col + dist; tCol++)
 			{
 				cell = findCell(tRow, tCol, tGen);
-				cell->flags &= ~CHOOSECELL;
+				cellTable[cell + O_FLAGS] &= ~CHOOSECELL;
 			}
 		}
 	}
@@ -1187,8 +1188,8 @@ void
 freezeCell(int row, int col)
 {
 	int	gen;
-	Cell *	cell0;
-	Cell *	cell;
+	int	cell0;
+	int	cell;
 
 	cell0 = findCell(row, col, 0);
 
@@ -1196,7 +1197,7 @@ freezeCell(int row, int col)
 	{
 		cell = findCell(row, col, gen);
 
-		cell->flags |= FROZENCELL;
+		cellTable[cell + O_FLAGS] |= FROZENCELL;
 
 		loopCells(cell0, cell);
 	}
@@ -1213,7 +1214,7 @@ printGen(int gen)
 	int		row;
 	int		col;
 	int		count = 0, unkCount = 0;
-	const Cell *	cell;
+	int	cell;
 	const char *	msg;
 	time_t mark;
 	long dif;
@@ -1241,8 +1242,8 @@ printGen(int gen)
 		for (col = 1; col <= colMax; col++)
 		{
 		    cell = findCell(row, col, gen);
-			count += (cell->state == ON);
-			unkCount += (cell->state == UNK);
+			count += (cellTable[cell] == ON);
+			unkCount += (cellTable[cell] == UNK);
 		}
 	}
 
@@ -1409,7 +1410,7 @@ printGen(int gen)
 		    {
 		    	cell = findCell(row, col, gen);
 
-		    	switch (cell->state)
+		    	switch (cellTable[cell])
 		    	{
 		    		case OFF:
 		    			msg = ". ";
@@ -1422,10 +1423,10 @@ printGen(int gen)
 		    		case UNK:
 		    			msg = "? ";
 
-		    			if (cell->flags & FROZENCELL)
+		    			if (cellTable[cell + O_FLAGS] & FROZENCELL)
 		    				msg = "+ ";
 
-		    			if (!(cell->flags & CHOOSECELL))
+		    			if (!(cellTable[cell + O_FLAGS] & CHOOSECELL))
 		    				msg = "X ";
 
 		    			break;
@@ -1466,7 +1467,7 @@ void
 writeGen(const char * file, Bool append)
 {
 	FILE *		fp;
-	const Cell *	cell;
+	int	cell;
 	int		row;
 	int		col;
 	int		ch;
@@ -1506,7 +1507,7 @@ writeGen(const char * file, Bool append)
 		{
 			cell = findCell(row, col, curGen);
 
-			if (cell->state == OFF)
+			if (cellTable[cell] == OFF)
 				continue;
 
 			if (row < minRow)
@@ -1543,12 +1544,12 @@ writeGen(const char * file, Bool append)
 		{
 			cell = findCell(row, col, curGen);
 
-			switch (cell->state)
+			switch (cellTable[cell])
 			{
 				case OFF:	ch = '.'; break;
 				case ON:	ch = '*'; break;
 				case UNK:	ch =
-						((cell->flags & CHOOSECELL) ? '?' : 'X');
+						((cellTable[cell + O_FLAGS] & CHOOSECELL) ? '?' : 'X');
 						break;
 				default:
 					ttyStatus("Bad cell state");
@@ -1588,11 +1589,12 @@ void
 dumpState(const char * file)
 {
 	FILE *		fp;
-	Cell **		set;
-	const Cell *	cell;
+	int*		set;
+	int	cell;
 	int		row;
 	int		col;
 	int		gen;
+	int rcg;
 	int **		param;
 
 	file = getStr(file, "Dump state to file: ");
@@ -1638,9 +1640,16 @@ dumpState(const char * file)
 	while (set != nextSet)
 	{
 		cell = *set++;
+	    rcg = cellTable[cell + O_RC0G];
 
-		fprintf(fp, "S %d %d %d %d %d\n", cell->row, cell->col,
-			cell->gen, cell->state, (cell->flags & FREECELL) ? 1 : 0);
+        gen = rcg & 0x0f;
+        rcg >>= 16;
+	    row = rcg & 0x0f;
+	    rcg >>= 8;
+	    col = rcg & 0x0f;
+
+		fprintf(fp, "S %d %d %d %d %d\n", row, col,
+			gen, cellTable[cell], (cellTable[cell + O_FLAGS] & FREECELL) ? 1 : 0);
 	}
 
 	/*
@@ -1652,7 +1661,7 @@ dumpState(const char * file)
 	{
 		cell = findCell(row, col, gen);
 
-		if (cell->flags & CHOOSECELL)
+		if (cellTable[cell + O_FLAGS] & CHOOSECELL)
 			continue;
 
 		fprintf(fp, "X %d %d %d\n", row, col, gen);
@@ -1668,7 +1677,7 @@ dumpState(const char * file)
 	{
 		cell = findCell(row, col, 0);
 
-		if (cell->flags & FROZENCELL)
+		if (cellTable[cell + O_FLAGS] & FROZENCELL)
 			fprintf(fp, "F %d %d\n", row, col);
 	}
 
@@ -1706,7 +1715,7 @@ loadState(const char * file)
 	int		len;
 	State		state;
 	Bool		free;
-	Cell *		cell;
+	int		cell;
 	int **		param;
 	char		buf[LINE_SIZE];
 
@@ -1841,7 +1850,7 @@ loadState(const char * file)
 		gen = getNum(&cp, 0);
 
 		cell = findCell(row, col, gen);
-		cell->flags &= ~CHOOSECELL;
+		cellTable[cell + O_FLAGS] &= ~CHOOSECELL;
 
 		buf[0] = '\0';
 		fgets(buf, LINE_SIZE, fp);

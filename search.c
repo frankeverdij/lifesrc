@@ -49,34 +49,28 @@ static	Flags	implic[1024];
 /*
  * Other local data.
  */
-static	int	newCellCount;		/* cells ready for allocation */
-static	int	auxCellCount;		/* cells in auxillary table */
 static  int searchIdx;
 static  int searchCount;
-static	Cell *	newCells;		/* cells ready for allocation */
-static	Cell *	deadCell;		/* boundary cell value */
-static	Cell **	searchList;		/* current list of cells to search */
+static	int	newCells;		/* cells ready for allocation */
+static	int	deadCell = 0;		/* boundary cell value */
+static	int*	searchList;		/* current list of cells to search */
 static  State * stateList;
-static	Cell *	cellTable[MAX_CELLS];	/* table of usual cells */
-static	Cell *	auxTable[AUX_CELLS];	/* table of auxillary cells */
-static	RowInfo	dummyRowInfo;		/* dummy info for ignored cells */
-static	ColInfo	dummyColInfo;		/* dummy info for ignored cells */
 
 
 /*
  * Local procedures
  */
 static	void	initSearchOrder(void);
-static	void	linkCell(Cell *);
-static	State	choose(const Cell *);
-static	Cell *	symCell(const Cell *);
-static	Cell *	mapCell(const Cell *, Bool);
-static	Cell *	allocateCell(void);
-static	Cell *	getNormalUnknown(void);
-static	Status	consistify(Cell * const);
-static	Status	consistify10(Cell * const);
+static void initCell(const int);
+static	void	linkCell(int);
+static	State	choose(const int);
+static	int	symCell(const int);
+static	int	mapCell(const int, Bool);
+static	int	getNormalUnknown(void);
+static	Status	consistify(int const);
+static	Status	consistify10(int const);
 static	Status	examineNext(void);
-static	int	getDesc(const Cell * const);
+static	int	getDesc(const int);
 
 
 /*
@@ -90,10 +84,11 @@ initCells(void)
 	int	row;
 	int	col;
 	int	gen;
+	int rcg;
 	int	i;
-	Bool	edge;
-	Cell *	cell;
-	Cell *	cell2;
+	Bool edge;
+	int	cell;
+	int	cell2;
 
 	/*
 	 * Check whether valid parameters have been set.
@@ -117,10 +112,7 @@ initCells(void)
 	 * The first allocation of a cell MUST be deadCell.
 	 * Then allocate the cells in the cell table.
 	 */
-	deadCell = allocateCell();
-
-	for (i = 0; i < MAX_CELLS; i++)
-		cellTable[i] = allocateCell();
+	cellTable = (int *)calloc(MAX_CELLS, sizeof(Cell)); /* FE: kan beter */
 
 	/*
 	 * Link the cells together.
@@ -135,12 +127,15 @@ initCells(void)
 					(row > rowMax) || (col > colMax));
 
 				cell = findCell(row, col, gen);
-				cell->gen = gen;
-				cell->row = row;
-				cell->col = col;
-				cell->flags |= CHOOSECELL;
-//				cell->rowInfo = &dummyRowInfo;
-//				cell->colInfo = &dummyColInfo;
+				initCell(cell);
+				printf("%d %d %d %d\n", cell, col, row, gen);
+				rcg = col;
+				rcg <<= 8;
+				rcg += row;
+				rcg <<= 16;
+				rcg += gen;
+				cellTable[cell + O_RC0G] = rcg;
+				cellTable[cell + O_FLAGS] |= CHOOSECELL;
 
 				/*
 				 * If this is not an edge cell, then its state
@@ -151,17 +146,17 @@ initCells(void)
 				{
 					linkCell(cell);
 					setState(cell, UNK, stateList);
-					cell->flags |= FREECELL;
+					cellTable[cell + O_FLAGS] |= FREECELL;
 				}
 
 				/*
 				 * Map time forwards and backwards,
 				 * wrapping around at the ends.
 				 */
-				cell->past = findCell(row, col,
+				cellTable[cell + O_PAST] = findCell(row, col,
 					(gen+genMax-1) % genMax);
 
-				cell->future = findCell(row, col,
+				cellTable[cell + O_FUTURE] = findCell(row, col,
 					(gen+1) % genMax);
 
 				/*
@@ -192,27 +187,14 @@ initCells(void)
 			{
 				cell = findCell(row, col, genMax - 1);
 				cell2 = mapCell(cell, TRUE);
-				cell->future = cell2;
-				cell2->past = cell;
+				cellTable[cell + O_FUTURE] = cell2;
+				cellTable[cell2 + O_PAST] = cell;
 
 				cell = findCell(row, col, 0);
 				cell2 = mapCell(cell, FALSE);
-				cell->past = cell2;
-				cell2->future = cell;
+				cellTable[cell + O_PAST] = cell2;
+				cellTable[cell2 + O_FUTURE] = cell;
 			}
-		}
-	}
-
-	/*
-	 * Initialize the row and column info addresses for generation 0.
-	 */
-	for (row = 1; row <= rowMax; row++)
-	{
-		for (col = 1; col <= colMax; col++)
-		{
-			cell = findCell(row, col, 0);
-//			cell->rowInfo = &rowInfo[row];
-//			cell->colInfo = &colInfo[col];
 		}
 	}
 
@@ -244,7 +226,7 @@ initSearchOrder(void)
 	int	col;
 	int	gen;
 	int	count;
-	Cell *	table[MAX_CELLS];
+	int table[MAX_CELLS];
 	globals_struct g;
 	
 	g.colMax = colMax;
@@ -283,22 +265,22 @@ initSearchOrder(void)
 	/*
 	 * Now sort the table based on our desired search order.
 	 */
-	qsort_r((char *) table, searchCount, sizeof(Cell *), &orderSortFunc, &g);
+	qsort_r((char *) table, searchCount, sizeof(int), &orderSortFunc, &g);
 
 	/*
 	 * Finally build the search list from the table elements in the
 	 * final order.
 	 */
-	searchList = (Cell **) malloc(sizeof(Cell *) * (searchCount + 1));
+	searchList = (int *) malloc(sizeof(int) * (searchCount + 1));
 	stateList = (State *) malloc(sizeof(State) * (searchCount + 1));
 
 	for (int i = 0; i < searchCount; i++)
 	{
 	    searchList[i] = table[i];
-	    searchList[i]->index = i;
-	    stateList[i] = searchList[i]->state;
+	    cellTable[searchList[i] + O_INDEX] = i;
+	    stateList[i] = cellTable[searchList[i]];
 	}
-	searchList[searchCount] = NULL;
+	searchList[searchCount] = NULL_CELL;
 	stateList[searchCount] = ON + UNK;
     searchIdx = 0;
 }
@@ -312,36 +294,36 @@ initSearchOrder(void)
  * If the cell is newly set, then it is added to the set table.
  */
 Status
-setCell(Cell * const cell, const State state, const Bool free)
+setCell(const int cell, const State state, const Bool free)
 {
-	if (cell->state == state)
+	if (cellTable[cell] == state)
 	{
-		DPRINTF("setCell %d %d %d to state %s already set\n",
-			cell->row, cell->col, cell->gen,
+		DPRINTF("setCell %d to state %s already set\n",
+			cellTable[cell + O_RC0G],
 			(state == ON) ? "on" : "off");
 
 		return OK;
 	}
 
-	if (cell->state != UNK)
+	if (cellTable[cell] != UNK)
 	{
-		DPRINTF("setCell %d %d %d to state %s inconsistent\n",
-			cell->row, cell->col, cell->gen,
+		DPRINTF("setCell %d to state %s inconsistent\n",
+			cellTable[cell + O_RC0G],
 			(state == ON) ? "on" : "off");
 
 		return ERROR;
 	}
-	DPRINTF("setCell %d %d %d to %s, %s successful\n",
-		cell->row, cell->col, cell->gen,
+	DPRINTF("setCell %d to %s, %s successful\n",
+		cellTable[cell + O_RC0G],
 		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
 	*newSet++ = cell;
 
 	setState(cell, state, stateList);
 	if (free)
-	    cell->flags |= FREECELL;
+	    cellTable[cell + O_FLAGS] |= FREECELL;
 	else
-	    cell->flags &= ~FREECELL;
+	    cellTable[cell + O_FLAGS] &= ~FREECELL;
 
 	return OK;
 }
@@ -351,9 +333,9 @@ setCell(Cell * const cell, const State state, const Bool free)
  * Calculate the current descriptor for a cell.
  */
 static int
-getDesc(const Cell * const cell)
+getDesc(const int cell)
 {
-	return SUMTODESC(cell->state, cell->sumNear);
+	return SUMTODESC(cellTable[cell], cellTable[cell + O_SUMNEAR]);
 }
 
 
@@ -364,9 +346,9 @@ getDesc(const Cell * const cell)
  * current cell.  Returns ERROR if the cell is inconsistent.
  */
 static Status
-consistify(Cell * const cell)
+consistify(const int cell)
 {
-	Cell *	prevCell;
+	int	prevCell;
 	int	desc;
 	State	state, cellState;
 	Flags	flags;
@@ -378,15 +360,15 @@ consistify(Cell * const cell)
 	 * cell is unknown but the transit table knows the answer,
 	 * then set the now known state of the cell.
 	 */
-	prevCell = cell->past;
-	desc = SUMTODESC(prevCell->state, prevCell->sumNear);
+	prevCell = cellTable[cell + O_PAST];
+	desc = SUMTODESC(cellTable[prevCell], cellTable[prevCell + O_SUMNEAR]);
 	state = transit[desc];
 
 	if (state != UNK)
-	    if (state != cell->state)
+	    if (state != cellTable[cell])
     		if (setCell(cell, state, FALSE) == ERROR)
 	    		return ERROR;
-	cellState = cell->state;
+	cellState = cellTable[cell];
 	if (cellState == UNK)
 		return OK;
 
@@ -442,54 +424,54 @@ consistify(Cell * const cell)
 	 * For each unknown neighbor, set its state as indicated.
 	 * Return an error if any neighbor is inconsistent.
 	 */
-	DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
-		prevCell->row, prevCell->col, prevCell->gen,
+	DPRINTF("Forcing unknown neighbors of cell %d %s\n",
+		cellTable[prevCell + O_RC0G],
 		((state == ON) ? "on" : "off"));
 
-	if ((prevCell->cul->state == UNK) &&
-		(setCell(prevCell->cul, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CUL] == UNK) &&
+		(setCell(cellTable[prevCell + O_CUL], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((prevCell->cu->state == UNK) &&
-		(setCell(prevCell->cu, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CU] == UNK) &&
+		(setCell(cellTable[prevCell + O_CU], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((prevCell->cur->state == UNK) &&
-		(setCell(prevCell->cur, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CUR] == UNK) &&
+		(setCell(cellTable[prevCell + O_CUR], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((prevCell->cl->state == UNK) &&
-		(setCell(prevCell->cl, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CL] == UNK) &&
+		(setCell(cellTable[prevCell + O_CL], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((prevCell->cr->state == UNK) &&
-		(setCell(prevCell->cr, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CR] == UNK) &&
+		(setCell(cellTable[prevCell + O_CR], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((prevCell->cdl->state == UNK) &&
-		(setCell(prevCell->cdl, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CDL] == UNK) &&
+		(setCell(cellTable[prevCell + O_CDL], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((prevCell->cd->state == UNK) &&
-		(setCell(prevCell->cd, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CD] == UNK) &&
+		(setCell(cellTable[prevCell + O_CD], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((prevCell->cdr->state == UNK) &&
-		(setCell(prevCell->cdr, state, FALSE) != OK))
+	if ((cellTable[prevCell + O_CDR] == UNK) &&
+		(setCell(cellTable[prevCell + O_CDR], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
@@ -505,36 +487,36 @@ consistify(Cell * const cell)
  * neighbors in the next generation.
  */
 static Status
-consistify10(Cell * const cell)
+consistify10(const int cell)
 {
 	if (consistify(cell) != OK)
 		return ERROR;
 
-	if (consistify(cell->future) != OK)
+	if (consistify(cellTable[cell + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cul->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CUL] + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cu->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CU] + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cur->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CUR] + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cl->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CL] + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cr->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CR] + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cdl->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CDL] + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cd->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CD] + O_FUTURE]) != OK)
 		return ERROR;
 
-	if (consistify(cell->cdr->future) != OK)
+	if (consistify(cellTable[cellTable[cell + O_CDR] + O_FUTURE]) != OK)
 		return ERROR;
 
 	return OK;
@@ -547,7 +529,7 @@ consistify10(Cell * const cell)
 static Status
 examineNext(void)
 {
-	Cell *	cell;
+	int	cell;
 
 	/*
 	 * If there are no more cells to examine, then what we have
@@ -562,11 +544,11 @@ examineNext(void)
 	 */
 	cell = *nextSet++;
 
-	DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
-		cell->row, cell->col, cell->gen,
-		((cell->flags & FREECELL) ? "free" : "forced"));
+	DPRINTF("Examining saved cell %d (%s) for consistency\n",
+		cellTable[cell + O_RC0G],
+		((cellTable[cell + O_FLAGS] & FREECELL) ? "free" : "forced"));
 
-	if (cell->loop && (setCell(cell->loop, cell->state, FALSE) != OK))
+	if (cellTable[cell + O_LOOP] && (setCell(cellTable[cell + O_LOOP], cellTable[cell], FALSE) != OK))
 	{
 		return ERROR;
 	}
@@ -580,7 +562,7 @@ examineNext(void)
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
 Status
-proceed(Cell * cell, State state, Bool free)
+proceed(int cell, State state, Bool free)
 {
 	int	status;
 
@@ -605,31 +587,31 @@ proceed(Cell * cell, State state, Bool free)
  * Returns the cell which is to be tried for the other possibility.
  * Returns NULL_CELL on an "object cannot exist" error.
  */
-Cell *
+int
 backup(void)
 {
-	Cell *	cell;
-
+	int	cell;
 
 	while (newSet != baseSet)
 	{
 		cell = *--newSet;
 
-		DPRINTF("backing up cell %d %d %d, was %s, %s\n",
-			cell->row, cell->col, cell->gen,
-			((cell->state == ON) ? "on" : "off"),
-			((cell->flags & FREECELL) ? "free": "forced"));
 
-		if (!(cell->flags & FREECELL))
+		DPRINTF("backing up cell %d, was %s, %s\n",
+			cellTable[cell + O_RC0G],
+			((cellTable[cell] == ON) ? "on" : "off"),
+			((cellTable[cell + O_FLAGS] & FREECELL) ? "free": "forced"));
+
+		if (!(cellTable[cell + O_FLAGS] & FREECELL))
 		{
 			setState(cell, UNK, stateList);
-			cell->flags |= FREECELL;
+			cellTable[cell + O_FLAGS] |= FREECELL;
 
 			continue;
 		}
 
 		nextSet = newSet;
-        searchIdx = cell->index;
+        searchIdx = cellTable[cell + O_INDEX];
 
 		return cell;
 	}
@@ -646,7 +628,7 @@ backup(void)
  * Returns ERROR if an inconsistency was found.
  */
 Status
-go(Cell * cell, State state, Bool free)
+go(int cell, State state, Bool free)
 {
 	Status	status;
 
@@ -666,7 +648,7 @@ go(Cell * cell, State state, Bool free)
 			return ERROR;
 
 		free = FALSE;
-		state = 1 - cell->state;
+		state = 1 - cellTable[cell];
 		setState(cell, UNK, stateList);
 	}
 }
@@ -676,17 +658,17 @@ go(Cell * cell, State state, Bool free)
  * Find another unknown cell in a normal search.
  * Returns NULL_CELL if there are no more unknown cells.
  */
-static Cell *
+static int
 getNormalUnknown(void)
 {
-	Cell *	cell;
+	int	cell;
 
 	for (int i = searchIdx; i < searchCount; i++)
 	{
 		if (stateList[i] == UNK)
 		{
 		    cell = searchList[i];
-		    if (cell->flags & CHOOSECELL)
+		    if (cellTable[cell + O_FLAGS] & CHOOSECELL)
 		    {
 		    	searchIdx = i;
 
@@ -706,7 +688,7 @@ getNormalUnknown(void)
  * as a nearby generation.
  */
 static State
-choose(const Cell * cell)
+choose(const int cell)
 {
 	/*
 	 * If we are following cells in other generations,
@@ -714,14 +696,14 @@ choose(const Cell * cell)
 	 */
 	if (followGens)
 	{
-		if ((cell->past->state == ON) ||
-			(cell->future->state == ON))
+		if ((cellTable[cell + O_PAST] == ON) ||
+			(cellTable[cell + O_FUTURE] == ON))
 		{
 			return ON;
 		}
 
-		if ((cell->past->state == OFF) ||
-			(cell->future->state == OFF))
+		if ((cellTable[cell + O_PAST] == OFF) ||
+			(cellTable[cell + O_FUTURE] == OFF))
 		{
 			return OFF;
 		}
@@ -738,7 +720,7 @@ choose(const Cell * cell)
 Status
 search(const Bool batch)
 {
-	Cell *	cell;
+	int	cell;
 	Bool	free;
 	Bool	needWrite;
 	State	state;
@@ -753,7 +735,7 @@ search(const Bool batch)
 			return ERROR;
 
 		free = FALSE;
-		state = 1 - cell->state;
+		state = 1 - cellTable[cell];
 		setState(cell, UNK, stateList);
 	}
 	else
@@ -785,16 +767,6 @@ search(const Bool batch)
 		 * columns count values up to date.
 		 */
 		needWrite = FALSE;
-
-		if (outputCols &&
-			(fullColumns >= outputLastCols + outputCols))
-		{
-			outputLastCols = fullColumns;
-			needWrite = TRUE;
-		}
-
-		if (outputLastCols > fullColumns)
-			outputLastCols = fullColumns;
 
 		/*
 		 * If it is time to view the progress,then show it.
@@ -845,11 +817,12 @@ search(const Bool batch)
 Bool
 subPeriods(void)
 {
-	int		row;
-	int		col;
-	int		gen;
-	const Cell *	cellG0;
-	const Cell *	cellGn;
+	int row;
+	int col;
+	int gen;
+
+	int	cellG0;
+	int	cellGn;
 
 	for (gen = 1; gen < genMax; gen++)
 	{
@@ -863,7 +836,7 @@ subPeriods(void)
 				cellG0 = findCell(row, col, 0);
 				cellGn = findCell(row, col, gen);
 
-				if (cellG0->state != cellGn->state)
+				if (cellTable[cellG0] != cellTable[cellGn])
 					goto nextGen;
 			}
 		}
@@ -882,15 +855,20 @@ nextGen:;
  * of cells between these two generations.  This routine should only be
  * called for cells belonging to those two generations.
  */
-static Cell *
-mapCell(const Cell * cell, Bool forward)
+static int
+mapCell(const int cell, Bool forward)
 {
 	int	row;
 	int	col;
+	int	gen;
 	int	tmp;
+    int rcg = cellTable[cell + O_RC0G];
 
-	row = cell->row;
-	col = cell->col;
+    gen = rcg & 0x0f;
+    rcg >>= 16;
+	row = rcg & 0x0f;
+	rcg >>= 8;
+	col = rcg & 0x0f;
 
 	if (flipRows && (col >= flipRows))
 		row = rowMax + 1 - row;
@@ -957,9 +935,9 @@ mapCell(const Cell * cell, Bool forward)
  * If any cells in the loop are frozen, then they all are.
  */
 void
-loopCells(Cell * cell1, Cell * cell2)
+loopCells(int cell1, int cell2)
 {
-	Cell *	cell;
+	int	cell;
 	Bool	frozen;
 
 	/*
@@ -976,18 +954,18 @@ loopCells(Cell * cell1, Cell * cell2)
 	 * Make the cells belong to their own loop if required.
 	 * This will simplify the code.
 	 */
-	if (cell1->loop == NULL)
-		cell1->loop = cell1;
+	if (cellTable[cell1 + O_LOOP] == NULL_CELL)
+		cellTable[cell1 + O_LOOP] = cell1;
 
-	if (cell2->loop == NULL)
-		cell2->loop = cell2;
+	if (cellTable[cell2 + O_LOOP] == NULL_CELL)
+		cellTable[cell2 + O_LOOP] = cell2;
 
 	/*
 	 * See if the second cell is already part of the first cell's loop.
 	 * If so, they they are already joined.  We don't need to
 	 * check the other direction.
 	 */
-	for (cell = cell1->loop; cell != cell1; cell = cell->loop)
+	for (cell = cellTable[cell1 + O_LOOP]; cell != cell1; cell = cellTable[cell + O_LOOP])
 	{
 		if (cell == cell2)
 			return;
@@ -997,9 +975,9 @@ loopCells(Cell * cell1, Cell * cell2)
 	 * The two cells belong to separate loops.
 	 * Break each of those loops and make one big loop from them.
 	 */
-	cell = cell1->loop;
-	cell1->loop = cell2->loop;
-	cell2->loop = cell;
+	cell = cellTable[cell1 + O_LOOP];
+	cellTable[cell1 + O_LOOP] = cellTable[cell2 + O_LOOP];
+	cellTable[cell2 + O_LOOP] = cell;
 
 	/*
 	 * See if any of the cells in the loop are frozen.
@@ -1007,20 +985,20 @@ loopCells(Cell * cell1, Cell * cell2)
 	 * since they effectively are anyway.  This lets the
 	 * user see that fact.
 	 */
-	frozen = cell1->flags & FROZENCELL;
+	frozen = cellTable[cell1 + O_FLAGS] & FROZENCELL;
 
-	for (cell = cell1->loop; cell != cell1; cell = cell->loop)
+	for (cell = cellTable[cell1 + O_LOOP]; cell != cell1; cell = cellTable[cell + O_LOOP])
 	{
-		if (cell->flags & FROZENCELL)
+		if (cellTable[cell + O_FLAGS] & FROZENCELL)
 			frozen = TRUE;
 	}
 
 	if (frozen)
 	{
-		cell1->flags |= FROZENCELL;
+		cellTable[cell1 + O_FLAGS] |= FROZENCELL;
 
-		for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-			cell->flags |= FROZENCELL;
+		for (cell = cellTable[cell1 + O_LOOP]; cell != cell1; cell = cellTable[cell + O_LOOP])
+			cellTable[cell + O_FLAGS] |= FROZENCELL;
 	}
 }
 
@@ -1032,19 +1010,26 @@ loopCells(Cell * cell1, Cell * cell2)
  * pointer is good enough even for the case of both row and column symmetry.
  * Returns NULL_CELL if there is no symmetry.
  */
-static Cell *
-symCell(const Cell * cell)
+static int
+symCell(const int cell)
 {
 	int	row;
 	int	col;
+	int	gen;
+    int rcg = cellTable[cell + O_RC0G];
+
 	int	nRow;
 	int	nCol;
 
 	if (!rowSym && !colSym && !pointSym && !fwdSym && !bwdSym)
 		return NULL_CELL;
 
-	row = cell->row;
-	col = cell->col;
+    gen = rcg & 0x0f;
+    rcg >>= 16;
+	row = rcg & 0x0f;
+	rcg >>= 8;
+	col = rcg & 0x0f;
+
 	nRow = rowMax + 1 - row;
 	nCol = colMax + 1 - col;
 
@@ -1052,19 +1037,19 @@ symCell(const Cell * cell)
 	 * If this is point symmetry, then this is easy.
 	 */
 	if (pointSym)
-		return findCell(nRow, nCol, cell->gen);
+		return findCell(nRow, nCol, gen);
 
 	/*
 	 * If this is forward diagonal symmetry, then this is easy.
 	 */
 	if (fwdSym)
-		return findCell(nCol, nRow, cell->gen);
+		return findCell(nCol, nRow, gen);
 
 	/*
 	 * If this is backward diagonal symmetry, then this is easy.
 	 */
 	if (bwdSym)
-		return findCell(col, row, cell->gen);
+		return findCell(col, row, gen);
 
 	/*
 	 * If there is symmetry on only one axis, then this is easy.
@@ -1074,7 +1059,7 @@ symCell(const Cell * cell)
 		if (col < rowSym)
 			return NULL_CELL;
 
-		return findCell(nRow, col, cell->gen);
+		return findCell(nRow, col, gen);
 	}
 
 	if (!rowSym)
@@ -1082,7 +1067,7 @@ symCell(const Cell * cell)
 		if (row < colSym)
 			return NULL_CELL;
 
-		return findCell(row, nCol, cell->gen);
+		return findCell(row, nCol, gen);
 	}
 
 	/*
@@ -1091,7 +1076,7 @@ symCell(const Cell * cell)
 	 * and if so, then this is easy.
 	 */
 	if ((nRow == row) || (nCol == col))
-		return findCell(nRow, nCol, cell->gen);
+		return findCell(nRow, nCol, gen);
 
 	/*
 	 * The cell is really in one of the four quadrants, and therefore
@@ -1099,9 +1084,9 @@ symCell(const Cell * cell)
 	 * symmetrical cell in the next quadrant clockwise.
 	 */
 	if ((row < nRow) == (col < nCol))
-		return findCell(row, nCol, cell->gen);
+		return findCell(row, nCol, gen);
 	else
-		return findCell(nRow, col, cell->gen);
+		return findCell(nRow, col, gen);
 }
 
 
@@ -1110,48 +1095,51 @@ symCell(const Cell * cell)
  * link those neighbors back to this cell.
  */
 static void
-linkCell(Cell * cell)
+linkCell(int cell)
 {
 	int	row;
 	int	col;
 	int	gen;
-	Cell *	pairCell;
+    int rcg = cellTable[cell + O_RC0G];
+	int pairCell;
 
-	row = cell->row;
-	col = cell->col;
-	gen = cell->gen;
+    gen = rcg & 0x0f;
+    rcg >>= 16;
+	row = rcg & 0x0f;
+	rcg >>= 8;
+	col = rcg & 0x0f;
 
 	pairCell = findCell(row - 1, col - 1, gen);
-	cell->cul = pairCell;
-	pairCell->cdr = cell;
+	cellTable[cell + O_CUL] = pairCell;
+	cellTable[pairCell + O_CDR] = cell;
 
 	pairCell = findCell(row - 1, col, gen);
-	cell->cu = pairCell;
-	pairCell->cd = cell;
+	cellTable[cell + O_CU] = pairCell;
+	cellTable[pairCell + O_CD] = cell;
 
 	pairCell = findCell(row - 1, col + 1, gen);
-	cell->cur = pairCell;
-	pairCell->cdl = cell;
+	cellTable[cell + O_CUR] = pairCell;
+	cellTable[pairCell + O_CDL] = cell;
 
 	pairCell = findCell(row, col - 1, gen);
-	cell->cl = pairCell;
-	pairCell->cr = cell;
+	cellTable[cell + O_CL] = pairCell;
+	cellTable[pairCell + O_CR] = cell;
 
 	pairCell = findCell(row, col + 1, gen);
-	cell->cr = pairCell;
-	pairCell->cl = cell;
+	cellTable[cell + O_CR] = pairCell;
+	cellTable[pairCell + O_CL] = cell;
 
 	pairCell = findCell(row + 1, col - 1, gen);
-	cell->cdl = pairCell;
-	pairCell->cur = cell;
+	cellTable[cell + O_CDL] = pairCell;
+	cellTable[pairCell + O_CUR] = cell;
 
 	pairCell = findCell(row + 1, col, gen);
-	cell->cd = pairCell;
-	pairCell->cu = cell;
+	cellTable[cell + O_CD] = pairCell;
+	cellTable[pairCell + O_CU] = cell;
 
 	pairCell = findCell(row + 1, col + 1, gen);
-	cell->cdr = pairCell;
-	pairCell->cul = cell;
+	cellTable[cell + O_CDR] = pairCell;
+	cellTable[pairCell + O_CUL] = cell;
 }
 
 
@@ -1162,10 +1150,10 @@ linkCell(Cell * cell)
  * Cells outside of this range are handled by searching an auxillary table,
  * and are dynamically created as necessary.
  */
-Cell *
+int
 findCell(int row, int col, int gen)
 {
-	Cell *	cell;
+	int	cell;
 	int	i;
 
 	/*
@@ -1175,94 +1163,39 @@ findCell(int row, int col, int gen)
 		(col >= 0) && (col <= colMax + 1) &&
 		(gen >= 0) && (gen < genMax))
 	{
-		return cellTable[(col * (rowMax + 2) + row) * genMax + gen];
+		return cellTable[(sizeof(Cell)/sizeof(int)) * ((col * (rowMax + 2) + row) * genMax + gen + 1)];
 	}
-
-	/*
-	 * See if the cell is already allocated in the auxillary table.
-	 */
-	for (i = 0; i < auxCellCount; i++)
-	{
-		cell = auxTable[i];
-
-		if ((cell->row == row) && (cell->col == col) &&
-			(cell->gen == gen))
-		{
-			return cell;
-		}
-	}
-
-	/*
-	 * Need to allocate the cell and add it to the auxillary table.
-	 */
-	if (auxCellCount >= AUX_CELLS)
-		fatal("Too many auxillary cells");
-
-	cell = allocateCell();
-	cell->row = row;
-	cell->col = col;
-	cell->gen = gen;
-	auxTable[auxCellCount++] = cell;
-
-	return cell;
 }
 
 
 /*
- * Allocate a new cell.
+ * Initialize a new cell.
  * The cell is initialized as if it was a boundary cell.
  * Warning: The first allocation MUST be of the deadCell.
  */
-static Cell *
-allocateCell(void)
+static void initCell(const int cell)
 {
-	Cell *	cell;
-
-	/*
-	 * Allocate a new chunk of cells if there are none left.
-	 */
-	if (newCellCount <= 0)
-	{
-		newCells = (Cell *) malloc(sizeof(Cell) * ALLOC_SIZE);
-
-		if (newCells == NULL)
-			fatal("Cannot allocate cell structure");
-
-		newCellCount = ALLOC_SIZE;
-	}
-
-	newCellCount--;
-	cell = newCells++;
-
-	/*
-	 * If this is the first allocation, then make deadCell be this cell.
-	 */
-	if (deadCell == NULL)
-		deadCell = cell;
-
 	/*
 	 * Fill in the cell as if it was a boundary cell.
 	 */
-	cell->state = OFF;
-	cell->flags = CHOOSECELL;
-	cell->gen = -1;
-	cell->row = -1;
-	cell->col = -1;
-	cell->sumNear = 0;
-	cell->index = -1;
-	cell->past = deadCell;
-	cell->future = deadCell;
-	cell->cul = deadCell;
-	cell->cu = deadCell;
-	cell->cur = deadCell;
-	cell->cl = deadCell;
-	cell->cr = deadCell;
-	cell->cdl = deadCell;
-	cell->cd = deadCell;
-	cell->cdr = deadCell;
-	cell->loop = NULL;
+	cellTable[cell] = OFF;
+	cellTable[cell + O_FLAGS] = CHOOSECELL;
+	cellTable[cell + O_SUMNEAR] = 0;
+	cellTable[cell + O_INDEX] = -1;
+	cellTable[cell + O_PAST] = deadCell;
+	cellTable[cell + O_FUTURE] = deadCell;
+	cellTable[cell + O_CUL] = deadCell;
+	cellTable[cell + O_CU] = deadCell;
+	cellTable[cell + O_CUR] = deadCell;
+	cellTable[cell + O_CL] = deadCell;
+	cellTable[cell + O_CR] = deadCell;
+	cellTable[cell + O_CDL] = deadCell;
+	cellTable[cell + O_CD] = deadCell;
+	cellTable[cell + O_CDR] = deadCell;
+	cellTable[cell + O_LOOP] = NULL_CELL;
+	cellTable[cell + O_RC0G] = -1;
 
-	return cell;
+	return;
 }
 
 /* END CODE */

@@ -122,7 +122,7 @@ void engineRLE(const char *rule)
 
 void printRLE(const int gen, const char *rule)
 {
-    const Cell *cell;
+    int cell;
 
     /* initialize buffer */
     for (int row = 1; row <= rowMax; row ++)
@@ -130,7 +130,7 @@ void printRLE(const int gen, const char *rule)
         for (int col = 1; col <= colMax; col++)
         {
             cell = findCell(row , col, gen);
-            buffer[col + row * colMax] = cell->state;
+            buffer[col + row * colMax] = cellTable[cell];
         }
     }
     
