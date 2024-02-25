@@ -1594,7 +1594,7 @@ dumpState(const char * file)
 	int		row;
 	int		col;
 	int		gen;
-	int rcg;
+	sCrg crg;
 	int **		param;
 
 	file = getStr(file, "Dump state to file: ");
@@ -1640,16 +1640,10 @@ dumpState(const char * file)
 	while (set != nextSet)
 	{
 		cell = *set++;
-	    rcg = cellTable[cell + O_RC0G];
+	    crg = cellToColRowGen(cell);
 
-        gen = rcg & 0x0f;
-        rcg >>= 16;
-	    row = rcg & 0x0f;
-	    rcg >>= 8;
-	    col = rcg & 0x0f;
-
-		fprintf(fp, "S %d %d %d %d %d\n", row, col,
-			gen, cellTable[cell], (cellTable[cell + O_FLAGS] & FREECELL) ? 1 : 0);
+		fprintf(fp, "S %d %d %d %d %d\n", crg.row, crg.col,	crg.gen,
+		    cellTable[cell], (cellTable[cell + O_FLAGS] & FREECELL) ? 1 : 0);
 	}
 
 	/*

@@ -171,6 +171,7 @@ extern	Status	proceed(int, State, Bool);
 extern	Status	go(int, State, Bool);
 extern	Status	setCell(int const , const State, const Bool);
 extern	int	findCell(int, int, int);
+extern sCrg cellToColRowGen(int cell);
 extern	int	backup(void);
 extern	Bool	subPeriods(void);
 extern	void	loopCells(int, int);

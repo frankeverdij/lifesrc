@@ -52,7 +52,7 @@ static	Flags	implic[1024];
 static  int searchIdx;
 static  int searchCount;
 static	int	newCells;		/* cells ready for allocation */
-static	int	deadCell = 0;		/* boundary cell value */
+static	int	deadCell;		/* boundary cell value */
 static	int*	searchList;		/* current list of cells to search */
 static  State * stateList;
 
@@ -61,11 +61,11 @@ static  State * stateList;
  * Local procedures
  */
 static	void	initSearchOrder(void);
-static void initCell(const int);
 static	void	linkCell(int);
 static	State	choose(const int);
 static	int	symCell(const int);
 static	int	mapCell(const int, Bool);
+static void initCell(const int);
 static	int	getNormalUnknown(void);
 static	Status	consistify(int const);
 static	Status	consistify10(int const);
@@ -108,12 +108,21 @@ initCells(void)
 	if ((colTrans < -TRANS_MAX) || (colTrans > TRANS_MAX))
 		fatal("Column translation number out of range");
 
+	cellTable = (int *)calloc(MAX_CELLS, sizeof(Cell)); /* FE: kan beter */
+	for (col = 0; col <= colMax+1; col++)
+		for (row = 0; row <= rowMax+1; row++)
+			for (gen = 0; gen < genMax; gen++)
+			{
+				cell = findCell(row, col, gen);
+				initCell(cell);
+		    }
+
 	/*
 	 * The first allocation of a cell MUST be deadCell.
 	 * Then allocate the cells in the cell table.
 	 */
-	cellTable = (int *)calloc(MAX_CELLS, sizeof(Cell)); /* FE: kan beter */
-
+	deadCell = (colMax + 2) * (rowMax + 2) * genMax;
+    initCell(deadCell);
 	/*
 	 * Link the cells together.
 	 */
@@ -126,16 +135,15 @@ initCells(void)
 				edge = ((row == 0) || (col == 0) ||
 					(row > rowMax) || (col > colMax));
 
-				cell = findCell(row, col, gen);
-				initCell(cell);
-				printf("%d %d %d %d\n", cell, col, row, gen);
+                cell = findCell(row, col, gen);
+				/*printf("%d %d %d %d\n", cell, col, row, gen);
 				rcg = col;
 				rcg <<= 8;
 				rcg += row;
 				rcg <<= 16;
 				rcg += gen;
 				cellTable[cell + O_RC0G] = rcg;
-				cellTable[cell + O_FLAGS] |= CHOOSECELL;
+				cellTable[cell + O_FLAGS] |= CHOOSECELL;*/
 
 				/*
 				 * If this is not an edge cell, then its state
@@ -296,10 +304,12 @@ initSearchOrder(void)
 Status
 setCell(const int cell, const State state, const Bool free)
 {
+    sCrg crg = cellToColRowGen(cell);
+
 	if (cellTable[cell] == state)
 	{
-		DPRINTF("setCell %d to state %s already set\n",
-			cellTable[cell + O_RC0G],
+		DPRINTF("setCell %d %d %d with numner %d to state %s already set\n",
+			crg.row, crg.col, crg.gen, cell,
 			(state == ON) ? "on" : "off");
 
 		return OK;
@@ -307,14 +317,14 @@ setCell(const int cell, const State state, const Bool free)
 
 	if (cellTable[cell] != UNK)
 	{
-		DPRINTF("setCell %d to state %s inconsistent\n",
-			cellTable[cell + O_RC0G],
+		DPRINTF("setCell %d %d %d # %d to state %s inconsistent\n",
+			crg.row, crg.col, crg.gen, cell,
 			(state == ON) ? "on" : "off");
 
 		return ERROR;
 	}
-	DPRINTF("setCell %d to %s, %s successful\n",
-		cellTable[cell + O_RC0G],
+	DPRINTF("setCell %d %d %d # %d to %s, %s successful\n",
+		crg.row, crg.col, crg.gen, cell,
 		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
 	*newSet++ = cell;
@@ -348,6 +358,8 @@ getDesc(const int cell)
 static Status
 consistify(const int cell)
 {
+    int row,col,gen;
+    sCrg crg;
 	int	prevCell;
 	int	desc;
 	State	state, cellState;
@@ -363,7 +375,7 @@ consistify(const int cell)
 	prevCell = cellTable[cell + O_PAST];
 	desc = SUMTODESC(cellTable[prevCell], cellTable[prevCell + O_SUMNEAR]);
 	state = transit[desc];
-
+    printf("consistify %d %d # %d\n",implic[desc], state, prevCell);
 	if (state != UNK)
 	    if (state != cellTable[cell])
     		if (setCell(cell, state, FALSE) == ERROR)
@@ -424,8 +436,9 @@ consistify(const int cell)
 	 * For each unknown neighbor, set its state as indicated.
 	 * Return an error if any neighbor is inconsistent.
 	 */
-	DPRINTF("Forcing unknown neighbors of cell %d %s\n",
-		cellTable[prevCell + O_RC0G],
+	crg = cellToColRowGen(prevCell);
+	DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
+		crg.row, crg.col, crg.gen,
 		((state == ON) ? "on" : "off"));
 
 	if ((cellTable[prevCell + O_CUL] == UNK) &&
@@ -530,7 +543,7 @@ static Status
 examineNext(void)
 {
 	int	cell;
-
+    sCrg crg;
 	/*
 	 * If there are no more cells to examine, then what we have
 	 * is consistent.
@@ -543,9 +556,9 @@ examineNext(void)
 	 * and for consistency with its previous and next generations.
 	 */
 	cell = *nextSet++;
-
-	DPRINTF("Examining saved cell %d (%s) for consistency\n",
-		cellTable[cell + O_RC0G],
+    crg = cellToColRowGen(cell);
+	DPRINTF("Examining saved cell %d %d %d # %d (%s) for consistency\n",
+		crg.row, crg.col, crg.gen, cell,
 		((cellTable[cell + O_FLAGS] & FREECELL) ? "free" : "forced"));
 
 	if (cellTable[cell + O_LOOP] && (setCell(cellTable[cell + O_LOOP], cellTable[cell], FALSE) != OK))
@@ -591,14 +604,14 @@ int
 backup(void)
 {
 	int	cell;
-
+    sCrg crg;
 	while (newSet != baseSet)
 	{
 		cell = *--newSet;
 
-
-		DPRINTF("backing up cell %d, was %s, %s\n",
-			cellTable[cell + O_RC0G],
+        crg = cellToColRowGen(cell);
+		DPRINTF("backing up cell %d %d %d # %d, was %s, %s\n",
+			crg.row,crg.col,crg.gen,cell,
 			((cellTable[cell] == ON) ? "on" : "off"),
 			((cellTable[cell + O_FLAGS] & FREECELL) ? "free": "forced"));
 
@@ -862,13 +875,11 @@ mapCell(const int cell, Bool forward)
 	int	col;
 	int	gen;
 	int	tmp;
-    int rcg = cellTable[cell + O_RC0G];
+    sCrg crg = cellToColRowGen(cell);
 
-    gen = rcg & 0x0f;
-    rcg >>= 16;
-	row = rcg & 0x0f;
-	rcg >>= 8;
-	col = rcg & 0x0f;
+    gen = crg.gen;
+	row = crg.row;
+	col = crg.col;
 
 	if (flipRows && (col >= flipRows))
 		row = rowMax + 1 - row;
@@ -1016,7 +1027,7 @@ symCell(const int cell)
 	int	row;
 	int	col;
 	int	gen;
-    int rcg = cellTable[cell + O_RC0G];
+    sCrg crg = cellToColRowGen(cell);
 
 	int	nRow;
 	int	nCol;
@@ -1024,11 +1035,9 @@ symCell(const int cell)
 	if (!rowSym && !colSym && !pointSym && !fwdSym && !bwdSym)
 		return NULL_CELL;
 
-    gen = rcg & 0x0f;
-    rcg >>= 16;
-	row = rcg & 0x0f;
-	rcg >>= 8;
-	col = rcg & 0x0f;
+    gen = crg.gen;
+	row = crg.row;
+	col = crg.col;
 
 	nRow = rowMax + 1 - row;
 	nCol = colMax + 1 - col;
@@ -1100,14 +1109,12 @@ linkCell(int cell)
 	int	row;
 	int	col;
 	int	gen;
-    int rcg = cellTable[cell + O_RC0G];
+    sCrg crg = cellToColRowGen(cell);
 	int pairCell;
 
-    gen = rcg & 0x0f;
-    rcg >>= 16;
-	row = rcg & 0x0f;
-	rcg >>= 8;
-	col = rcg & 0x0f;
+    gen = crg.gen;
+	row = crg.row;
+	col = crg.col;
 
 	pairCell = findCell(row - 1, col - 1, gen);
 	cellTable[cell + O_CUL] = pairCell;
@@ -1154,19 +1161,44 @@ int
 findCell(int row, int col, int gen)
 {
 	int	cell;
-	int	i;
+	sCrg crg;
 
 	/*
 	 * If the cell is a normal cell, then we know where it is.
 	 */
-	if ((row >= 0) && (row <= rowMax + 1) &&
-		(col >= 0) && (col <= colMax + 1) &&
-		(gen >= 0) && (gen < genMax))
+	if (((row >= 0) && (row <= rowMax + 1) &&
+		 (col >= 0) && (col <= colMax + 1) &&
+		 (gen >= 0) && (gen < genMax)) ||
+		((row == rowMax + 1) && (col == colMax + 1) && (gen == genMax)))
 	{
-		return cellTable[(sizeof(Cell)/sizeof(int)) * ((col * (rowMax + 2) + row) * genMax + gen + 1)];
+		cell = (sizeof(Cell)/sizeof(int)) * ((col * (rowMax + 2) + row) * genMax + gen);
+		crg = cellToColRowGen(cell);
+    	return cell;
+		//printf("cell # %d has %d %d %d , reverse is %d %d %d \n",cell, row, col, gen, crg.row, crg.col, crg.gen);
 	}
+
 }
 
+sCrg cellToColRowGen (int cell)
+{
+    sCrg crg;
+    cell /= (sizeof(Cell)/sizeof(int));
+
+    if (cell == ((colMax + 2) * (rowMax + 2) * genMax))
+    {
+        crg.col = -1;
+        crg.row = -1;
+        crg.gen = -1;
+    }
+    else
+    {
+        crg.gen = cell % genMax;
+        cell /= genMax;
+        crg.row = cell % (rowMax + 2);
+        crg.col = cell / (rowMax + 2);
+    }
+    return crg;
+}
 
 /*
  * Initialize a new cell.

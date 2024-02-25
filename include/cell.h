@@ -30,6 +30,13 @@ typedef struct Cell
     short   rowcol; /* row and columns of this cell */
 } Cell;
 
+typedef struct sCrg
+{
+    int col;
+    int row;
+    int gen;
+} sCrg;
+
 /* O_STATE = 0 which is intended, so no need to set a define*/
 #define O_FLAGS   1
 #define O_SUMNEAR 2
