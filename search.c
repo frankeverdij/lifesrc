@@ -121,7 +121,7 @@ initCells(void)
 	 * The first allocation of a cell MUST be deadCell.
 	 * Then allocate the cells in the cell table.
 	 */
-	deadCell = (colMax + 2) * (rowMax + 2) * genMax;
+	deadCell = findCell((colMax + 2), (rowMax + 2), genMax);
     initCell(deadCell);
 	/*
 	 * Link the cells together.
@@ -133,7 +133,7 @@ initCells(void)
 			for (gen = 0; gen < genMax; gen++)
 			{
 				edge = ((row == 0) || (col == 0) ||
-					(row > rowMax) || (col > colMax));
+					(row == rowMax + 1) || (col == colMax + 1));
 
                 cell = findCell(row, col, gen);
 				/*printf("%d %d %d %d\n", cell, col, row, gen);
@@ -1171,7 +1171,7 @@ findCell(int row, int col, int gen)
 		 (gen >= 0) && (gen < genMax)) ||
 		((row == rowMax + 1) && (col == colMax + 1) && (gen == genMax)))
 	{
-		cell = (sizeof(Cell)/sizeof(int)) * ((col * (rowMax + 2) + row) * genMax + gen);
+		cell = sizeof(Cell) * ((col * (rowMax + 2) + row) * genMax + gen);
 		crg = cellToColRowGen(cell);
     	return cell;
 		//printf("cell # %d has %d %d %d , reverse is %d %d %d \n",cell, row, col, gen, crg.row, crg.col, crg.gen);
@@ -1182,7 +1182,7 @@ findCell(int row, int col, int gen)
 sCrg cellToColRowGen (int cell)
 {
     sCrg crg;
-    cell /= (sizeof(Cell)/sizeof(int));
+    cell /= sizeof(Cell);
 
     if (cell == ((colMax + 2) * (rowMax + 2) * genMax))
     {

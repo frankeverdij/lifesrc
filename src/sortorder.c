@@ -24,23 +24,11 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 	c2 = *arg2;
     g = (globals_struct*) gvars;
 
-    int row1, row2;
-    int col1, col2;
-    int gen1, gen2;
-    int rcg1 = cellTable[c1 + O_RC0G];
-    int rcg2 = cellTable[c2 + O_RC0G];
-
-    gen1 = rcg1 & 0x0f;
-    rcg1 >>= 16;
-	row1 = rcg1 & 0x0f;
-	rcg1 >>= 8;
-	col1 = rcg1 & 0x0f;
-
-    gen2 = rcg2 & 0x0f;
-    rcg2 >>= 16;
-	row2 = rcg2 & 0x0f;
-	rcg2 >>= 8;
-	col2 = rcg2 & 0x0f;
+    sCrg crg1 = cellToColRowGen(c1);
+    sCrg crg2 = cellToColRowGen(c2);
+    int row1 = crg1.row, row2 = crg2.row;
+    int col1 = crg1.col, col2 = crg2.col;
+    int gen1 = crg1.gen, gen2 = crg2.gen;
 
 	// Put generation 0 first
 	// or if calculating parents, put generation 0 last
