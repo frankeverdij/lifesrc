@@ -49,6 +49,8 @@ static	Flags	implic[1024];
 /*
  * Other local data.
  */
+static	size_t	cellTableSize;		/* total size of cellTable */
+static	int	auxCellCount = 0;		/* cells in auxillary table */
 static  int searchIdx;
 static  int searchCount;
 static	int	newCells;		/* cells ready for allocation */
@@ -108,21 +110,27 @@ initCells(void)
 	if ((colTrans < -TRANS_MAX) || (colTrans > TRANS_MAX))
 		fatal("Column translation number out of range");
 
-	cellTable = (int *)calloc(MAX_CELLS, sizeof(Cell)); /* FE: kan beter */
-	for (col = 0; col <= colMax+1; col++)
-		for (row = 0; row <= rowMax+1; row++)
-			for (gen = 0; gen < genMax; gen++)
-			{
-				cell = findCell(row, col, gen);
-				initCell(cell);
-		    }
+    /*
+     * Allocate the cellTable. Add at least one extra cell for the
+     * deadcell, which is located at (rowMax+1, colMax+1, genMax).
+     * The rest is for the additional cells which we need to add on
+     * the fly and reallocate the cellTable if necessary.
+     */
+    deadCell = sizeof(Cell) * ((rowMax + 2) * (colMax + 2) * genMax);
+    
+    cellTableSize = deadCell + sizeof(Cell);
+	cellTable = (int *)malloc(sizeof(int) * cellTableSize);
 
 	/*
 	 * The first allocation of a cell MUST be deadCell.
-	 * Then allocate the cells in the cell table.
 	 */
-	deadCell = findCell((colMax + 2), (rowMax + 2), genMax);
     initCell(deadCell);
+
+	for (cell = 0; cell <= deadCell; cell += sizeof(Cell))
+	{
+		initCell(cell);
+	}
+
 	/*
 	 * Link the cells together.
 	 */
@@ -136,14 +144,6 @@ initCells(void)
 					(row == rowMax + 1) || (col == colMax + 1));
 
                 cell = findCell(row, col, gen);
-				/*printf("%d %d %d %d\n", cell, col, row, gen);
-				rcg = col;
-				rcg <<= 8;
-				rcg += row;
-				rcg <<= 16;
-				rcg += gen;
-				cellTable[cell + O_RC0G] = rcg;
-				cellTable[cell + O_FLAGS] |= CHOOSECELL;*/
 
 				/*
 				 * If this is not an edge cell, then its state
@@ -154,7 +154,7 @@ initCells(void)
 				{
 					linkCell(cell);
 					setState(cell, UNK, stateList);
-					cellTable[cell + O_FLAGS] |= FREECELL;
+					cellTable[cell + O_GENFLAGS] |= FREECELL;
 				}
 
 				/*
@@ -308,7 +308,7 @@ setCell(const int cell, const State state, const Bool free)
 
 	if (cellTable[cell] == state)
 	{
-		DPRINTF("setCell %d %d %d with numner %d to state %s already set\n",
+		DPRINTF("setCell %d %d %d # %d to state %s already set\n",
 			crg.row, crg.col, crg.gen, cell,
 			(state == ON) ? "on" : "off");
 
@@ -331,9 +331,9 @@ setCell(const int cell, const State state, const Bool free)
 
 	setState(cell, state, stateList);
 	if (free)
-	    cellTable[cell + O_FLAGS] |= FREECELL;
+	    cellTable[cell + O_GENFLAGS] |= FREECELL;
 	else
-	    cellTable[cell + O_FLAGS] &= ~FREECELL;
+	    cellTable[cell + O_GENFLAGS] &= ~FREECELL;
 
 	return OK;
 }
@@ -375,7 +375,7 @@ consistify(const int cell)
 	prevCell = cellTable[cell + O_PAST];
 	desc = SUMTODESC(cellTable[prevCell], cellTable[prevCell + O_SUMNEAR]);
 	state = transit[desc];
-    printf("consistify %d %d # %d\n",implic[desc], state, prevCell);
+    DPRINTF("consistify %d %d\n",implic[desc], state);
 	if (state != UNK)
 	    if (state != cellTable[cell])
     		if (setCell(cell, state, FALSE) == ERROR)
@@ -559,7 +559,7 @@ examineNext(void)
     crg = cellToColRowGen(cell);
 	DPRINTF("Examining saved cell %d %d %d # %d (%s) for consistency\n",
 		crg.row, crg.col, crg.gen, cell,
-		((cellTable[cell + O_FLAGS] & FREECELL) ? "free" : "forced"));
+		((cellTable[cell + O_GENFLAGS] & FREECELL) ? "free" : "forced"));
 
 	if (cellTable[cell + O_LOOP] && (setCell(cellTable[cell + O_LOOP], cellTable[cell], FALSE) != OK))
 	{
@@ -613,12 +613,12 @@ backup(void)
 		DPRINTF("backing up cell %d %d %d # %d, was %s, %s\n",
 			crg.row,crg.col,crg.gen,cell,
 			((cellTable[cell] == ON) ? "on" : "off"),
-			((cellTable[cell + O_FLAGS] & FREECELL) ? "free": "forced"));
+			((cellTable[cell + O_GENFLAGS] & FREECELL) ? "free": "forced"));
 
-		if (!(cellTable[cell + O_FLAGS] & FREECELL))
+		if (!(cellTable[cell + O_GENFLAGS] & FREECELL))
 		{
 			setState(cell, UNK, stateList);
-			cellTable[cell + O_FLAGS] |= FREECELL;
+			cellTable[cell + O_GENFLAGS] |= FREECELL;
 
 			continue;
 		}
@@ -681,7 +681,7 @@ getNormalUnknown(void)
 		if (stateList[i] == UNK)
 		{
 		    cell = searchList[i];
-		    if (cellTable[cell + O_FLAGS] & CHOOSECELL)
+		    if (cellTable[cell + O_GENFLAGS] & CHOOSECELL)
 		    {
 		    	searchIdx = i;
 
@@ -996,20 +996,20 @@ loopCells(int cell1, int cell2)
 	 * since they effectively are anyway.  This lets the
 	 * user see that fact.
 	 */
-	frozen = cellTable[cell1 + O_FLAGS] & FROZENCELL;
+	frozen = cellTable[cell1 + O_GENFLAGS] & FROZENCELL;
 
 	for (cell = cellTable[cell1 + O_LOOP]; cell != cell1; cell = cellTable[cell + O_LOOP])
 	{
-		if (cellTable[cell + O_FLAGS] & FROZENCELL)
+		if (cellTable[cell + O_GENFLAGS] & FROZENCELL)
 			frozen = TRUE;
 	}
 
 	if (frozen)
 	{
-		cellTable[cell1 + O_FLAGS] |= FROZENCELL;
+		cellTable[cell1 + O_GENFLAGS] |= FROZENCELL;
 
 		for (cell = cellTable[cell1 + O_LOOP]; cell != cell1; cell = cellTable[cell + O_LOOP])
-			cellTable[cell + O_FLAGS] |= FROZENCELL;
+			cellTable[cell + O_GENFLAGS] |= FROZENCELL;
 	}
 }
 
@@ -1160,43 +1160,93 @@ linkCell(int cell)
 int
 findCell(int row, int col, int gen)
 {
-	int	cell;
+	int	i, cell;
+	short * ptr;
 	sCrg crg;
 
 	/*
 	 * If the cell is a normal cell, then we know where it is.
 	 */
-	if (((row >= 0) && (row <= rowMax + 1) &&
+	if ((row >= 0) && (row <= rowMax + 1) &&
 		 (col >= 0) && (col <= colMax + 1) &&
-		 (gen >= 0) && (gen < genMax)) ||
-		((row == rowMax + 1) && (col == colMax + 1) && (gen == genMax)))
+		 (gen >= 0) && (gen < genMax))
 	{
 		cell = sizeof(Cell) * ((col * (rowMax + 2) + row) * genMax + gen);
-		crg = cellToColRowGen(cell);
     	return cell;
-		//printf("cell # %d has %d %d %d , reverse is %d %d %d \n",cell, row, col, gen, crg.row, crg.col, crg.gen);
 	}
-
+	
+    /*
+	 * Is it deadCell?
+	 */
+	if ((row == rowMax + 1) && (col == colMax + 1) && (gen == genMax))
+	{
+	    return deadCell;
+	}
+//	DPRINTF("Looking for %d %d %d\n", row, col, gen);
+	/*
+	 * It is an auxilliary cell. Iterate though the list and
+	 * try to find it.
+	 */
+    for (cell = deadCell; cell < deadCell + sizeof(Cell) * auxCellCount; cell += sizeof(Cell))
+    {
+        crg = cellToColRowGen(cell);
+        if ((crg.row == row) && (crg.col == col) &&
+			(crg.gen == gen))
+		{
+//		    DPRINTF("Found Aux Cell %d %d %d # %d\n", crg.row, crg.col, crg.gen, cell);
+			return cell;
+		}
+    }
+    
+    /*
+     * It is a new Auxilliary cell. We have to re-allocate the celltable.
+     */
+    auxCellCount++;
+    cell = deadCell + sizeof(Cell) * auxCellCount;
+    if (cell >= cellTableSize)
+    {
+        DPRINTF("resizing cellTable. Was %zd", cellTableSize);
+        cellTableSize += sizeof(Cell) * 25;
+        cellTable = realloc(cellTable, sizeof(int) * cellTableSize);
+        DPRINTF(" to %zd\n", cellTableSize);
+    }    
+    initCell(cell);
+    ptr = (short *)&cellTable[cell + O_GENFLAGS];
+    ptr++;
+    *ptr++ = gen;
+    *ptr++ = row;
+    *ptr = col;
+   
 }
 
 sCrg cellToColRowGen (int cell)
 {
     sCrg crg;
-    cell /= sizeof(Cell);
+    short * ptr;
 
-    if (cell == ((colMax + 2) * (rowMax + 2) * genMax))
+    if (cell == deadCell)
     {
-        crg.col = -1;
-        crg.row = -1;
-        crg.gen = -1;
+        crg.gen = genMax;
+        crg.row = rowMax + 1;
+        crg.col = colMax + 1;
+    }
+    else if (cell > deadCell)
+    {
+        ptr = (short *)&cellTable[cell + O_GENFLAGS];
+        crg.flags = *ptr++;
+        crg.gen = *ptr++;
+        crg.row = *ptr++;
+        crg.col = *ptr;
     }
     else
     {
+        cell /= sizeof(Cell);
         crg.gen = cell % genMax;
         cell /= genMax;
         crg.row = cell % (rowMax + 2);
         crg.col = cell / (rowMax + 2);
     }
+
     return crg;
 }
 
@@ -1207,11 +1257,14 @@ sCrg cellToColRowGen (int cell)
  */
 static void initCell(const int cell)
 {
+    sCrg crg;
+
 	/*
 	 * Fill in the cell as if it was a boundary cell.
 	 */
 	cellTable[cell] = OFF;
-	cellTable[cell + O_FLAGS] = CHOOSECELL;
+	cellTable[cell + O_GENFLAGS] = CHOOSECELL;
+	cellTable[cell + O_COLROW] = -1;
 	cellTable[cell + O_SUMNEAR] = 0;
 	cellTable[cell + O_INDEX] = -1;
 	cellTable[cell + O_PAST] = deadCell;
@@ -1225,7 +1278,13 @@ static void initCell(const int cell)
 	cellTable[cell + O_CD] = deadCell;
 	cellTable[cell + O_CDR] = deadCell;
 	cellTable[cell + O_LOOP] = NULL_CELL;
-	cellTable[cell + O_RC0G] = -1;
+	
+	if (cell <= deadCell)
+	{
+	    crg = cellToColRowGen(cell);
+	    cellTable[cell + O_GENFLAGS] += (crg.gen << 8);
+	    cellTable[cell + O_COLROW] = crg.col << 8 + crg.row;
+	}
 
 	return;
 }

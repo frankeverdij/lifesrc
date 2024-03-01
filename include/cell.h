@@ -2,7 +2,7 @@
 #define CELL_H
 
 #include "state.h"
-typedef unsigned int cellFlags;
+typedef unsigned short cellFlags;
 
 #define FREECELL    ((cellFlags) 0x01) /* this cell still has free choice */
 #define FROZENCELL  ((cellFlags) 0x02) /* this cell is frozen in all gens */
@@ -11,8 +11,11 @@ typedef unsigned int cellFlags;
 typedef struct Cell
 {
     State   state;  /* current state */
+    short   gen;    /* generation of this cell */
     cellFlags   flags;  /* the (C)hoose, fro(Z)en, and (F)ree flags */
                         /*  in a bitfield : 0x00000CZF */
+    short   row;    /* row of this cell */
+    short   col;    /* column of this cell */
     int     sumNear;    /* sum of states of neighbor cells */
     int     index;
     int     past;   /* cell in past at this location */
@@ -26,33 +29,32 @@ typedef struct Cell
     int     cd;	    /* cell to down */
     int     cdr;    /* cell to down and right */
     int     loop;   /* next cell in this same loop */
-    short   gen;    /* generation number of this cell*/
-    short   rowcol; /* row and columns of this cell */
 } Cell;
 
 typedef struct sCrg
 {
-    int col;
-    int row;
-    int gen;
+    short flags;
+    short gen;
+    short row;
+    short col;
 } sCrg;
 
 /* O_STATE = 0 which is intended, so no need to set a define*/
-#define O_FLAGS   1
-#define O_SUMNEAR 2
-#define O_INDEX   3
-#define O_PAST    4
-#define O_FUTURE  5
-#define O_CUL     6
-#define O_CU      7
-#define O_CUR     8
-#define O_CL      9
-#define O_CR      10
-#define O_CDL     11
-#define O_CD      12
-#define O_CDR     13
-#define O_LOOP    14
-#define O_RC0G    15
+#define O_GENFLAGS  1
+#define O_COLROW    2
+#define O_SUMNEAR   3
+#define O_INDEX     4
+#define O_PAST      5
+#define O_FUTURE    6
+#define O_CUL       7
+#define O_CU        8
+#define O_CUR       9
+#define O_CL        10
+#define O_CR        11
+#define O_CDL       12
+#define O_CD        13
+#define O_CDR       14
+#define O_LOOP      15
 
 #define NULL_CELL   -1
 

@@ -1114,7 +1114,7 @@ excludeCone(int row, int col, int gen)
 			for (tCol = col - dist; tCol <= col + dist; tCol++)
 			{
 				cell = findCell(tRow, tCol, tGen);
-				cellTable[cell + O_FLAGS] &= ~CHOOSECELL;
+				cellTable[cell + O_GENFLAGS] &= ~CHOOSECELL;
 			}
 		}
 	}
@@ -1197,7 +1197,7 @@ freezeCell(int row, int col)
 	{
 		cell = findCell(row, col, gen);
 
-		cellTable[cell + O_FLAGS] |= FROZENCELL;
+		cellTable[cell + O_GENFLAGS] |= FROZENCELL;
 
 		loopCells(cell0, cell);
 	}
@@ -1423,10 +1423,10 @@ printGen(int gen)
 		    		case UNK:
 		    			msg = "? ";
 
-		    			if (cellTable[cell + O_FLAGS] & FROZENCELL)
+		    			if (cellTable[cell + O_GENFLAGS] & FROZENCELL)
 		    				msg = "+ ";
 
-		    			if (!(cellTable[cell + O_FLAGS] & CHOOSECELL))
+		    			if (!(cellTable[cell + O_GENFLAGS] & CHOOSECELL))
 		    				msg = "X ";
 
 		    			break;
@@ -1549,7 +1549,7 @@ writeGen(const char * file, Bool append)
 				case OFF:	ch = '.'; break;
 				case ON:	ch = '*'; break;
 				case UNK:	ch =
-						((cellTable[cell + O_FLAGS] & CHOOSECELL) ? '?' : 'X');
+						((cellTable[cell + O_GENFLAGS] & CHOOSECELL) ? '?' : 'X');
 						break;
 				default:
 					ttyStatus("Bad cell state");
@@ -1643,7 +1643,7 @@ dumpState(const char * file)
 	    crg = cellToColRowGen(cell);
 
 		fprintf(fp, "S %d %d %d %d %d\n", crg.row, crg.col,	crg.gen,
-		    cellTable[cell], (cellTable[cell + O_FLAGS] & FREECELL) ? 1 : 0);
+		    cellTable[cell], (cellTable[cell + O_GENFLAGS] & FREECELL) ? 1 : 0);
 	}
 
 	/*
@@ -1655,7 +1655,7 @@ dumpState(const char * file)
 	{
 		cell = findCell(row, col, gen);
 
-		if (cellTable[cell + O_FLAGS] & CHOOSECELL)
+		if (cellTable[cell + O_GENFLAGS] & CHOOSECELL)
 			continue;
 
 		fprintf(fp, "X %d %d %d\n", row, col, gen);
@@ -1671,7 +1671,7 @@ dumpState(const char * file)
 	{
 		cell = findCell(row, col, 0);
 
-		if (cellTable[cell + O_FLAGS] & FROZENCELL)
+		if (cellTable[cell + O_GENFLAGS] & FROZENCELL)
 			fprintf(fp, "F %d %d\n", row, col);
 	}
 
@@ -1844,7 +1844,7 @@ loadState(const char * file)
 		gen = getNum(&cp, 0);
 
 		cell = findCell(row, col, gen);
-		cellTable[cell + O_FLAGS] &= ~CHOOSECELL;
+		cellTable[cell + O_GENFLAGS] &= ~CHOOSECELL;
 
 		buf[0] = '\0';
 		fgets(buf, LINE_SIZE, fp);

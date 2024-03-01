@@ -75,9 +75,9 @@ void printBlk(const int gen, const Bool color)
                 if (twoStates == UNK)
                 {
                     twoStates = COLORUNK;
-                    if (!(cellTable[up] & CHOOSECELL))
+                    if (!(cellTable[up + O_GENFLAGS] & CHOOSECELL))
                         twoStates = COLORUCHK;
-                    if (cellTable[up] & FROZENCELL)
+                    if (cellTable[up + O_GENFLAGS] & FROZENCELL)
                         twoStates = COLORFRZ;
                 }
 
@@ -88,9 +88,9 @@ void printBlk(const int gen, const Bool color)
                     if (second == UNK)
                     {
                         second = COLORUNK;
-                        if (!(cellTable[down + O_FLAGS] & CHOOSECELL))
+                        if (!(cellTable[down + O_GENFLAGS] & CHOOSECELL))
                             second = COLORUCHK;
-                        if (cellTable[down + O_FLAGS] & FROZENCELL)
+                        if (cellTable[down + O_GENFLAGS] & FROZENCELL)
                             second = COLORFRZ;
                     }
 
