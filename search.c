@@ -51,6 +51,7 @@ static	Flags	implic[1024];
  */
 static	size_t	cellTableSize;		/* total size of cellTable */
 static	int	auxCellCount = 0;		/* cells in auxillary table */
+static int strIntSize;
 static  int searchIdx;
 static  int searchCount;
 static	int	newCells;		/* cells ready for allocation */
@@ -73,6 +74,7 @@ static	Status	consistify(int const);
 static	Status	consistify10(int const);
 static	Status	examineNext(void);
 static	int	getDesc(const int);
+void dumpCellTable();
 
 
 /*
@@ -110,23 +112,24 @@ initCells(void)
 	if ((colTrans < -TRANS_MAX) || (colTrans > TRANS_MAX))
 		fatal("Column translation number out of range");
 
+    strIntSize = sizeof(Cell)/sizeof(int);
     /*
      * Allocate the cellTable. Add at least one extra cell for the
      * deadcell, which is located at (rowMax+1, colMax+1, genMax).
      * The rest is for the additional cells which we need to add on
      * the fly and reallocate the cellTable if necessary.
      */
-    deadCell = sizeof(Cell) * ((rowMax + 2) * (colMax + 2) * genMax);
+    deadCell =  strIntSize * ((rowMax + 2) * (colMax + 2) * genMax);
     
-    cellTableSize = deadCell + sizeof(Cell);
-	cellTable = (int *)malloc(sizeof(int) * cellTableSize);
+    cellTableSize = deadCell + strIntSize;
+	cellTable = (int *)malloc(cellTableSize * sizeof(int));
 
 	/*
 	 * The first allocation of a cell MUST be deadCell.
 	 */
     initCell(deadCell);
 
-	for (cell = 0; cell <= deadCell; cell += sizeof(Cell))
+	for (cell = 0; cell <= deadCell; cell += strIntSize)
 	{
 		initCell(cell);
 	}
@@ -218,6 +221,7 @@ initCells(void)
 	initNextState(bornRules, liveRules);
 	initTransit(states, transit);
 	initImplic(states, implic);
+	dumpCellTable();
 }
 
 
@@ -1171,7 +1175,7 @@ findCell(int row, int col, int gen)
 		 (col >= 0) && (col <= colMax + 1) &&
 		 (gen >= 0) && (gen < genMax))
 	{
-		cell = sizeof(Cell) * ((col * (rowMax + 2) + row) * genMax + gen);
+		cell = strIntSize * ((col * (rowMax + 2) + row) * genMax + gen);
     	return cell;
 	}
 	
@@ -1187,7 +1191,7 @@ findCell(int row, int col, int gen)
 	 * It is an auxilliary cell. Iterate though the list and
 	 * try to find it.
 	 */
-    for (cell = deadCell; cell < deadCell + sizeof(Cell) * auxCellCount; cell += sizeof(Cell))
+    for (cell = deadCell; cell < deadCell + strIntSize * auxCellCount; cell += strIntSize)
     {
         crg = cellToColRowGen(cell);
         if ((crg.row == row) && (crg.col == col) &&
@@ -1202,11 +1206,11 @@ findCell(int row, int col, int gen)
      * It is a new Auxilliary cell. We have to re-allocate the celltable.
      */
     auxCellCount++;
-    cell = deadCell + sizeof(Cell) * auxCellCount;
+    cell = deadCell + strIntSize * auxCellCount;
     if (cell >= cellTableSize)
     {
         DPRINTF("resizing cellTable. Was %zd", cellTableSize);
-        cellTableSize += sizeof(Cell) * 25;
+        cellTableSize += strIntSize * 25;
         cellTable = realloc(cellTable, sizeof(int) * cellTableSize);
         DPRINTF(" to %zd\n", cellTableSize);
     }    
@@ -1240,7 +1244,7 @@ sCrg cellToColRowGen (int cell)
     }
     else
     {
-        cell /= sizeof(Cell);
+        cell /= strIntSize;
         crg.gen = cell % genMax;
         cell /= genMax;
         crg.row = cell % (rowMax + 2);
@@ -1257,6 +1261,7 @@ sCrg cellToColRowGen (int cell)
  */
 static void initCell(const int cell)
 {
+    static int zeroCounter = 0;
     sCrg crg;
 
 	/*
@@ -1278,7 +1283,11 @@ static void initCell(const int cell)
 	cellTable[cell + O_CD] = deadCell;
 	cellTable[cell + O_CDR] = deadCell;
 	cellTable[cell + O_LOOP] = NULL_CELL;
-	
+	if (cell == 0)
+	{
+	    zeroCounter++;
+	    printf("zero %d\n",zeroCounter);
+	}
 	if (cell <= deadCell)
 	{
 	    crg = cellToColRowGen(cell);
@@ -1287,6 +1296,16 @@ static void initCell(const int cell)
 	}
 
 	return;
+}
+
+void dumpCellTable()
+{
+    sCrg crg;
+    for(int i=0; i < cellTableSize; i+=strIntSize)
+    {
+        crg=cellToColRowGen(i);
+        printf("e%d #%d : r%d c%d g%d f%d s%d sum%d i%d\n", i, i/strIntSize, crg.row, crg.col, crg.gen, crg.flags, cellTable[i],cellTable[i+O_SUMNEAR], cellTable[i+O_INDEX]);
+    }
 }
 
 /* END CODE */

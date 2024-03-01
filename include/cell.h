@@ -11,9 +11,9 @@ typedef unsigned short cellFlags;
 typedef struct Cell
 {
     State   state;  /* current state */
-    short   gen;    /* generation of this cell */
     cellFlags   flags;  /* the (C)hoose, fro(Z)en, and (F)ree flags */
                         /*  in a bitfield : 0x00000CZF */
+    short   gen;    /* generation of this cell */
     short   row;    /* row of this cell */
     short   col;    /* column of this cell */
     int     sumNear;    /* sum of states of neighbor cells */
