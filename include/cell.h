@@ -33,7 +33,7 @@ typedef struct Cell
 
 typedef struct sCrg
 {
-    short flags;
+    cellFlags flags;
     short gen;
     short row;
     short col;

@@ -88,7 +88,7 @@ initCells(void)
 	int	row;
 	int	col;
 	int	gen;
-	int rcg;
+	sCrg * ptr;
 	int	i;
 	Bool edge;
 	int	cell;
@@ -157,7 +157,8 @@ initCells(void)
 				{
 					linkCell(cell);
 					setState(cell, UNK, stateList);
-					cellTable[cell + O_GENFLAGS] |= FREECELL;
+					ptr = (sCrg * ) &cellTable[cell + O_GENFLAGS];
+					ptr->flags |= FREECELL;
 				}
 
 				/*
@@ -221,7 +222,6 @@ initCells(void)
 	initNextState(bornRules, liveRules);
 	initTransit(states, transit);
 	initImplic(states, implic);
-	dumpCellTable();
 }
 
 
@@ -379,7 +379,6 @@ consistify(const int cell)
 	prevCell = cellTable[cell + O_PAST];
 	desc = SUMTODESC(cellTable[prevCell], cellTable[prevCell + O_SUMNEAR]);
 	state = transit[desc];
-    DPRINTF("consistify %d %d\n",implic[desc], state);
 	if (state != UNK)
 	    if (state != cellTable[cell])
     		if (setCell(cell, state, FALSE) == ERROR)
@@ -879,11 +878,12 @@ mapCell(const int cell, Bool forward)
 	int	col;
 	int	gen;
 	int	tmp;
-    sCrg crg = cellToColRowGen(cell);
+    //sCrg crg = cellToColRowGen(cell);
+    sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 
-    gen = crg.gen;
-	row = crg.row;
-	col = crg.col;
+    gen = ptr->gen;
+	row = ptr->row;
+	col = ptr->col;
 
 	if (flipRows && (col >= flipRows))
 		row = rowMax + 1 - row;
@@ -1165,7 +1165,7 @@ int
 findCell(int row, int col, int gen)
 {
 	int	i, cell;
-	short * ptr;
+	sCrg * ptr;
 	sCrg crg;
 
 	/*
@@ -1215,32 +1215,33 @@ findCell(int row, int col, int gen)
         DPRINTF(" to %zd\n", cellTableSize);
     }    
     initCell(cell);
-    ptr = (short *)&cellTable[cell + O_GENFLAGS];
-    ptr++;
-    *ptr++ = gen;
-    *ptr++ = row;
-    *ptr = col;
-   
+    ptr = (sCrg *)&cellTable[cell + O_GENFLAGS];
+    ptr->flags = CHOOSECELL;
+    ptr->gen = gen;
+    ptr->row = row;
+    ptr->col = col;
+    return cell;
 }
 
 sCrg cellToColRowGen (int cell)
 {
     sCrg crg;
-    short * ptr;
+    sCrg * ptr;
 
     if (cell == deadCell)
     {
         crg.gen = genMax;
         crg.row = rowMax + 1;
         crg.col = colMax + 1;
+        crg.flags = 0;
     }
     else if (cell > deadCell)
     {
-        ptr = (short *)&cellTable[cell + O_GENFLAGS];
-        crg.flags = *ptr++;
-        crg.gen = *ptr++;
-        crg.row = *ptr++;
-        crg.col = *ptr;
+        ptr = (sCrg *)&cellTable[cell + O_GENFLAGS];
+        crg.flags = ptr->flags;
+        crg.gen = ptr->gen;
+        crg.row = ptr->row;
+        crg.col = ptr->col;
     }
     else
     {
@@ -1249,6 +1250,7 @@ sCrg cellToColRowGen (int cell)
         cell /= genMax;
         crg.row = cell % (rowMax + 2);
         crg.col = cell / (rowMax + 2);
+        crg.flags = *(cellFlags *) &cellTable[cell + O_GENFLAGS];
     }
 
     return crg;
@@ -1263,7 +1265,7 @@ static void initCell(const int cell)
 {
     static int zeroCounter = 0;
     sCrg crg;
-
+    sCrg * ptr;
 	/*
 	 * Fill in the cell as if it was a boundary cell.
 	 */
@@ -1283,16 +1285,24 @@ static void initCell(const int cell)
 	cellTable[cell + O_CD] = deadCell;
 	cellTable[cell + O_CDR] = deadCell;
 	cellTable[cell + O_LOOP] = NULL_CELL;
-	if (cell == 0)
-	{
-	    zeroCounter++;
-	    printf("zero %d\n",zeroCounter);
-	}
-	if (cell <= deadCell)
+
+	if (cell < deadCell)
 	{
 	    crg = cellToColRowGen(cell);
-	    cellTable[cell + O_GENFLAGS] += (crg.gen << 8);
-	    cellTable[cell + O_COLROW] = crg.col << 8 + crg.row;
+	    ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+	    ptr->flags = CHOOSECELL;
+	    ptr->gen = crg.gen;
+	    ptr->row = crg.row;
+	    ptr->col = crg.col;
+	}
+	if (cell == deadCell)
+	{
+	    crg = cellToColRowGen(cell);
+	    ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+	    ptr->flags = 0;
+	    ptr->gen = -1;
+	    ptr->row = -1;
+	    ptr->col = -1;
 	}
 
 	return;
@@ -1300,11 +1310,11 @@ static void initCell(const int cell)
 
 void dumpCellTable()
 {
-    sCrg crg;
+    sCrg * ptr;
     for(int i=0; i < cellTableSize; i+=strIntSize)
     {
-        crg=cellToColRowGen(i);
-        printf("e%d #%d : r%d c%d g%d f%d s%d sum%d i%d\n", i, i/strIntSize, crg.row, crg.col, crg.gen, crg.flags, cellTable[i],cellTable[i+O_SUMNEAR], cellTable[i+O_INDEX]);
+        ptr = (sCrg *) &cellTable[i+O_GENFLAGS];
+        printf("e%d #%d : r%d c%d g%d f%d s%d sum%d i%d\n", i, i/strIntSize, ptr->row, ptr->col, ptr->gen, ptr->flags, cellTable[i], cellTable[i+O_SUMNEAR], cellTable[i+O_INDEX]);
     }
 }
 
