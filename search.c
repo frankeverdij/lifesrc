@@ -222,6 +222,7 @@ initCells(void)
 	initNextState(bornRules, liveRules);
 	initTransit(states, transit);
 	initImplic(states, implic);
+	dumpCellTable();
 }
 
 
@@ -1315,6 +1316,7 @@ void dumpCellTable()
     {
         ptr = (sCrg *) &cellTable[i+O_GENFLAGS];
         printf("e%d #%d : r%d c%d g%d f%d s%d sum%d i%d\n", i, i/strIntSize, ptr->row, ptr->col, ptr->gen, ptr->flags, cellTable[i], cellTable[i+O_SUMNEAR], cellTable[i+O_INDEX]);
+        printf("%d %d %d %d %d %d %d %d\n", cellTable[i+O_CUL], cellTable[i+O_CU], cellTable[i+O_CUR], cellTable[i+O_CL],cellTable[i+O_CR],cellTable[i+O_CDL],cellTable[i+O_CD],cellTable[i+O_CDR]);
     }
 }
 
