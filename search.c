@@ -222,7 +222,7 @@ initCells(void)
 	initNextState(bornRules, liveRules);
 	initTransit(states, transit);
 	initImplic(states, implic);
-	dumpCellTable();
+	//dumpCellTable();
 }
 
 
