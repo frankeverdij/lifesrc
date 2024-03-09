@@ -568,13 +568,15 @@ examineNext(void)
 	DPRINTF("Examining saved cell %d %d %d # %d (%s) for consistency\n",
 		ptr->row, ptr->col, ptr->gen, cell,
 		((cellTable[cell + O_GENFLAGS] & FREECELL) ? "free" : "forced"));
-    printf(" en %d\n",cellTable[cell + O_LOOP]);
+    //printf(" en loop %d\n",cellTable[cell + O_LOOP]);
 
-	if (cellTable[cell + O_LOOP] && (setCell(cellTable[cell + O_LOOP], cellTable[cell], FALSE) != OK))
+	if (cellTable[cell + O_LOOP] != NULL_CELL)
 	{
-		return ERROR;
-	}
-
+	    if (setCell(cellTable[cell + O_LOOP], cellTable[cell], FALSE) != OK)
+	    {
+		    return ERROR;
+	    }
+    }
 	return consistify10(cell);
 }
 
