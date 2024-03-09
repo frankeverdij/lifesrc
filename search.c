@@ -292,6 +292,8 @@ initSearchOrder(void)
 	    searchList[i] = table[i];
 	    cellTable[searchList[i] + O_INDEX] = i;
 	    stateList[i] = cellTable[searchList[i]];
+	    sCrg * ptr = (sCrg *)&cellTable[searchList[i] + O_GENFLAGS];
+	    DPRINTF("sort %d %d %d\n", ptr->row, ptr->col, ptr->gen);
 	}
 	searchList[searchCount] = NULL_CELL;
 	stateList[searchCount] = ON + UNK;
@@ -441,56 +443,56 @@ consistify(const int cell)
 	 * For each unknown neighbor, set its state as indicated.
 	 * Return an error if any neighbor is inconsistent.
 	 */
-	    	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+	    	sCrg * ptr = (sCrg *) &cellTable[prevCell + O_GENFLAGS];
 
 //crg = cellToColRowGen(prevCell);
-	DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
-		ptr->row, ptr->col, ptr->gen,
+	DPRINTF("Forcing unknown neighbors of cell %d %d %d # %d %s\n",
+		ptr->row, ptr->col, ptr->gen, cell,
 		((state == ON) ? "on" : "off"));
 
-	if ((cellTable[prevCell + O_CUL] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CUL]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CUL], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((cellTable[prevCell + O_CU] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CU]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CU], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((cellTable[prevCell + O_CUR] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CUR]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CUR], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((cellTable[prevCell + O_CL] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CL]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CL], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((cellTable[prevCell + O_CR] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CR]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CR], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((cellTable[prevCell + O_CDL] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CDL]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CDL], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((cellTable[prevCell + O_CD] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CD]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CD], state, FALSE) != OK))
 	{
 		return ERROR;
 	}
 
-	if ((cellTable[prevCell + O_CDR] == UNK) &&
+	if ((cellTable[cellTable[prevCell + O_CDR]] == UNK) &&
 		(setCell(cellTable[prevCell + O_CDR], state, FALSE) != OK))
 	{
 		return ERROR;
