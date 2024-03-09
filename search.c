@@ -309,7 +309,9 @@ initSearchOrder(void)
 Status
 setCell(const int cell, const State state, const Bool free)
 {
+#ifdef DEBUG_FLAG
     sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+#endif
 
 	if (cellTable[cell] == state)
 	{
@@ -364,7 +366,7 @@ static Status
 consistify(const int cell)
 {
     int row,col,gen;
-	int	prevCell;
+	int	dummyCell, prevCell;
 	int	desc;
 	State	state, cellState;
 	Flags	flags;
@@ -439,60 +441,25 @@ consistify(const int cell)
 	 * For each unknown neighbor, set its state as indicated.
 	 * Return an error if any neighbor is inconsistent.
 	 */
-   	sCrg * ptr = (sCrg *) &cellTable[prevCell + O_GENFLAGS];
+#ifdef DEBUG_FLAG
+  	sCrg * ptr = (sCrg *) &cellTable[prevCell + O_GENFLAGS];
+#endif
 
 	DPRINTF("Forcing unknown neighbors of cell %d %d %d # %d %s\n",
 		ptr->row, ptr->col, ptr->gen, cell,
 		((state == ON) ? "on" : "off"));
 
-	if ((cellTable[cellTable[prevCell + O_CUL]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CUL], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((cellTable[cellTable[prevCell + O_CU]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CU], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((cellTable[cellTable[prevCell + O_CUR]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CUR], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((cellTable[cellTable[prevCell + O_CL]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CL], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((cellTable[cellTable[prevCell + O_CR]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CR], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((cellTable[cellTable[prevCell + O_CDL]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CDL], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((cellTable[cellTable[prevCell + O_CD]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CD], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((cellTable[cellTable[prevCell + O_CDR]] == UNK) &&
-		(setCell(cellTable[prevCell + O_CDR], state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
+    for (int i = O_CUL; i <= O_CDR; i++)
+    {
+        dummyCell = cellTable[prevCell + i];
+	    if (cellTable[dummyCell] == UNK)
+	    {
+	        if (setCell(dummyCell, state, FALSE) != OK)
+	        {
+	    	    return ERROR;
+	    	}
+        }
+    }
 	DPRINTF("Implications successful\n");
 
 	return OK;
@@ -559,8 +526,9 @@ examineNext(void)
 	 * and for consistency with its previous and next generations.
 	 */
 	cell = *nextSet++;
+#ifdef DEBUG_FLAG
     sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
-
+#endif
 	DPRINTF("Examining saved cell %d %d %d # %d (%s) for consistency\n",
 		ptr->row, ptr->col, ptr->gen, cell,
 		((cellTable[cell + O_GENFLAGS] & FREECELL) ? "free" : "forced"));
@@ -614,8 +582,9 @@ backup(void)
 	while (newSet != baseSet)
 	{
 		cell = *--newSet;
+#ifdef DEBUG_FLAG
     	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
-
+#endif
 		DPRINTF("backing up cell %d %d %d # %d, was %s, %s\n",
 			ptr->row,ptr->col,ptr->gen,cell,
 			((cellTable[cell] == ON) ? "on" : "off"),
@@ -881,9 +850,9 @@ mapCell(const int cell, Bool forward)
 	int	col;
 	int	gen;
 	int	tmp;
-
+#ifdef DEBUG_FLAG
     sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
-
+#endif
     gen = ptr->gen;
 	row = ptr->row;
 	col = ptr->col;
@@ -965,7 +934,7 @@ loopCells(int cell1, int cell2)
 	if ((cell1 == deadCell) || (cell2 == deadCell))
 		fatal("Attemping to use deadCell in a loop");
 
-	if ((cell1 == cell2) && (cell1 != NULL_CELL) && (cell2 != NULL_CELL))
+	if ((cell1 == cell2) && (cell1 != NULL_CELL))
 		return;
 
 	/*
@@ -985,7 +954,7 @@ loopCells(int cell1, int cell2)
 	 */
 	for (cell = cellTable[cell1 + O_LOOP]; cell != cell1; cell = cellTable[cell + O_LOOP])
 	{
-		if ((cell == cell2) && (cell != NULL_CELL) && (cell2 != NULL_CELL))
+		if ((cell == cell2) && (cell != NULL_CELL))
 			return;
 	}
 
