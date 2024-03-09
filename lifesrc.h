@@ -24,7 +24,7 @@
  * Build options
  */
 #ifndef DEBUG_FLAG
-#define	DEBUG_FLAG	0	/* nonzero for debugging features */
+#define	DEBUG_FLAG	1	/* nonzero for debugging features */
 #endif
 
 

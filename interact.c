@@ -1640,9 +1640,10 @@ dumpState(const char * file)
 	while (set != nextSet)
 	{
 		cell = *set++;
-	    crg = cellToColRowGen(cell);
+	    //crg = cellToColRowGen(cell);
+    	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 
-		fprintf(fp, "S %d %d %d %d %d\n", crg.row, crg.col,	crg.gen,
+		fprintf(fp, "S %d %d %d %d %d\n", ptr->row, ptr->col,	ptr->gen,
 		    cellTable[cell], (cellTable[cell + O_GENFLAGS] & FREECELL) ? 1 : 0);
 	}
 
