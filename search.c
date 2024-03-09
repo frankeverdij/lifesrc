@@ -74,7 +74,6 @@ static	Status	consistify(int const);
 static	Status	consistify10(int const);
 static	Status	examineNext(void);
 static	int	getDesc(const int);
-void dumpCellTable();
 
 
 /*
@@ -222,7 +221,6 @@ initCells(void)
 	initNextState(bornRules, liveRules);
 	initTransit(states, transit);
 	initImplic(states, implic);
-	dumpCellTable();
 }
 
 
@@ -311,8 +309,7 @@ initSearchOrder(void)
 Status
 setCell(const int cell, const State state, const Bool free)
 {
-    //sCrg crg = cellToColRowGen(cell);
-    	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+    sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 
 	if (cellTable[cell] == state)
 	{
@@ -367,7 +364,6 @@ static Status
 consistify(const int cell)
 {
     int row,col,gen;
-    //sCrg crg;
 	int	prevCell;
 	int	desc;
 	State	state, cellState;
@@ -443,9 +439,8 @@ consistify(const int cell)
 	 * For each unknown neighbor, set its state as indicated.
 	 * Return an error if any neighbor is inconsistent.
 	 */
-	    	sCrg * ptr = (sCrg *) &cellTable[prevCell + O_GENFLAGS];
+   	sCrg * ptr = (sCrg *) &cellTable[prevCell + O_GENFLAGS];
 
-//crg = cellToColRowGen(prevCell);
 	DPRINTF("Forcing unknown neighbors of cell %d %d %d # %d %s\n",
 		ptr->row, ptr->col, ptr->gen, cell,
 		((state == ON) ? "on" : "off"));
@@ -552,7 +547,6 @@ static Status
 examineNext(void)
 {
 	int	cell;
-    //sCrg crg;
 	/*
 	 * If there are no more cells to examine, then what we have
 	 * is consistent.
@@ -565,12 +559,11 @@ examineNext(void)
 	 * and for consistency with its previous and next generations.
 	 */
 	cell = *nextSet++;
-    //crg = cellToColRowGen(cell);
-        	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+    sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+
 	DPRINTF("Examining saved cell %d %d %d # %d (%s) for consistency\n",
 		ptr->row, ptr->col, ptr->gen, cell,
 		((cellTable[cell + O_GENFLAGS] & FREECELL) ? "free" : "forced"));
-    //printf(" en loop %d\n",cellTable[cell + O_LOOP]);
 
 	if (cellTable[cell + O_LOOP] != NULL_CELL)
 	{
@@ -617,13 +610,12 @@ int
 backup(void)
 {
 	int	cell;
-    //sCrg crg;
+
 	while (newSet != baseSet)
 	{
 		cell = *--newSet;
     	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 
-        //crg = cellToColRowGen(cell);
 		DPRINTF("backing up cell %d %d %d # %d, was %s, %s\n",
 			ptr->row,ptr->col,ptr->gen,cell,
 			((cellTable[cell] == ON) ? "on" : "off"),
@@ -889,7 +881,7 @@ mapCell(const int cell, Bool forward)
 	int	col;
 	int	gen;
 	int	tmp;
-    //sCrg crg = cellToColRowGen(cell);
+
     sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 
     gen = ptr->gen;
@@ -1042,7 +1034,7 @@ symCell(const int cell)
 	int	row;
 	int	col;
 	int	gen;
-    // crg = cellToColRowGen(cell);
+
 	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 
 	int	nRow;
@@ -1126,7 +1118,7 @@ linkCell(int cell)
 	int	col;
 	int	gen;
 	sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
-    //sCrg crg = cellToColRowGen(cell);
+
 	int pairCell;
 
     gen = ptr->gen;
@@ -1179,7 +1171,6 @@ findCell(int row, int col, int gen)
 {
 	int	i, cell;
 	sCrg * ptr;
-	//sCrg crg;
 
 	/*
 	 * If the cell is a normal cell, then we know where it is.
@@ -1199,19 +1190,19 @@ findCell(int row, int col, int gen)
 	{
 	    return deadCell;
 	}
-//	DPRINTF("Looking for %d %d %d\n", row, col, gen);
+
 	/*
 	 * It is an auxilliary cell. Iterate though the list and
 	 * try to find it.
 	 */
+    DPRINTF("Looking for %d %d %d\n", row, col, gen);
     for (cell = deadCell; cell < deadCell + strIntSize * auxCellCount; cell += strIntSize)
     {
-        //crg = cellToColRowGen(cell);
  	    ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
-       if ((ptr->row == row) && (ptr->col == col) &&
+        if ((ptr->row == row) && (ptr->col == col) &&
 			(ptr->gen == gen))
 		{
-//		    DPRINTF("Found Aux Cell %d %d %d # %d\n", crg.row, crg.col, crg.gen, cell);
+		    DPRINTF("Found Aux Cell %d %d %d # %d\n", crg.row, crg.col, crg.gen, cell);
 			return cell;
 		}
     }
@@ -1229,7 +1220,7 @@ findCell(int row, int col, int gen)
         DPRINTF(" to %zd\n", cellTableSize);
     }    
     initCell(cell);
-    ptr = (sCrg *)&cellTable[cell + O_GENFLAGS];
+    ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
     ptr->flags = CHOOSECELL;
     ptr->gen = gen;
     ptr->row = row;
@@ -1237,43 +1228,16 @@ findCell(int row, int col, int gen)
     return cell;
 }
 
-/*sCrg cellToColRowGen (int cell)
-{
-    sCrg crg;
-    sCrg * ptr;
-
-    if (cell == deadCell)
-    {
-        crg.gen = genMax;
-        crg.row = rowMax + 1;
-        crg.col = colMax + 1;
-        crg.flags = 0;
-    }
-    else if (cell > deadCell)
-    {
-        ptr = (sCrg *)&cellTable[cell + O_GENFLAGS];
-        crg.flags = ptr->flags;
-        crg.gen = ptr->gen;
-        crg.row = ptr->row;
-        crg.col = ptr->col;
-    }
-    else
-    {
-    }
-
-    return crg;
-}*/
 
 /*
  * Initialize a new cell.
  * The cell is initialized as if it was a boundary cell.
- * Warning: The first allocation MUST be of the deadCell.
+ * Warning: The f(sCrg *) &cellTable[cell + O_GENFLAGS];irst allocation MUST be of the deadCell.
  */
 static void initCell(int cell)
 {
-    static int zeroCounter = 0;
-    //sCrg crg;
-    sCrg * ptr;
+    sCrg * ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
+
 	/*
 	 * Fill in the cell as if it was a boundary cell.
 	 */
@@ -1296,7 +1260,6 @@ static void initCell(int cell)
 
 	if (cell < deadCell)
 	{
-	    ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 	    cell /= strIntSize;
         ptr->gen = cell % genMax;
         cell /= genMax;
@@ -1304,10 +1267,9 @@ static void initCell(int cell)
         ptr->col = cell / (rowMax + 2);
         ptr->flags = CHOOSECELL;
 	}
+	
 	if (cell == deadCell)
 	{
-	    //crg = cellToColRowGen(cell);
-	    ptr = (sCrg *) &cellTable[cell + O_GENFLAGS];
 	    ptr->flags = 0;
 	    ptr->gen = genMax;
 	    ptr->row = rowMax + 1;
@@ -1317,15 +1279,5 @@ static void initCell(int cell)
 	return;
 }
 
-void dumpCellTable()
-{
-    sCrg * ptr;
-    for(int i=0; i < cellTableSize; i+=strIntSize)
-    {
-        ptr = (sCrg *) &cellTable[i+O_GENFLAGS];
-        printf("e%d #%d : r%d c%d g%d f%d s%d sum%d i%d l%d\n", i, i/strIntSize, ptr->row, ptr->col, ptr->gen, ptr->flags, cellTable[i], cellTable[i+O_SUMNEAR], cellTable[i+O_INDEX], cellTable[i+O_LOOP]);
-        printf("%d %d %d %d %d %d %d %d\n", cellTable[i+O_CUL], cellTable[i+O_CU], cellTable[i+O_CUR], cellTable[i+O_CL],cellTable[i+O_CR],cellTable[i+O_CDL],cellTable[i+O_CD],cellTable[i+O_CDR]);
-    }
-}
 
 /* END CODE */
