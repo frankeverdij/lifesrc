@@ -56,7 +56,7 @@ static  int searchCount;
 static	Cell *	newCells;		/* cells ready for allocation */
 static	Cell *	deadCell;		/* boundary cell value */
 static	Cell **	searchList;		/* current list of cells to search */
-static	Cell *	cellTable[MAX_CELLS];	/* table of usual cells */
+static	Cell **	cellTable;	/* table of usual cells */
 static	Cell *	auxTable[AUX_CELLS];	/* table of auxillary cells */
 static	RowInfo	dummyRowInfo;		/* dummy info for ignored cells */
 static	ColInfo	dummyColInfo;		/* dummy info for ignored cells */
@@ -89,7 +89,7 @@ initCells(void)
 	int	row;
 	int	col;
 	int	gen;
-	int	i;
+	int	i, cellTableSize;
 	Bool	edge;
 	Cell *	cell;
 	Cell *	cell2;
@@ -117,8 +117,10 @@ initCells(void)
 	 * Then allocate the cells in the cell table.
 	 */
 	deadCell = allocateCell();
+    cellTableSize = (rowMax + 2) * (colMax + 2) * genMax + 1;
+    cellTable = (Cell **) malloc(sizeof(Cell *) * cellTableSize);
 
-	for (i = 0; i < MAX_CELLS; i++)
+	for (i = 0; i < cellTableSize; i++)
 		cellTable[i] = allocateCell();
 
 	/*
@@ -243,7 +245,6 @@ initSearchOrder(void)
 	int	col;
 	int	gen;
 	int	count;
-	Cell *	table[MAX_CELLS];
 	globals_struct g;
 	
 	g.colMax = colMax;
@@ -259,7 +260,15 @@ initSearchOrder(void)
 	 * Ignore cells that are not relevant to the search due to symmetry.
 	 */
 	searchCount = 0;
-
+    if (searchList == NULL)
+    {
+        searchList = (Cell **) malloc(sizeof(Cell *) * ((rowMax + 2) * (colMax + 2) * genMax + 1));
+    }
+    else
+    {
+        fatal("searchList already allocated!\n");
+    }
+    
 	for (gen = 0; gen < genMax; gen++)
 		for (col = 1; col <= colMax; col++)
 			for (row = 1; row <= rowMax; row++)
@@ -276,23 +285,20 @@ initSearchOrder(void)
 		if (bwdSym && (col >= row ))
 			continue;
 
-		table[searchCount++] = findCell(row, col, gen);
+		searchList[searchCount++] = findCell(row, col, gen);
 	}
 
 	/*
 	 * Now sort the table based on our desired search order.
 	 */
-	qsort_r((char *) table, searchCount, sizeof(Cell *), &orderSortFunc, &g);
+	qsort_r((char *) searchList, searchCount, sizeof(Cell *), &orderSortFunc, &g);
 
 	/*
 	 * Finally build the search list from the table elements in the
 	 * final order.
 	 */
-	searchList = (Cell **) malloc(sizeof(Cell *) * (searchCount + 1));
-
 	for (int i = 0; i < searchCount; i++)
 	{
-	    searchList[i] = table[i];
 	    searchList[i]->index = i;
 	}
 	searchList[searchCount] = NULL;
