@@ -475,30 +475,12 @@ consistify10(const int cell)
 
 	if (consistify(cellTable[cell + O_FUTURE]) != OK)
 		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CUL] + O_FUTURE]) != OK)
-		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CU] + O_FUTURE]) != OK)
-		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CUR] + O_FUTURE]) != OK)
-		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CL] + O_FUTURE]) != OK)
-		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CR] + O_FUTURE]) != OK)
-		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CDL] + O_FUTURE]) != OK)
-		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CD] + O_FUTURE]) != OK)
-		return ERROR;
-
-	if (consistify(cellTable[cellTable[cell + O_CDR] + O_FUTURE]) != OK)
-		return ERROR;
+		
+    for (int i = O_CUL; i <= O_CDR; i++)
+	{
+	    if (consistify(cellTable[cellTable[cell + i] + O_FUTURE]) != OK)
+	    	return ERROR;
+    }
 
 	return OK;
 }
