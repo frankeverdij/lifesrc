@@ -5,6 +5,6 @@
 #include "state.h"
 #include "cell.h"
 
-void setState(const int idx, const State state, State * stateIndex);
+void setState(const int cell, const State state);
 
 #endif /* SETSTATE_H */

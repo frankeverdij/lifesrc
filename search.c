@@ -155,7 +155,7 @@ initCells(void)
 				if (!edge)
 				{
 					linkCell(cell);
-					setState(cell, UNK, stateList);
+					setState(cell, UNK);
 					ptr = (sCrg * ) &cellTable[cell + O_GENFLAGS];
 					ptr->flags |= FREECELL;
 				}
@@ -283,18 +283,15 @@ initSearchOrder(void)
 	 * final order.
 	 */
 	searchList = (int *) malloc(sizeof(int) * (searchCount + 1));
-	stateList = (State *) malloc(sizeof(State) * (searchCount + 1));
 
 	for (int i = 0; i < searchCount; i++)
 	{
 	    searchList[i] = table[i];
 	    cellTable[searchList[i] + O_INDEX] = i;
-	    stateList[i] = cellTable[searchList[i]];
 	    sCrg * ptr = (sCrg *)&cellTable[searchList[i] + O_GENFLAGS];
 	    DPRINTF("sort %d %d %d\n", ptr->row, ptr->col, ptr->gen);
 	}
 	searchList[searchCount] = NULL_CELL;
-	stateList[searchCount] = ON + UNK;
     searchIdx = 0;
 }
 
@@ -336,7 +333,7 @@ setCell(const int cell, const State state, const Bool free)
 
 	*newSet++ = cell;
 
-	setState(cell, state, stateList);
+	setState(cell, state);
 	if (free)
 	    cellTable[cell + O_GENFLAGS] |= FREECELL;
 	else
@@ -592,7 +589,7 @@ backup(void)
 
 		if (!(cellTable[cell + O_GENFLAGS] & FREECELL))
 		{
-			setState(cell, UNK, stateList);
+			setState(cell, UNK);
 			cellTable[cell + O_GENFLAGS] |= FREECELL;
 
 			continue;
@@ -637,7 +634,7 @@ go(int cell, State state, Bool free)
 
 		free = FALSE;
 		state = 1 - cellTable[cell];
-		setState(cell, UNK, stateList);
+		setState(cell, UNK);
 	}
 }
 
@@ -653,9 +650,9 @@ getNormalUnknown(void)
 
 	for (int i = searchIdx; i < searchCount; i++)
 	{
-		if (stateList[i] == UNK)
-		{
 		    cell = searchList[i];
+		if (cellTable[cell] == UNK)
+		{
 		    if (cellTable[cell + O_GENFLAGS] & CHOOSECELL)
 		    {
 		    	searchIdx = i;
@@ -724,7 +721,7 @@ search(const Bool batch)
 
 		free = FALSE;
 		state = 1 - cellTable[cell];
-		setState(cell, UNK, stateList);
+		setState(cell, UNK);
 	}
 	else
 	{
