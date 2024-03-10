@@ -56,7 +56,6 @@ static  int searchCount;
 static	Cell *	newCells;		/* cells ready for allocation */
 static	Cell *	deadCell;		/* boundary cell value */
 static	Cell **	searchList;		/* current list of cells to search */
-static  State * stateList;
 static	Cell *	cellTable[MAX_CELLS];	/* table of usual cells */
 static	Cell *	auxTable[AUX_CELLS];	/* table of auxillary cells */
 static	RowInfo	dummyRowInfo;		/* dummy info for ignored cells */
@@ -150,7 +149,7 @@ initCells(void)
 				if (!edge)
 				{
 					linkCell(cell);
-					setState(cell, UNK, stateList);
+					setState(cell, UNK);
 					cell->flags |= FREECELL;
 				}
 
@@ -290,16 +289,13 @@ initSearchOrder(void)
 	 * final order.
 	 */
 	searchList = (Cell **) malloc(sizeof(Cell *) * (searchCount + 1));
-	stateList = (State *) malloc(sizeof(State) * (searchCount + 1));
 
 	for (int i = 0; i < searchCount; i++)
 	{
 	    searchList[i] = table[i];
 	    searchList[i]->index = i;
-	    stateList[i] = searchList[i]->state;
 	}
 	searchList[searchCount] = NULL;
-	stateList[searchCount] = ON + UNK;
     searchIdx = 0;
 }
 
@@ -337,7 +333,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 
 	*newSet++ = cell;
 
-	setState(cell, state, stateList);
+	setState(cell, state);
 	if (free)
 	    cell->flags |= FREECELL;
 	else
@@ -622,7 +618,7 @@ backup(void)
 
 		if (!(cell->flags & FREECELL))
 		{
-			setState(cell, UNK, stateList);
+			setState(cell, UNK);
 			cell->flags |= FREECELL;
 
 			continue;
@@ -667,7 +663,7 @@ go(Cell * cell, State state, Bool free)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		setState(cell, UNK, stateList);
+		setState(cell, UNK);
 	}
 }
 
@@ -683,9 +679,9 @@ getNormalUnknown(void)
 
 	for (int i = searchIdx; i < searchCount; i++)
 	{
-		if (stateList[i] == UNK)
-		{
 		    cell = searchList[i];
+		if (cell->state == UNK)
+		{
 		    if (cell->flags & CHOOSECELL)
 		    {
 		    	searchIdx = i;
@@ -754,7 +750,7 @@ search(const Bool batch)
 
 		free = FALSE;
 		state = 1 - cell->state;
-		setState(cell, UNK, stateList);
+		setState(cell, UNK);
 	}
 	else
 	{
