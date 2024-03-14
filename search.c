@@ -123,6 +123,11 @@ initCells(void)
 	for (i = 0; i < cellTableSize; i++)
 		cellTable[i] = allocateCell();
 
+    /*
+     * Allocate the setTable.
+     */
+    setTable = (Cell **) malloc(sizeof(Cell *) * cellTableSize);
+
 	/*
 	 * Link the cells together.
 	 */

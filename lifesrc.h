@@ -32,7 +32,7 @@
  */
 #define	DUMP_VERSION	7		/* version of dump file */
 
-#define	ALLOC_SIZE	50000		/* chunk size for cell allocation */
+#define	ALLOC_SIZE	3000		/* chunk size for cell allocation */
 #define	VIEW_MULT	1000		/* viewing frequency multiplier */
 #define	DUMP_MULT	1000		/* dumping frequency multiplier */
 #define	DUMP_FILE	"lifesrc.dmp"	/* default dump file name */
@@ -210,7 +210,7 @@ EXTERN	char *	outputFile;	/* file to output results to */
 /*
  * Data about all of the cells.
  */
-EXTERN	Cell *	setTable[MAX_CELLS];	/* table of cells whose value is set */
+EXTERN	Cell **	setTable;	/* table of cells whose value is set */
 EXTERN	Cell **	newSet;		/* where to add new cells into setting table */
 EXTERN	Cell **	nextSet;	/* next cell in setting table to examine */
 EXTERN	Cell **	baseSet;	/* base of changeable part of setting table */
