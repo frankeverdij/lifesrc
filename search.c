@@ -342,6 +342,18 @@ setCell(Cell * const cell, const State state, const Bool free)
 	return OK;
 }
 
+void shortSetCell(Cell * const cell, const State state)
+{
+    if (cell->state == UNK)
+    {
+        *newSet++ = cell;
+        setState(cell, state);
+        cell->flags &= ~FREECELL;
+    }
+
+    return;
+}
+
 
 /*
  * Calculate the current descriptor for a cell.
@@ -362,7 +374,8 @@ getDesc(const Cell * const cell)
 static Status
 consistify(Cell * const cell)
 {
-	Cell *	prevCell;
+	Cell *	dummyCell;
+	Cell *  prevCell;
 	int	desc;
 	State	state, cellState;
 	Flags	flags;
@@ -442,53 +455,15 @@ consistify(Cell * const cell)
 		prevCell->row, prevCell->col, prevCell->gen,
 		((state == ON) ? "on" : "off"));
 
-	if ((prevCell->cul->state == UNK) &&
-		(setCell(prevCell->cul, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
+    shortSetCell(prevCell->cul, state);
+    shortSetCell(prevCell->cu, state);
+    shortSetCell(prevCell->cur, state);
+    shortSetCell(prevCell->cl, state);
+    shortSetCell(prevCell->cr, state);
+    shortSetCell(prevCell->cdl, state);
+    shortSetCell(prevCell->cd, state);
+    shortSetCell(prevCell->cdl, state);
 
-	if ((prevCell->cu->state == UNK) &&
-		(setCell(prevCell->cu, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((prevCell->cur->state == UNK) &&
-		(setCell(prevCell->cur, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((prevCell->cl->state == UNK) &&
-		(setCell(prevCell->cl, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((prevCell->cr->state == UNK) &&
-		(setCell(prevCell->cr, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((prevCell->cdl->state == UNK) &&
-		(setCell(prevCell->cdl, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((prevCell->cd->state == UNK) &&
-		(setCell(prevCell->cd, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
-
-	if ((prevCell->cdr->state == UNK) &&
-		(setCell(prevCell->cdr, state, FALSE) != OK))
-	{
-		return ERROR;
-	}
 
 	DPRINTF("Implications successful\n");
 
