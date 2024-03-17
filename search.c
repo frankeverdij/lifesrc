@@ -391,6 +391,12 @@ consistify(Cell * const cell)
 	desc = SUMTODESC(prevCell->state, prevCell->sumNear);
 	state = transit[desc];
 
+    /*
+     * This was the first iteration of the code logic which determines
+     * either the setting of an unknown cell state from the previous cell,
+     * or exiting if the cell state given from the transit table contradicts
+     * the current known cell state.
+
 	if (state != UNK)
 	    if (state != cell->state)
     		if (setCell(cell, state, FALSE) == ERROR)
@@ -398,6 +404,26 @@ consistify(Cell * const cell)
 	cellState = cell->state;
 	if (cellState == UNK)
 		return OK;
+
+	 * The code below is equivalent and faster.
+     */
+
+    if ((cell->state ^ state) == ON)
+        return ERROR;
+    if (cell->state == UNK)
+    {
+        if (state == UNK)
+        {
+            return OK;
+        }
+        else
+        {
+            *newSet++ = cell;
+            setState(cell, state);
+            cell->flags &= ~FREECELL;
+        }
+    }
+    cellState = cell->state;
 
 	/*
 	 * Now look up the previous generation in the implic table.
