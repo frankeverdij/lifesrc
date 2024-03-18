@@ -374,10 +374,9 @@ getDesc(const Cell * const cell)
 static Status
 consistify(Cell * const cell)
 {
-	Cell *	dummyCell;
 	Cell *  prevCell;
 	int	desc;
-	State	state, cellState;
+	State	state;
 	Flags	flags;
 
 	/*
@@ -423,7 +422,6 @@ consistify(Cell * const cell)
             cell->flags &= ~FREECELL;
         }
     }
-    cellState = cell->state;
 
 	/*
 	 * Now look up the previous generation in the implic table.
@@ -437,7 +435,7 @@ consistify(Cell * const cell)
 
 	DPRINTF("Implication flags %x\n", flags);
 
-	if (cellState == OFF)
+	if (cell->state == OFF)
 	{
 	    if (flags & N0IC0)
 	        if (setCell(prevCell, OFF, FALSE) != OK)
