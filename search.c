@@ -428,66 +428,54 @@ consistify(Cell * const cell)
 	 * If this cell implies anything about the cell or its neighbors
 	 * in the previous generation, then handle that.
 	 */
-	flags = implic[desc];
 
-	if (flags == 0)
+	/*
+	 * The shift of 'flags' depending on cell->state is a trick to save
+	 * an 'if' statement since the bitflags for set cells is exactly the same
+	 * as for unset cells, except they are left shifted by 4 bits.
+	 */
+
+	flags = implic[desc] >> 4 * cell->state;
+
+	if (!flags)
 		return OK;
 
 	DPRINTF("Implication flags %x\n", flags);
 
-	if (cell->state == OFF)
-	{
-	    if (flags & N0IC0)
-	        if (setCell(prevCell, OFF, FALSE) != OK)
+	if (flags & N0IC0)
+	    if (setCell(prevCell, OFF, FALSE) != OK)
 		    return ERROR;
-	    if (flags & N0IC1)
-	        if (setCell(prevCell, ON, FALSE) != OK)
+	if (flags & N0IC1)
+	    if (setCell(prevCell, ON, FALSE) != OK)
 		    return ERROR;
-	    state = UNK;
-	    if (flags & N0ICUN0)
-	        state = OFF;
-	    if (flags & N0ICUN1)
-	        state = ON;
-	}
-	else  /* cellState == ON */
+
+    /*
+     * state is a function of four outcomes of flags & (N0ICUN0|N0ICUN1):
+     * UNK if 0 ; 0 if 1 ; 1 if 2 or 3
+     */
+    state = (!(flags & N0ICUN0)) * UNK;
+	if (flags & N0ICUN1)
+	    state = ON;
+
+	if (state != UNK)
 	{
-	    if (flags & N1IC0)
-	        if (setCell(prevCell, OFF, FALSE) != OK)
-		        return ERROR;
-	    if (flags & N1IC1)
-	        if (setCell(prevCell, ON, FALSE) != OK)
-		        return ERROR;
-	    state = UNK;
-	    if (flags & N1ICUN0)
-	        state = OFF;
-	    if (flags & N1ICUN1)
-	        state = ON;
-	}
+    	/*
+	     * For each unknown neighbor, set its state as indicated.
+	     * Return an error if any neighbor is inconsistent.
+	     */
+	    DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
+	    	prevCell->row, prevCell->col, prevCell->gen,
+	    	((state == ON) ? "on" : "off"));
 
-	if (state == UNK)
-	{
-		DPRINTF("Implications successful\n");
-
-		return OK;
-	}
-
-	/*
-	 * For each unknown neighbor, set its state as indicated.
-	 * Return an error if any neighbor is inconsistent.
-	 */
-	DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
-		prevCell->row, prevCell->col, prevCell->gen,
-		((state == ON) ? "on" : "off"));
-
-    shortSetCell(prevCell->cul, state);
-    shortSetCell(prevCell->cu, state);
-    shortSetCell(prevCell->cur, state);
-    shortSetCell(prevCell->cl, state);
-    shortSetCell(prevCell->cr, state);
-    shortSetCell(prevCell->cdl, state);
-    shortSetCell(prevCell->cd, state);
-    shortSetCell(prevCell->cdl, state);
-
+        shortSetCell(prevCell->cul, state);
+        shortSetCell(prevCell->cu, state);
+        shortSetCell(prevCell->cur, state);
+        shortSetCell(prevCell->cl, state);
+        shortSetCell(prevCell->cr, state);
+        shortSetCell(prevCell->cdl, state);
+        shortSetCell(prevCell->cd, state);
+        shortSetCell(prevCell->cdl, state);
+    }
 
 	DPRINTF("Implications successful\n");
 
