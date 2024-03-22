@@ -437,9 +437,6 @@ consistify(Cell * const cell)
 
 	flags = implic[desc] >> 4 * cell->state;
 
-	if (!flags)
-		return OK;
-
 	DPRINTF("Implication flags %x\n", flags);
 
 	if (flags & N0IC0)
@@ -449,32 +446,42 @@ consistify(Cell * const cell)
 	    if (setCell(prevCell, ON, FALSE) != OK)
 		    return ERROR;
 
-    /*
-     * state is a function of four outcomes of flags & (N0ICUN0|N0ICUN1):
-     * UNK if 0 ; 0 if 1 ; 1 if 2 or 3
-     */
-    state = (!(flags & N0ICUN0)) * UNK;
 	if (flags & N0ICUN1)
-	    state = ON;
-
-	if (state != UNK)
 	{
-    	/*
-	     * For each unknown neighbor, set its state as indicated.
-	     * Return an error if any neighbor is inconsistent.
-	     */
-	    DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
-	    	prevCell->row, prevCell->col, prevCell->gen,
-	    	((state == ON) ? "on" : "off"));
+        /*
+         * For each unknown neighbor, set its state as indicated.
+         * Return an error if any neighbor is inconsistent.
+         */
+        DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
+            prevCell->row, prevCell->col, prevCell->gen, "on");
 
-        shortSetCell(prevCell->cul, state);
-        shortSetCell(prevCell->cu, state);
-        shortSetCell(prevCell->cur, state);
-        shortSetCell(prevCell->cl, state);
-        shortSetCell(prevCell->cr, state);
-        shortSetCell(prevCell->cdl, state);
-        shortSetCell(prevCell->cd, state);
-        shortSetCell(prevCell->cdl, state);
+        shortSetCell(prevCell->cul, ON);
+        shortSetCell(prevCell->cu, ON);
+        shortSetCell(prevCell->cur, ON);
+        shortSetCell(prevCell->cl, ON);
+        shortSetCell(prevCell->cr, ON);
+        shortSetCell(prevCell->cdl, ON);
+        shortSetCell(prevCell->cd, ON);
+        shortSetCell(prevCell->cdl, ON);
+        
+    	DPRINTF("Implications successful\n");
+
+	    return OK;
+    }
+    
+    if (flags & N0ICUN0)
+    {
+        DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
+            prevCell->row, prevCell->col, prevCell->gen, "off");
+
+        shortSetCell(prevCell->cul, OFF);
+        shortSetCell(prevCell->cu, OFF);
+        shortSetCell(prevCell->cur, OFF);
+        shortSetCell(prevCell->cl, OFF);
+        shortSetCell(prevCell->cr, OFF);
+        shortSetCell(prevCell->cdl, OFF);
+        shortSetCell(prevCell->cd, OFF);
+        shortSetCell(prevCell->cdl, OFF);
     }
 
 	DPRINTF("Implications successful\n");
