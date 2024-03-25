@@ -319,27 +319,28 @@ setCell(Cell * const cell, const State state, const Bool free)
 		return OK;
 	}
 
-	if (cell->state != UNK)
+	if (cell->state == UNK)
 	{
-		DPRINTF("setCell %d %d %d to state %s inconsistent\n",
-			cell->row, cell->col, cell->gen,
-			(state == ON) ? "on" : "off");
+    	DPRINTF("setCell %d %d %d to %s, %s successful\n",
+	    	cell->row, cell->col, cell->gen,
+	    	(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
-		return ERROR;
+	    *newSet++ = cell;
+	    setState(cell, state);
+
+	    if (!(free))
+	        cell->flags &= ~FREECELL;
+	    else
+	        cell->flags |= FREECELL;
+
+    	return OK;
 	}
-	DPRINTF("setCell %d %d %d to %s, %s successful\n",
+
+	DPRINTF("setCell %d %d %d to state %s inconsistent\n",
 		cell->row, cell->col, cell->gen,
-		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
+		(state == ON) ? "on" : "off");
 
-	*newSet++ = cell;
-
-	setState(cell, state);
-	if (free)
-	    cell->flags |= FREECELL;
-	else
-	    cell->flags &= ~FREECELL;
-
-	return OK;
+	return ERROR;
 }
 
 void shortSetCell(Cell * const cell, const State state)
@@ -407,21 +408,21 @@ consistify(Cell * const cell)
 	 * The code below is equivalent and faster.
      */
 
-    if ((cell->state ^ state) == ON)
-        return ERROR;
     if (cell->state == UNK)
     {
-        if (state == UNK)
-        {
-            return OK;
-        }
-        else
+        if (state != UNK)
         {
             *newSet++ = cell;
             setState(cell, state);
             cell->flags &= ~FREECELL;
         }
+        else
+        {
+            return OK;
+        }
     }
+    else if ((cell->state ^ state) == ON)
+        return ERROR;
 
 	/*
 	 * Now look up the previous generation in the implic table.
@@ -442,6 +443,7 @@ consistify(Cell * const cell)
 	if (flags & N0IC0)
 	    if (setCell(prevCell, OFF, FALSE) != OK)
 		    return ERROR;
+
 	if (flags & N0IC1)
 	    if (setCell(prevCell, ON, FALSE) != OK)
 		    return ERROR;
