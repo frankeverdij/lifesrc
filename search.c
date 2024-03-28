@@ -318,27 +318,28 @@ setCell(const int cell, const State state, const Bool free)
 		return OK;
 	}
 
-	if (cellTable[cell] != UNK)
+	if (cellTable[cell] == UNK)
 	{
-		DPRINTF("setCell %d %d %d # %d to state %s inconsistent\n",
-			ptr->row, ptr->col, ptr->gen, cell,
-			(state == ON) ? "on" : "off");
+	    DPRINTF("setCell %d %d %d # %d to %s, %s successful\n",
+		    ptr->row, ptr->col, ptr->gen, cell,
+		    (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
-		return ERROR;
-	}
-	DPRINTF("setCell %d %d %d # %d to %s, %s successful\n",
+	    *newSet++ = cell;
+	    setState(cell, state);
+
+	    if (!(free))
+	        cellTable[cell + O_GENFLAGS] &= ~FREECELL;
+	    else
+	        cellTable[cell + O_GENFLAGS] |= FREECELL;
+
+	    return OK;
+    }
+
+    DPRINTF("setCell %d %d %d # %d to state %s inconsistent\n",
 		ptr->row, ptr->col, ptr->gen, cell,
-		(free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
+		(state == ON) ? "on" : "off");
 
-	*newSet++ = cell;
-
-	setState(cell, state);
-	if (free)
-	    cellTable[cell + O_GENFLAGS] |= FREECELL;
-	else
-	    cellTable[cell + O_GENFLAGS] &= ~FREECELL;
-
-	return OK;
+	return ERROR;
 }
 
 
