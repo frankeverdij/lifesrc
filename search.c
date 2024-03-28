@@ -296,7 +296,6 @@ initSearchOrder(void)
 }
 
 
-
 /*
  * Set the state of a cell to the specified state.
  * The state is either ON or OFF.
@@ -343,6 +342,19 @@ setCell(const int cell, const State state, const Bool free)
 }
 
 
+void shortSetCell(const int cell, const State state)
+{
+    if (cellTable[cell] == UNK)
+    {
+        *newSet++ = cell;
+        setState(cell, state);
+        cellTable[cell + O_GENFLAGS] &= ~FREECELL;
+    }
+
+    return;
+}
+
+
 /*
  * Calculate the current descriptor for a cell.
  */
@@ -363,9 +375,9 @@ static Status
 consistify(const int cell)
 {
     int row,col,gen;
-	int	dummyCell, prevCell;
+	int	prevCell;
 	int	desc;
-	State	state, cellState;
+	State	state;
 	Flags	flags;
 
 	/*
@@ -378,86 +390,75 @@ consistify(const int cell)
 	prevCell = cellTable[cell + O_PAST];
 	desc = SUMTODESC(cellTable[prevCell], cellTable[prevCell + O_SUMNEAR]);
 	state = transit[desc];
-	if (state != UNK)
-	    if (state != cellTable[cell])
-    		if (setCell(cell, state, FALSE) == ERROR)
-	    		return ERROR;
-	cellState = cellTable[cell];
-	if (cellState == UNK)
-		return OK;
+
+    if (cellTable[cell] == UNK)
+    {
+        if (state != UNK)
+        {
+            *newSet++ = cell;
+            setState(cell, state);
+            cellTable[cell + O_GENFLAGS] &= ~FREECELL;
+        }
+        else
+        {
+            return OK;
+        }
+    }
+    else if ((cellTable[cell] ^ state) == ON)
+        return ERROR;
 
 	/*
 	 * Now look up the previous generation in the implic table.
 	 * If this cell implies anything about the cell or its neighbors
 	 * in the previous generation, then handle that.
 	 */
-	flags = implic[desc];
-
-	if (flags == 0)
-		return OK;
+	flags = implic[desc] >> 4 * cellTable[cell];
 
 	DPRINTF("Implication flags %x\n", flags);
 
-	if (cellState == OFF)
-	{
-	    if (flags & N0IC0)
-	        if (setCell(prevCell, OFF, FALSE) != OK)
-		    return ERROR;
-	    if (flags & N0IC1)
-	        if (setCell(prevCell, ON, FALSE) != OK)
-		    return ERROR;
-	    state = UNK;
-	    if (flags & N0ICUN0)
-	        state = OFF;
-	    if (flags & N0ICUN1)
-	        state = ON;
-	}
-	else  /* cellState == ON */
-	{
-	    if (flags & N1IC0)
-	        if (setCell(prevCell, OFF, FALSE) != OK)
-		        return ERROR;
-	    if (flags & N1IC1)
-	        if (setCell(prevCell, ON, FALSE) != OK)
-		        return ERROR;
-	    state = UNK;
-	    if (flags & N1ICUN0)
-	        state = OFF;
-	    if (flags & N1ICUN1)
-	        state = ON;
-	}
+    if (flags & N0IC0)
+        if (setCell(prevCell, OFF, FALSE) != OK)
+            return ERROR;
 
-	if (state == UNK)
-	{
-		DPRINTF("Implications successful\n");
+    if (flags & N0IC1)
+        if (setCell(prevCell, ON, FALSE) != OK)
+            return ERROR;
 
-		return OK;
-	}
-
-	/*
-	 * For each unknown neighbor, set its state as indicated.
-	 * Return an error if any neighbor is inconsistent.
-	 */
+    if (flags & N0ICUN1)
+    {
+        /*
+         * For each unknown neighbor, set its state as indicated.
+         * Return an error if any neighbor is inconsistent.
+         */
 #ifdef DEBUG_FLAG
   	sCrg * ptr = (sCrg *) &cellTable[prevCell + O_GENFLAGS];
 #endif
 
-	DPRINTF("Forcing unknown neighbors of cell %d %d %d # %d %s\n",
-		ptr->row, ptr->col, ptr->gen, cell,
-		((state == ON) ? "on" : "off"));
+        DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
+            prevCell->row, prevCell->col, prevCell->gen, "on");
 
-    for (int i = O_CUL; i <= O_CDR; i++)
-    {
-        dummyCell = cellTable[prevCell + i];
-	    if (cellTable[dummyCell] == UNK)
-	    {
-	        if (setCell(dummyCell, state, FALSE) != OK)
-	        {
-	    	    return ERROR;
-	    	}
-        }
+        for (int i = O_CUL; i <= O_CDR ; i++)
+            shortSetCell(cellTable[prevCell + i], ON);
+        
+        DPRINTF("Implications successful\n");
+
+        return OK;
     }
-	DPRINTF("Implications successful\n");
+
+    if (flags & N0ICUN0)
+    {
+#ifdef DEBUG_FLAG
+  	sCrg * ptr = (sCrg *) &cellTable[prevCell + O_GENFLAGS];
+#endif
+
+        DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
+            prevCell->row, prevCell->col, prevCell->gen, "off");
+
+        for (int i = O_CUL; i <= O_CDR ; i++)
+            shortSetCell(cellTable[prevCell + i], OFF);
+    }
+
+    DPRINTF("Implications successful\n");
 
 	return OK;
 }
