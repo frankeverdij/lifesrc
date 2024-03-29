@@ -59,8 +59,6 @@ static Cell *  deadCell; /* boundary cell value */
 static Cell ** searchList; /* current list of cells to search */
 static Cell *  cellTable[MAX_CELLS]; /* table of usual cells */
 static Cell *  auxTable[AUX_CELLS]; /* table of auxillary cells */
-static RowInfo dummyRowInfo; /* dummy info for ignored cells */
-static ColInfo dummyColInfo; /* dummy info for ignored cells */
 
 
 /*
@@ -139,8 +137,6 @@ initCells(void)
                 cell->row = row;
                 cell->col = col;
                 cell->flags |= CHOOSECELL;
-//                cell->rowInfo = &dummyRowInfo;
-//                cell->colInfo = &dummyColInfo;
 
                 /*
                  * If this is not an edge cell, then its state
@@ -200,19 +196,6 @@ initCells(void)
                 cell->past = cell2;
                 cell2->future = cell;
             }
-        }
-    }
-
-    /*
-     * Initialize the row and column info addresses for generation 0.
-     */
-    for (row = 1; row <= rowMax; row++)
-    {
-        for (col = 1; col <= colMax; col++)
-        {
-            cell = findCell(row, col, 0);
-//            cell->rowInfo = &rowInfo[row];
-//            cell->colInfo = &colInfo[col];
         }
     }
 
@@ -774,38 +757,13 @@ search(const Bool batch)
         }
 
         /*
-         * If we have enough columns found, then remember to
-         * write it to the output file.  Also keep the last
-         * columns count values up to date.
-         */
-        needWrite = FALSE;
-
-        if (outputCols &&
-            (fullColumns >= outputLastCols + outputCols))
-        {
-            outputLastCols = fullColumns;
-            needWrite = TRUE;
-        }
-
-        if (outputLastCols > fullColumns)
-            outputLastCols = fullColumns;
-
-        /*
          * If it is time to view the progress,then show it.
          */
-        if (needWrite || (viewFreq && (++viewCount >= viewFreq)))
+        if (viewFreq && (++viewCount >= viewFreq))
         {
             viewCount = 0;
             printGen(curGen);
         }
-
-        /*
-         * Write the progress to the output file if needed.
-         * This is done after viewing it so that the write
-         * message will stay visible for a while.
-         */
-        if (needWrite)
-            writeGen(outputFile, TRUE);
 
         /*
          * Check for commands.
