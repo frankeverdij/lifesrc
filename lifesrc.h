@@ -33,8 +33,8 @@
 #define	DUMP_VERSION	7		/* version of dump file */
 
 #define	ALLOC_SIZE	50000		/* chunk size for cell allocation */
-#define	VIEW_MULT	1000		/* viewing frequency multiplier */
-#define	DUMP_MULT	1000		/* dumping frequency multiplier */
+#define	VIEW_MULT	1000000		/* viewing frequency multiplier */
+#define	DUMP_MULT	1000000		/* dumping frequency multiplier */
 #define	DUMP_FILE	"lifesrc.dmp"	/* default dump file name */
 #define	LINE_SIZE	132		/* size of input lines */
 
