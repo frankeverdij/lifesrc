@@ -448,7 +448,7 @@ consistify(Cell * const cell)
         shortSetCell(prevCell->cr, ON);
         shortSetCell(prevCell->cdl, ON);
         shortSetCell(prevCell->cd, ON);
-        shortSetCell(prevCell->cdl, ON);
+        shortSetCell(prevCell->cdr, ON);
         
         DPRINTF("Implications successful\n");
 
@@ -467,7 +467,7 @@ consistify(Cell * const cell)
         shortSetCell(prevCell->cr, OFF);
         shortSetCell(prevCell->cdl, OFF);
         shortSetCell(prevCell->cd, OFF);
-        shortSetCell(prevCell->cdl, OFF);
+        shortSetCell(prevCell->cdr, OFF);
     }
 
     DPRINTF("Implications successful\n");
