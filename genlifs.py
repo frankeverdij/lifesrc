@@ -69,7 +69,7 @@ def read_lif(lif_filename):
     return b
 
 class Partials:
-    def __init__(self, rows = 0, wantPeriod = 0, unkCols = 1):
+    def __init__(self, rows = 0, wantPeriod = 0, unkCols = 1, symmetric = False):
         self.period = 0
         self.wantPeriod = wantPeriod
         self.basePartials = []
@@ -81,6 +81,7 @@ class Partials:
         self.symmetry = False
         self.rows = rows
         self.unkCols = unkCols
+        self.symmetric = symmetric
 
     def read_partials(self):
         while (path.exists(str(self.period)+".lif")):
@@ -179,7 +180,8 @@ class Partials:
                 fh.close()
 
             # write shell script for this pattern
-            self.write_script(dirpath, futureGen, i,
+            if not self.symmetric:
+                self.write_script(dirpath, futureGen, i,
                                 str(i) + "_" + futureGen, '')
             if (self.symmetry and (j[1] % self.period == 0) and (j[2] == j[3])):
                 # create an extra script for the symmetric case
@@ -218,9 +220,11 @@ def main():
         help = 'number of extra rows with unknown cells appended')
     parser.add_argument('-p', '--period', type = int, default = 0,
         help = 'override period of ship in script creation')
+    parser.add_argument('-s', '--symmetric', action = 'store_true',
+        help = 'only output symmetric patterns')
     args = parser.parse_args(sys.argv[1:])
 
-    p = Partials(args.rows, args.period, args.unknowncolumns)
+    p = Partials(args.rows, args.period, args.unknowncolumns, args.symmetric)
     p.read_partials()
     p.create_mirrors()
     p.get_dimensions()
