@@ -617,8 +617,11 @@ main(int argc, char ** argv)
 
 		if (outputFile == NULL)
 		{
-			getCommands();
-			continue;
+			if (!noWait)
+			{
+				getCommands();
+				continue;
+			}
 		}
 
 		/*
