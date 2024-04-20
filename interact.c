@@ -646,7 +646,7 @@ main(int argc, char ** argv)
 
 		if (foundCount == 0)
 		{
-		    printf("Total time searched%s.", timeBuf);
+		    printf("Total time searched%s.\n", timeBuf);
 			fatal("No objects found.");
         }
 		ttyClose();
