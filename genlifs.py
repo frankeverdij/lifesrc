@@ -231,6 +231,8 @@ def main():
     for i in range(args.columnrange):
         p.create_patterns(i)
         p.write_patterns()
+    with open("genlifs.command", 'w') as fh:
+        fh.write(" ".join(sys.argv)+'\n')
 
 if __name__ == "__main__":
     main()
