@@ -69,7 +69,7 @@ def read_lif(lif_filename):
     return b
 
 class Partials:
-    def __init__(self, rows = 0, wantPeriod = 0, unkCols = 1, symmetric = False):
+    def __init__(self, rows = 0, wantPeriod = 0, unkCols = [1, 1], symmetric = False):
         self.period = 0
         self.wantPeriod = wantPeriod
         self.basePartials = []
@@ -144,9 +144,9 @@ class Partials:
 
                 # add in the unknown background field starting from row unkRow
                 for m in range(unkRow, height):
-                    for n in range(ncol + 2 * self.unkCols):
+                    for n in range(ncol + self.unkCols[0] + self.unkCols[1]):
                         bg[m][self.basePartialInfo[baseHanded][0] \
-                            - self.unkCols + n] = '?'
+                            - self.unkCols[0] + n] = '?'
 
                 # add left partial on top of the background
                 for m in range(self.basePartialInfo[baseHanded][1]):
@@ -214,8 +214,10 @@ def main():
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-cr', '--columnrange', type = int, default = 5,
         help = 'range of columns added to the center of the pattern')
-    parser.add_argument('-uk', '--unknowncolumns', type = int, default = 1,
-        help = 'extra columns added to the center of the background')
+    parser.add_argument('-ukl', '--unknowncolumnsleft', type=int, default=1,
+        help='extra columns added to the left of the background')
+    parser.add_argument('-ukr', '--unknowncolumnsright', type=int, default=1,
+        help='extra columns added to the right of the background')
     parser.add_argument('-r', '--rows', type = int, default = 0,
         help = 'number of extra rows with unknown cells appended')
     parser.add_argument('-p', '--period', type = int, default = 0,
@@ -224,7 +226,8 @@ def main():
         help = 'only output symmetric patterns')
     args = parser.parse_args(sys.argv[1:])
 
-    p = Partials(args.rows, args.period, args.unknowncolumns, args.symmetric)
+    unkcol = [args.unknowncolumnsleft, args.unknowncolumnsright]
+    p = Partials(args.rows, args.period, unkcol, args.symmetric)
     p.read_partials()
     p.create_mirrors()
     p.get_dimensions()
