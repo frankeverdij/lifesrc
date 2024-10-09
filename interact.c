@@ -8,6 +8,7 @@
 #include "lifesrc.h"
 #include "state.h"
 #include "setstate.h"
+#include "printasc.h"
 #include "printblk.h"
 #include "printrle.h"
 #include "sortorder.h"
@@ -1405,44 +1406,9 @@ printGen(int gen)
 
 	ttyPrintf("\n");
 
-    if (!blockOutput) {
-	    for (row = 1; row <= rowMax; row++)
-	    {
-		    for (col = 1; col <= colMax; col++)
-		    {
-		    	cell = findCell(row, col, gen);
-
-		    	switch (cell->state)
-		    	{
-		    		case OFF:
-		    			msg = ". ";
-		    			break;
-
-		    		case ON:
-		    			msg = "O ";
-		    			break;
-
-		    		case UNK:
-		    			msg = "? ";
-
-		    			if (cell->flags & FROZENCELL)
-		    				msg = "+ ";
-
-		    			if (!(cell->flags & CHOOSECELL))
-		    				msg = "X ";
-
-		    			break;
-		    	}
-
-		    	/*
-		    	 * If wide output, print only one character,
-		    	 * else print both characters.
-		    	 */
-		    	ttyWrite(msg, (colMax < 40) + 1);
-		    }
-
-		    ttyWrite("\n", 1);
-	    }
+    if (!blockOutput)
+    {
+        printAsc(gen);
 	}
 	else
 	{
