@@ -630,12 +630,12 @@ go(Cell * cell, State state, Bool free)
 
     for (;;)
     {
-        ++stepConfl;
         status = proceed(cell, state, free);
 
         if (status == OK)
             return OK;
 
+        ++stepConfl;
         cell = backup();
 
         if (cell == NULL_CELL)
