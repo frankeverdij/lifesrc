@@ -29,6 +29,7 @@ static	char *	initFile;	/* file containing initial cells */
 static	char *	loadFile;	/* file to load state from */
 static  Bool    blockOutput; /* print Unicode blocks instead of character */
 static  Bool    RLEOutput;  /* print additional RLE code */
+static  Bool    augmentOutput;  /* print additional UTF8 code for stateList info */
 static time_t startTime;
 static char timeBuf[256] = {0};
 
@@ -324,6 +325,8 @@ main(int argc, char ** argv)
 
 				break;
 
+			case 'V':
+                augmentOutput = TRUE;
 			case 'v':
 				/*
 				 * Set view frequency.
@@ -1408,11 +1411,11 @@ printGen(int gen)
 
     if (!blockOutput)
     {
-        printAsc(gen, FALSE);
+        printAsc(gen, augmentOutput);
 	}
 	else
 	{
-        printBlk(gen, FALSE);
+        printBlk(gen, augmentOutput);
 	}
 
     if (RLEOutput)

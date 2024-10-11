@@ -19,7 +19,7 @@ static const char *ascii[128] =
      " ", " ", " ", " ", " ", " ", " ", " ",
      " ", " ", " ", " ", " ", " ", " ", " "};
 
-void printAsc(const int gen, const bool augment)
+void printAsc(const int gen, const Bool augment)
 {
     int idx;
     Cell * cell;
