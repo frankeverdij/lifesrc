@@ -254,10 +254,10 @@ initSearchOrder(void)
         if (colSym && (row >= colSym) && (col * 2 > colMax + 1))
             continue;
 
-        if (fwdSym && (colMax + 1 >= row + col))
+        if (fwdSym && (colMax + 1 > row + col))
             continue;
 
-        if (bwdSym && (col >= row ))
+        if (bwdSym && (col > row ))
             continue;
 
         table[searchCount++] = findCell(row, col, gen);
