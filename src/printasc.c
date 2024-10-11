@@ -1,9 +1,27 @@
 #include "lifesrc.h"
 #include "state.h"
 
-void printAsc(const int gen)
+static const char *ascii[128] =
+    {".", "O", "\033[9m.\033[29m", "\033[9mO\033[29m", "\033[7m.\033[27m", "\033[7mO\033[27m", "\033[4m.\033[24m", "\033[4mO\033[24m", 
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     "?", " ", "\033[9m?\033[29m", " ", "\033[7m?\033[27m", " ", "\033[4m?\033[24m", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     "+", " ", "\033[9m+\033[29m", " ", "\033[7m+\033[27m", " ", "\033[4m+\033[24m", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     "X", " ", "\033[9mX\033[29m", " ", "\033[7mX\033[27m", " ", "\033[4mX\033[24m", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " ",
+     " ", " ", " ", " ", " ", " ", " ", " "};
+
+void printAsc(const int gen, const bool augment)
 {
-    const char * msg;
+    int idx;
     Cell * cell;
 
     for (int row = 1; row <= rowMax; row++)
@@ -12,33 +30,17 @@ void printAsc(const int gen)
         {
             cell = findCell(row, col, gen);
 
-            switch (cell->state)
+            idx = cell->state;
+
+            if (cell->flags & FROZENCELL) idx = 64;
+            if (!(cell->flags & CHOOSECELL)) idx = 96;
+            if (augment)
             {
-                case OFF:
-                    msg = ". ";
-                    break;
-
-                case ON:
-                    msg = "O ";
-                    break;
-
-                case UNK:
-                    msg = "? ";
-
-                    if (cell->flags & FROZENCELL)
-                        msg = "+ ";
-
-                    if (!(cell->flags & CHOOSECELL))
-                        msg = "X ";
-
-                    break;
+                if (cell->index < 0) idx += 2;
+                if (cell->index == 0) idx += 4;
             }
 
-            /*
-             * If wide output, print only one character,
-             * else print both characters.
-             */
-            ttyWrite(msg, (colMax < 40) + 1);
+            ttyPrintf("%s ", ascii[idx]);
         }
 
         ttyWrite("\n", 1);

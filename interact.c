@@ -1408,7 +1408,7 @@ printGen(int gen)
 
     if (!blockOutput)
     {
-        printAsc(gen);
+        printAsc(gen, FALSE);
 	}
 	else
 	{
