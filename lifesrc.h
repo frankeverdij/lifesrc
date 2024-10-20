@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+
 #include "state.h"
 
 
@@ -199,10 +201,10 @@ EXTERN	int	curGen;		/* current generation for display */
 EXTERN	int	outputCols;	/* number of columns to save for output */
 EXTERN	int	outputLastCols;	/* last number of columns output */
 EXTERN	int	cellCount;	/* number of live cells in generation 0 */
-EXTERN	long	dumpFreq;	/* how often to perform dumps */
-EXTERN	long	dumpcount;	/* counter for dumps */
-EXTERN	long	viewFreq;	/* how often to view results */
-EXTERN	long	viewCount;	/* counter for viewing */
+EXTERN	int	dumpFreq;	/* how often to perform dumps */
+EXTERN	sig_atomic_t	dumpFlag;	/* sigaction flag for dumps */
+EXTERN	int	viewFreq;	/* how often to view results */
+EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
 EXTERN	char *	outputFile;	/* file to output results to */
 

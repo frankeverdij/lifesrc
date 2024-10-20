@@ -5,6 +5,8 @@
 
 #include <ctype.h>
 #include <time.h>
+#include <sys/time.h>
+
 #include "lifesrc.h"
 #include "state.h"
 #include "setstate.h"
@@ -13,6 +15,7 @@
 #include "printrle.h"
 #include "sortorder.h"
 #include "sectohms.h"
+#include "outputtimers.h"
 
 #define	VERSION	"3.8"
 
@@ -51,6 +54,12 @@ static	Bool		setRules(const char *);
 static	long		getNum(const char **, int);
 static	const char *	getStr(const char *, const char *);
 
+void alarm_handler(const int signo)
+{
+    if (signo == SIGUSR1) dumpFlag = TRUE;
+    if (signo == SIGUSR2) viewFlag = TRUE;
+}
+
 
 /*
  * Table of addresses of parameters which are loaded and saved.
@@ -75,9 +84,17 @@ static	int *	paramTable[] =
 int
 main(int argc, char ** argv)
 {
+    struct sigaction actDump, actView;
+    struct sigevent sevDump, sevView;
+    struct itimerspec itsDump, itsView;
+    timer_t tidDump, tidView;
+
     time_t end;
     long dif = 0;
 	const char *	str;
+
+    setSigaction(&actDump, SIGUSR1, &alarm_handler);
+    setSigaction(&actView, SIGUSR2, &alarm_handler);
 
 	if (--argc <= 0)
 	{
@@ -93,7 +110,8 @@ main(int argc, char ** argv)
 	/*
 	 * Set a couple of defaults.
 	 */
-	viewFreq = 10 * VIEW_MULT;
+	viewFreq = 10;
+	dumpFreq = 0;
 	colMax = 75;
 
 	/*
@@ -314,7 +332,9 @@ main(int argc, char ** argv)
 				/*
 				 * Get dump frequency.
 				 */
-				dumpFreq = atol(str) * DUMP_MULT;
+				dumpFreq = atoi(str);
+                createTimer(&sevDump, &itsDump, &tidDump, SIGUSR1, dumpFreq);
+
 				dumpFile = DUMP_FILE;
 
 				if ((argc > 0) && (**argv != '-'))
@@ -344,7 +364,8 @@ main(int argc, char ** argv)
 					}
 			    }
 				if (*str)
-					viewFreq = atol(str) * VIEW_MULT;
+					viewFreq = atoi(str);
+                createTimer(&sevView, &itsView, &tidView, SIGUSR2, viewFreq);
 
 				break;
 
@@ -582,6 +603,24 @@ main(int argc, char ** argv)
 
 	inited = TRUE;
 
+    /*
+     * Arm the output timers
+     */
+    if (dumpFreq)
+    {
+        if (timer_settime(tidDump, 0, &itsDump, NULL) == -1)
+        {
+            perror("timer_settime Dump failed");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (timer_settime(tidView, 0, &itsView, NULL) == -1)
+    {
+        perror("timer_settime View failed");
+        exit(EXIT_FAILURE);
+    }
+
 	/*
 	 * Initial commands are complete, now look for the object.
 	 */
@@ -610,10 +649,9 @@ main(int argc, char ** argv)
 		}
 
 		if (dumpFreq)
-		{
-			dumpcount = 0;
-			dumpState(dumpFile);
-		}
+        {
+            dumpState(dumpFile);
+        }
 
 		quitOk = (curStatus == NOT_EXIST);
 
@@ -679,8 +717,6 @@ getCommands(void)
 	const char *	cmd;
 	char		buf[LINE_SIZE];
 
-	dumpcount = 0;
-	viewCount = 0;
 	printGen(curGen);
 
 	while (TRUE)
@@ -1391,10 +1427,10 @@ printGen(int gen)
 		ttyPrintf(" -wc%d", colWidth);
 
 	if (viewFreq)
-		ttyPrintf(" -v%ld", viewFreq / VIEW_MULT);
+		ttyPrintf(" -v%d", viewFreq);
 
 	if (dumpFreq)
-		ttyPrintf(" -d%ld %s", dumpFreq / DUMP_MULT, dumpFile);
+		ttyPrintf(" -d%d %s", dumpFreq, dumpFile);
 
 	if (outputFile)
 	{

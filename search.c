@@ -750,19 +750,19 @@ search(const Bool batch)
         /*
          * If it is time to dump our state, then do that.
          */
-        if (dumpFreq && (++dumpcount >= dumpFreq))
+        if (dumpFlag)
         {
-            dumpcount = 0;
             dumpState(dumpFile);
+            dumpFlag = FALSE;
         }
 
         /*
          * If it is time to view the progress,then show it.
          */
-        if (viewFreq && (++viewCount >= viewFreq))
+        if (viewFlag)
         {
-            viewCount = 0;
             printGen(curGen);
+            viewFlag = FALSE;
         }
 
         /*
