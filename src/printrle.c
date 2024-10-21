@@ -13,7 +13,7 @@ char stateToString(const State state)
     if (state == ON)
         return 'o';
     if (state == UNK)
-        return '?';
+        return '.';
     if (state == 255)
         return '$';
 
