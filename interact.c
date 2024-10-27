@@ -96,6 +96,14 @@ main(int argc, char ** argv)
     setSigaction(&actDump, SIGUSR1, &alarm_handler);
     setSigaction(&actView, SIGUSR2, &alarm_handler);
 
+    /*
+     * echo the command line, before the program alters argc
+     */
+    ttyPrintf("Command line: \n");
+    for (int i=0; i < argc; i++) ttyPrintf("%s ",argv[i]);
+    ttyPrintf("\n\n");
+
+
 	if (--argc <= 0)
 	{
 		usage();
