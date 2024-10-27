@@ -333,8 +333,6 @@ main(int argc, char ** argv)
 				 * Get dump frequency.
 				 */
 				dumpFreq = atoi(str);
-                createTimer(&sevDump, &itsDump, &tidDump, SIGUSR1, dumpFreq);
-
 				dumpFile = DUMP_FILE;
 
 				if ((argc > 0) && (**argv != '-'))
@@ -365,7 +363,6 @@ main(int argc, char ** argv)
 			    }
 				if (*str)
 					viewFreq = atoi(str);
-                createTimer(&sevView, &itsView, &tidView, SIGUSR2, viewFreq);
 
 				break;
 
@@ -612,6 +609,7 @@ main(int argc, char ** argv)
      */
     if (dumpFreq)
     {
+        createTimer(&sevDump, &itsDump, &tidDump, SIGUSR1, dumpFreq);
         if (timer_settime(tidDump, 0, &itsDump, NULL) == -1)
         {
             perror("timer_settime Dump failed");
@@ -619,6 +617,7 @@ main(int argc, char ** argv)
         }
     }
 
+    createTimer(&sevView, &itsView, &tidView, SIGUSR2, viewFreq);
     if (timer_settime(tidView, 0, &itsView, NULL) == -1)
     {
         perror("timer_settime View failed");
