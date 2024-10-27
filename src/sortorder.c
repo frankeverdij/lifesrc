@@ -95,8 +95,9 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 			(midrowf-(double)c1->row)*(midrowf-(double)c1->row);
 		d2 = (midcolf-(double)c2->col)*(midcolf-(double)c2->col) + 
 			(midrowf-(double)c2->row)*(midrowf-(double)c2->row);
-		if(d1>d2) return 1;
-		if(d1<d2) return -1;
+	    // wide ordering needs opposite sign as opposed to the rest.
+		if(d1 < d2) return (g->orderWide ? 1 : -1);
+		if(d1 > d2) return (g->orderWide ? -1 : 1);
 		return gen_diff;
 	}
 	else if(g->orderMiddle || g->sortOrder==SORTORDER_MIDDLECOLOUT) {

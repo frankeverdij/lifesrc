@@ -460,6 +460,10 @@ main(int argc, char ** argv)
 							sortOrder = SORTORDER_BACKDIAG;
 							break;
 
+						case 'O':
+							sortOrder = SORTORDER_CENTEROUT;
+							break;
+
 						default:
 							fatal("Bad ordering or sorting option");
 					}
@@ -1391,6 +1395,8 @@ printGen(int gen)
 			ttyPrintf("r");
 		else if (sortOrder == SORTORDER_LEFTRIGHT)
 			ttyPrintf("c");
+		else if (sortOrder == SORTORDER_CENTEROUT)
+			ttyPrintf("O");
 	}
 
 	if (follow)
@@ -2324,6 +2330,7 @@ usage(void)
 	"   -oc  Set search order to examine from left to right",
 	"   -of  Set search order to examine from top left forward diagonal",
 	"   -ob  Set search order to examine from top right backward diagonal",
+	"   -oO  Set search order to examine outwards from the center",
 	"   -p   Only look for parents of last generation",
 	"   -a   Find all objects (even those with subPeriods)",
 	"   -v   View object every N million searches",
