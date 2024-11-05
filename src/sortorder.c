@@ -54,10 +54,10 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 		return gen_diff;
 	}
 	if(g->sortOrder==SORTORDER_BACKDIAG) {
-		if(colMax-c1->col+c1->row > colMax-c2->col+c2->row) return (g->orderInvert)?(-1):1;
-		if(colMax-c1->col+c1->row < colMax-c2->col+c2->row) return (g->orderInvert)?1:(-1);
-		if(abs(colMax-c1->col-c1->row) > abs(colMax-c2->col-c2->row)) return (g->orderWide)?1:(-1);
-		if(abs(colMax-c1->col-c1->row) < abs(colMax-c2->col-c2->row)) return (g->orderWide)?(-1):1;
+		if(g->colMax-c1->col+c1->row > g->colMax-c2->col+c2->row) return (g->orderInvert)?(-1):1;
+		if(g->colMax-c1->col+c1->row < g->colMax-c2->col+c2->row) return (g->orderInvert)?1:(-1);
+		if(abs(g->colMax-c1->col-c1->row) > abs(g->colMax-c2->col-c2->row)) return (g->orderWide)?1:(-1);
+		if(abs(g->colMax-c1->col-c1->row) < abs(g->colMax-c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
 	else if(g->sortOrder==SORTORDER_KNIGHT) {
@@ -182,7 +182,7 @@ orderSortFuncOld(const void * addr1, const void * addr2, const void *gvars)
 	 */
 	if (g->orderMiddle)
 	{
-		midCol = (colMax + 1) / 2;
+		midCol = (g->colMax + 1) / 2;
 
 		dif1 = c1->col - midCol;
 
