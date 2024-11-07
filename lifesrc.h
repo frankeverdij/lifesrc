@@ -10,6 +10,7 @@
 #include <signal.h>
 
 #include "state.h"
+#include "globals.h"
 
 
 /*
@@ -147,66 +148,29 @@ struct Cell
 
 /*
  * Current parameter values for the program to be saved over runs.
- * These values are dumped and loaded by the dump and load commands.
+ * These values and the globals struct are dumped and loaded by the
+ * dump and load commands.
  * If you add another parameter, be sure to also add it to paramTable,
  * preferably at the end so as to minimize dump file incompatibilities.
  */
-EXTERN	Status	curStatus;	/* current status of search */
-EXTERN	int	rowMax;		/* maximum number of rows */
-EXTERN	int	colMax;		/* maximum number of columns */
-EXTERN	int	genMax;		/* maximum number of generations */
-EXTERN	int	rowTrans;	/* translation of rows */
-EXTERN	int	colTrans;	/* translation of columns */
-EXTERN	Bool	rowSym;		/* enable row symmetry starting at column */
-EXTERN	Bool	colSym;		/* enable column symmetry starting at row */
-EXTERN	Bool	pointSym;	/* enable symmetry with central point */
-EXTERN	Bool	fwdSym;		/* enable forward diagonal symmetry */
-EXTERN	Bool	bwdSym;		/* enable backward diagonal symmetry */
-EXTERN	Bool	flipRows;	/* flip rows at column number from last to first generation */
-EXTERN	Bool	flipCols;	/* flip columns at row number from last to first generation */
-EXTERN	Bool	flipFwd;	/* flip forward diagonal (/) from last to first gen */
-EXTERN	Bool	flipBwd;	/* flip backward diagonal (\) from last to first gen */
-EXTERN	Bool	flipQuads;	/* flip quadrants from last to first gen */
-EXTERN	Bool	parent;		/* only look for parents */
-EXTERN	Bool	allObjects;	/* look for all objects including subPeriods */
-EXTERN	Bool	setDeep;	/* set cleared cells deeply from init file */
-EXTERN	int	nearCols;	/* maximum distance to be near columns */
-EXTERN	int	maxCount;	/* maximum number of cells in generation 0 */
-EXTERN	int	useRow;		/* row that must have at least one ON cell */
-EXTERN	int	useCol;		/* column that must have at least one ON cell */
-EXTERN	int	colCells;	/* maximum cells in a column */
-EXTERN	int	colWidth;	/* maximum width of each column */
-EXTERN	Bool	follow;		/* follow average position of previous column */
-EXTERN	Bool	orderWide;	/* ordering tries to find wide objects */
-EXTERN	Bool	orderGens;	/* ordering tries all gens first */
-EXTERN	Bool	orderInvert;	/* Inverts direction of non-wide orderings */
-EXTERN	Bool	orderMiddle;	/* ordering tries middle columns first */
-EXTERN	Bool	followGens;	/* try to follow setting of other gens */
-EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
-EXTERN  long stepConfl; /* step counter for one Proceed-Backup action */
-EXTERN  int sortOrder; /* sort direction */
+EXTERN Status curStatus; /* current status of search */
+EXTERN long stepConfl;   /* step counter for one Proceed-Backup action */
 
 /*
  * These values are not affected when dumping and loading since they
  * do not affect the status of a search in progress.
  * They are either setTable on the command line or are computed.
  */
-EXTERN	Bool	quiet;		/* don't output */
-EXTERN	Bool	debug;		/* enable debugging output (if compiled so) */
 EXTERN	Bool	quitOk;		/* ok to quit without confirming */
-EXTERN	Bool	inited;		/* initialization has been done */
 EXTERN	State	bornRules[9];	/* rules for whether a cell is to be born */
 EXTERN	State	liveRules[9];	/* rules for whether a live cell stays alive */
 EXTERN	int	curGen;		/* current generation for display */
 EXTERN	int	outputCols;	/* number of columns to save for output */
 EXTERN	int	outputLastCols;	/* last number of columns output */
 EXTERN	int	cellCount;	/* number of live cells in generation 0 */
-EXTERN	int	dumpFreq;	/* how often to perform dumps */
 EXTERN	sig_atomic_t	dumpFlag;	/* sigaction flag for dumps */
-EXTERN	int	viewFreq;	/* how often to view results */
 EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
-EXTERN	char *	outputFile;	/* file to output results to */
 
 
 /*
@@ -225,19 +189,19 @@ EXTERN	int	fullColumns;	/* columns in gen 0 which are fully set */
 /*
  * Global procedures
  */
-extern	void	getCommands(void);
-extern	void	initCells(void);
-extern	void	printGen(int);
-extern	void	writeGen(const char *, Bool);
-extern	void	dumpState(const char *);
+extern	void	getCommands(const globals * const);
+extern	void	initCells(globals * const g);
+extern	void	printGen(int, const globals * const);
+extern	void	writeGen(const char *, Bool, const globals * const);
+extern	void	dumpState(const char *, const globals * const);
 extern	void	adjustNear(Cell *, int);
-extern	Status	search(const Bool);
+extern	Status	search(const Bool, globals * const);
 extern	Status	proceed(Cell *, State, Bool);
 extern	Status	go(Cell *, State, Bool);
 extern	Status	setCell(Cell * const , const State, const Bool);
-extern	Cell *	findCell(int, int, int);
+extern	Cell *	findCell(int, int, int, const globals * const);
 extern	Cell *	backup(void);
-extern	Bool	subPeriods(void);
+extern	Bool	subPeriods(const globals * const);
 extern	void	loopCells(Cell *, Cell *);
 extern	void	fatal(const char *);
 extern	Bool	ttyOpen(void);

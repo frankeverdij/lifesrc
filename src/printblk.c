@@ -1,4 +1,5 @@
 #include "lifesrc.h"
+#include "globals.h"
 #include "state.h"
 
 static const char *colorBlockGfx[256] =
@@ -58,20 +59,20 @@ static const char *blockGfx[128] =
 #define COLORUCHK 16
 #define COLORFRZ 64
 
-void printBlk(const int gen, const Bool color)
+void printBlk(const int gen, const Bool color, const globals * const g)
 {
     int row;
     int col;
     int twoStates, second;
     const Cell *up, *down;
     
-    for (row = 0; row < rowMax; row += 2)
+    for (row = 0; row < g->rowMax; row += 2)
     {
-        for (col = 1; col <= colMax; col++)
+        for (col = 1; col <= g->colMax; col++)
         {
             if (color)
             {
-                up = findCell(row + 1, col, gen);
+                up = findCell(row + 1, col, gen, g);
                 twoStates = up->state;
                 if (twoStates == UNK)
                 {
@@ -82,9 +83,9 @@ void printBlk(const int gen, const Bool color)
                         twoStates = COLORFRZ;
                 }
 
-                if (row + 1 < rowMax)
+                if (row + 1 < g->rowMax)
                 {
-                    down = findCell(row + 2, col, gen);
+                    down = findCell(row + 2, col, gen, g);
                     second = down->state;
                     if (second == UNK)
                     {
@@ -101,11 +102,11 @@ void printBlk(const int gen, const Bool color)
                 ttyPrintf("%s", colorBlockGfx[twoStates]);
 
             } else {
-                up = findCell(row + 1, col, gen);
+                up = findCell(row + 1, col, gen, g);
                 twoStates = up->state;
-                if (row + 1 < rowMax)
+                if (row + 1 < g->rowMax)
                 {
-                    down = findCell(row + 2, col, gen);
+                    down = findCell(row + 2, col, gen, g);
                     twoStates += 2 * down->state;
                 }
             

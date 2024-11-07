@@ -1,4 +1,5 @@
 #include "lifesrc.h"
+#include "printasc.h"
 #include "state.h"
 
 static const char *ascii[128] =
@@ -20,25 +21,25 @@ static const char *ascii[128] =
      " ", " ", " ", " ", " ", " ", " ", " ",
      " ", " ", " ", " ", " ", " ", " ", " "};
 
-void printAsc(const int gen, const Bool augment)
+void printAsc(const int gen, const Bool augment, const globals * const g)
 {
     Bool changeFlag;
     int idx;
     Cell * cell;
 
-    for (int row = 1; row <= rowMax; row++)
+    for (int row = 1; row <= g->rowMax; row++)
     {
-        for (int col = 1; col <= colMax; col++)
+        for (int col = 1; col <= g->colMax; col++)
         {
 
-            cell = findCell(row, col, gen);
+            cell = findCell(row, col, gen, g);
             idx = cell->state;
 
             changeFlag = FALSE;
-            for (int i = 0; i < genMax; i++)
+            for (int i = 0; i < g->genMax; i++)
             {
                 if (i == gen) continue;
-                if (findCell(row, col, i)->state != idx) changeFlag = TRUE;
+                if (findCell(row, col, i, g)->state != idx) changeFlag = TRUE;
             }
 
             if (cell->flags & FROZENCELL) idx = 64;

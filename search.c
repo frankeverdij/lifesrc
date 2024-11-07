@@ -21,6 +21,7 @@
 #include "description.h"
 #include "sortorder.h"
 #include "setstate.h"
+#include "globals.h"
 
 /*
  * Table of state values.
@@ -64,11 +65,11 @@ static Cell *  auxTable[AUX_CELLS]; /* table of auxillary cells */
 /*
  * Local procedures
  */
-static void initSearchOrder(void);
-static void linkCell(Cell *);
-static State choose(const Cell *);
-static Cell * symCell(const Cell *);
-static Cell * mapCell(const Cell *, Bool);
+static void initSearchOrder(globals * const);
+static void linkCell(Cell *, const globals * const);
+static State choose(const Cell *, const globals * const);
+static Cell * symCell(const Cell *, const globals * const);
+static Cell * mapCell(const Cell *, Bool, const globals * const);
 static Cell * allocateCell(void);
 static Cell * getNormalUnknown(void);
 static Status consistify(Cell * const);
@@ -83,7 +84,7 @@ static int getDesc(const Cell * const);
  * Boundary cells are set to zero state.
  */
 void
-initCells(void)
+initCells(globals * const g)
 {
     int row;
     int col;
@@ -96,19 +97,19 @@ initCells(void)
     /*
      * Check whether valid parameters have been set.
      */
-    if ((rowMax <= 0) || (rowMax > ROW_MAX))
+    if ((g->rowMax <= 0) || (g->rowMax > ROW_MAX))
         fatal("Row number out of range");
 
-    if ((colMax <= 0) || (colMax > COL_MAX))
+    if ((g->colMax <= 0) || (g->colMax > COL_MAX))
         fatal("Column number out of range");
 
-    if ((genMax <= 0) || (genMax > GEN_MAX))
+    if ((g->genMax <= 0) || (g->genMax > GEN_MAX))
         fatal("Generation number out of range");
 
-    if ((rowTrans < -TRANS_MAX) || (rowTrans > TRANS_MAX))
+    if ((g->rowTrans < -TRANS_MAX) || (g->rowTrans > TRANS_MAX))
         fatal("Row translation number out of range");
 
-    if ((colTrans < -TRANS_MAX) || (colTrans > TRANS_MAX))
+    if ((g->colTrans < -TRANS_MAX) || (g->colTrans > TRANS_MAX))
         fatal("Column translation number out of range");
 
     /*
@@ -123,16 +124,16 @@ initCells(void)
     /*
      * Link the cells together.
      */
-    for (col = 0; col <= colMax+1; col++)
+    for (col = 0; col <= g->colMax+1; col++)
     {
-        for (row = 0; row <= rowMax+1; row++)
+        for (row = 0; row <= g->rowMax+1; row++)
         {
-            for (gen = 0; gen < genMax; gen++)
+            for (gen = 0; gen < g->genMax; gen++)
             {
                 edge = ((row == 0) || (col == 0) ||
-                    (row > rowMax) || (col > colMax));
+                    (row > g->rowMax) || (col > g->colMax));
 
-                cell = findCell(row, col, gen);
+                cell = findCell(row, col, gen, g);
                 cell->gen = gen;
                 cell->row = row;
                 cell->col = col;
@@ -145,7 +146,7 @@ initCells(void)
                  */
                 if (!edge)
                 {
-                    linkCell(cell);
+                    linkCell(cell, g);
                     setState(cell, UNK);
                     cell->flags |= FREECELL;
                 }
@@ -155,10 +156,10 @@ initCells(void)
                  * wrapping around at the ends.
                  */
                 cell->past = findCell(row, col,
-                    (gen+genMax-1) % genMax);
+                    (gen+g->genMax-1) % g->genMax, g);
 
                 cell->future = findCell(row, col,
-                    (gen+1) % genMax);
+                    (gen+1) % g->genMax, g);
 
                 /*
                  * If this is not an edge cell, and
@@ -166,10 +167,10 @@ initCells(void)
                  * this cell in the same loop as the
                  * next symmetrical cell.
                  */
-                if ((rowSym || colSym || pointSym ||
-                    fwdSym || bwdSym) && !edge)
+                if ((g->rowSym || g->colSym || g->pointSym ||
+                    g->fwdSym || g->bwdSym) && !edge)
                 {
-                    loopCells(cell, symCell(cell));
+                    loopCells(cell, symCell(cell, g));
                 }
             }
         }
@@ -180,26 +181,26 @@ initCells(void)
      * and the first generation, then change the future and past pointers
      * to implement it.  This is for translations and flips.
      */
-    if (rowTrans || colTrans || flipRows || flipCols || flipFwd || flipBwd || flipQuads)
+    if (g->rowTrans || g->colTrans || g->flipRows || g->flipCols || g->flipFwd || g->flipBwd || g->flipQuads)
     {
-        for (row = 0; row <= rowMax+1; row++)
+        for (row = 0; row <= g->rowMax+1; row++)
         {
-            for (col = 0; col <= colMax+1; col++)
+            for (col = 0; col <= g->colMax+1; col++)
             {
-                cell = findCell(row, col, genMax - 1);
-                cell2 = mapCell(cell, TRUE);
+                cell = findCell(row, col, g->genMax - 1, g);
+                cell2 = mapCell(cell, TRUE, g);
                 cell->future = cell2;
                 cell2->past = cell;
 
-                cell = findCell(row, col, 0);
-                cell2 = mapCell(cell, FALSE);
+                cell = findCell(row, col, 0, g);
+                cell2 = mapCell(cell, FALSE, g);
                 cell->past = cell2;
                 cell2->future = cell;
             }
         }
     }
 
-    initSearchOrder();
+    initSearchOrder(g);
 
     newSet = setTable;
     nextSet = setTable;
@@ -221,52 +222,42 @@ initCells(void)
  * from the left to the right columns.  The order can be changed though.
  */
 static void
-initSearchOrder(void)
+initSearchOrder(globals * const g)
 {
     int row;
     int col;
     int gen;
     int count;
     Cell * table[MAX_CELLS];
-    globals_struct g;
-    
-    g.colMax = colMax;
-    g.rowMax = rowMax;
-    g.parent = parent;
-    g.orderGens = orderGens;
-    g.orderInvert = orderInvert;
-    g.orderMiddle = orderMiddle;
-    g.orderWide = orderWide;
-    g.sortOrder = sortOrder;
     /*
      * Make a table of cells that will be searched.
      * Ignore cells that are not relevant to the search due to symmetry.
      */
     searchCount = 0;
 
-    for (gen = 0; gen < genMax; gen++)
-        for (col = 1; col <= colMax; col++)
-            for (row = 1; row <= rowMax; row++)
+    for (gen = 0; gen < g->genMax; gen++)
+        for (col = 1; col <= g->colMax; col++)
+            for (row = 1; row <= g->rowMax; row++)
     {
-        if (rowSym && (col >= rowSym) && (row * 2 > rowMax + 1))
+        if (g->rowSym && (col >= g->rowSym) && (row * 2 > g->rowMax + 1))
             continue;
 
-        if (colSym && (row >= colSym) && (col * 2 > colMax + 1))
+        if (g->colSym && (row >= g->colSym) && (col * 2 > g->colMax + 1))
             continue;
 
-        if (fwdSym && (colMax + 1 > row + col))
+        if (g->fwdSym && (g->colMax + 1 > row + col))
             continue;
 
-        if (bwdSym && (col > row ))
+        if (g->bwdSym && (col > row ))
             continue;
 
-        table[searchCount++] = findCell(row, col, gen);
+        table[searchCount++] = findCell(row, col, gen, g);
     }
 
     /*
      * Now sort the table based on our desired search order.
      */
-    qsort_r((char *) table, searchCount, sizeof(Cell *), &orderSortFunc, &g);
+    qsort_r((char *) table, searchCount, sizeof(Cell *), &orderSortFunc, g);
 
     /*
      * Finally build the search list from the table elements in the
@@ -683,13 +674,13 @@ getNormalUnknown(void)
  * as a nearby generation.
  */
 static State
-choose(const Cell * cell)
+choose(const Cell * cell, const globals * const g)
 {
     /*
      * If we are following cells in other generations,
      * then try to do that.
      */
-    if (followGens)
+    if (g->followGens)
     {
         if ((cell->past->state == ON) ||
             (cell->future->state == ON))
@@ -704,7 +695,7 @@ choose(const Cell * cell)
         }
     }
 
-    return chooseUnknown;
+    return g->chooseUnknown;
 }
 
 
@@ -713,7 +704,7 @@ choose(const Cell * cell)
  * Returns if an object is found, or is impossible.
  */
 Status
-search(const Bool batch)
+search(const Bool batch, globals * const g)
 {
     Cell * cell;
     Bool free;
@@ -735,7 +726,7 @@ search(const Bool batch)
     }
     else
     {
-        state = choose(cell);
+        state = choose(cell, g);
         free = TRUE;
     }
 
@@ -752,7 +743,7 @@ search(const Bool batch)
          */
         if (dumpFlag)
         {
-            dumpState(dumpFile);
+            dumpState(dumpFile, g);
             dumpFlag = FALSE;
         }
 
@@ -761,7 +752,7 @@ search(const Bool batch)
          */
         if (viewFlag)
         {
-            printGen(curGen);
+            printGen(curGen, g);
             viewFlag = FALSE;
         }
 
@@ -771,7 +762,7 @@ search(const Bool batch)
         if (!batch)
         {
             if (ttyCheck())
-                getCommands();
+                getCommands(g);
         }
 
         /*
@@ -782,7 +773,7 @@ search(const Bool batch)
         if (cell == NULL_CELL)
             return FOUND;
 
-        state = choose(cell);
+        state = choose(cell, g);
         free = TRUE;
     }
 }
@@ -795,7 +786,7 @@ search(const Bool batch)
  * Returns TRUE if there is an identical generation.
  */
 Bool
-subPeriods(void)
+subPeriods(const globals * const g)
 {
     int row;
     int col;
@@ -803,17 +794,17 @@ subPeriods(void)
     const Cell * cellG0;
     const Cell * cellGn;
 
-    for (gen = 1; gen < genMax; gen++)
+    for (gen = 1; gen < g->genMax; gen++)
     {
-        if (genMax % gen)
+        if (g->genMax % gen)
             continue;
 
-        for (row = 1; row <= rowMax; row++)
+        for (row = 1; row <= g->rowMax; row++)
         {
-            for (col = 1; col <= colMax; col++)
+            for (col = 1; col <= g->colMax; col++)
             {
-                cellG0 = findCell(row, col, 0);
-                cellGn = findCell(row, col, gen);
+                cellG0 = findCell(row, col, 0, g);
+                cellGn = findCell(row, col, gen, g);
 
                 if (cellG0->state != cellGn->state)
                     goto nextGen;
@@ -835,7 +826,7 @@ nextGen:;
  * called for cells belonging to those two generations.
  */
 static Cell *
-mapCell(const Cell * cell, Bool forward)
+mapCell(const Cell * cell, Bool forward, const globals * const g)
 {
     int row;
     int col;
@@ -844,49 +835,49 @@ mapCell(const Cell * cell, Bool forward)
     row = cell->row;
     col = cell->col;
 
-    if (flipRows && (col >= flipRows))
-        row = rowMax + 1 - row;
+    if (g->flipRows && (col >= g->flipRows))
+        row = g->rowMax + 1 - row;
 
-    if (flipCols && (row >= flipCols))
-        col = colMax + 1 - col;
+    if (g->flipCols && (row >= g->flipCols))
+        col = g->colMax + 1 - col;
 
-    if (flipQuads)
+    if (g->flipQuads)
     {                /* NEED TO GO BACKWARDS */
         tmp = col;
         col = row;
-        row = colMax + 1 - tmp;
+        row = g->colMax + 1 - tmp;
     }
 
     if (forward)
     {
-        if (flipFwd)
+        if (g->flipFwd)
         {       /* For Glide Symmetry */
             tmp = col;
-            col = rowMax + 1 - col;
-            row = colMax + 1 - tmp;
+            col = g->rowMax + 1 - col;
+            row = g->colMax + 1 - tmp;
         }
-        if (flipBwd)
+        if (g->flipBwd)
         {
             tmp = col;
             col = row;
             row = tmp;
         }
 
-        row += rowTrans;
-        col += colTrans;
+        row += g->rowTrans;
+        col += g->colTrans;
     }
     else
     {
-        row -= rowTrans;
-        col -= colTrans;
+        row -= g->rowTrans;
+        col -= g->colTrans;
 
-        if (flipFwd)
+        if (g->flipFwd)
         {       /* For Glide Symmetry */
             tmp = col;
-            col = rowMax + 1 - col;
-            row = colMax + 1 - tmp;
+            col = g->rowMax + 1 - col;
+            row = g->colMax + 1 - tmp;
         }
-        if (flipBwd)
+        if (g->flipBwd)
         {
             tmp = col;
             col = row;
@@ -895,9 +886,9 @@ mapCell(const Cell * cell, Bool forward)
     }
 
     if (forward)
-        return findCell(row, col, 0);
+        return findCell(row, col, 0, g);
     else
-        return findCell(row, col, genMax - 1);
+        return findCell(row, col, g->genMax - 1, g);
 }
 
 
@@ -985,56 +976,56 @@ loopCells(Cell * cell1, Cell * cell2)
  * Returns NULL_CELL if there is no symmetry.
  */
 static Cell *
-symCell(const Cell * cell)
+symCell(const Cell * cell, const globals * const g)
 {
     int row;
     int col;
     int nRow;
     int nCol;
 
-    if (!rowSym && !colSym && !pointSym && !fwdSym && !bwdSym)
+    if (!g->rowSym && !g->colSym && !g->pointSym && !g->fwdSym && !g->bwdSym)
         return NULL_CELL;
 
     row = cell->row;
     col = cell->col;
-    nRow = rowMax + 1 - row;
-    nCol = colMax + 1 - col;
+    nRow = g->rowMax + 1 - row;
+    nCol = g->colMax + 1 - col;
 
     /*
      * If this is point symmetry, then this is easy.
      */
-    if (pointSym)
-        return findCell(nRow, nCol, cell->gen);
+    if (g->pointSym)
+        return findCell(nRow, nCol, cell->gen, g);
 
     /*
      * If this is forward diagonal symmetry, then this is easy.
      */
-    if (fwdSym)
-        return findCell(nCol, nRow, cell->gen);
+    if (g->fwdSym)
+        return findCell(nCol, nRow, cell->gen, g);
 
     /*
      * If this is backward diagonal symmetry, then this is easy.
      */
-    if (bwdSym)
-        return findCell(col, row, cell->gen);
+    if (g->bwdSym)
+        return findCell(col, row, cell->gen, g);
 
     /*
      * If there is symmetry on only one axis, then this is easy.
      */
-    if (!colSym)
+    if (!g->colSym)
     {
-        if (col < rowSym)
+        if (col < g->rowSym)
             return NULL_CELL;
 
-        return findCell(nRow, col, cell->gen);
+        return findCell(nRow, col, cell->gen, g);
     }
 
-    if (!rowSym)
+    if (!g->rowSym)
     {
-        if (row < colSym)
+        if (row < g->colSym)
             return NULL_CELL;
 
-        return findCell(row, nCol, cell->gen);
+        return findCell(row, nCol, cell->gen, g);
     }
 
     /*
@@ -1043,7 +1034,7 @@ symCell(const Cell * cell)
      * and if so, then this is easy.
      */
     if ((nRow == row) || (nCol == col))
-        return findCell(nRow, nCol, cell->gen);
+        return findCell(nRow, nCol, cell->gen, g);
 
     /*
      * The cell is really in one of the four quadrants, and therefore
@@ -1051,9 +1042,9 @@ symCell(const Cell * cell)
      * symmetrical cell in the next quadrant clockwise.
      */
     if ((row < nRow) == (col < nCol))
-        return findCell(row, nCol, cell->gen);
+        return findCell(row, nCol, cell->gen, g);
     else
-        return findCell(nRow, col, cell->gen);
+        return findCell(nRow, col, cell->gen, g);
 }
 
 
@@ -1062,7 +1053,7 @@ symCell(const Cell * cell)
  * link those neighbors back to this cell.
  */
 static void
-linkCell(Cell * cell)
+linkCell(Cell * cell, const globals * const g)
 {
     int row;
     int col;
@@ -1073,35 +1064,35 @@ linkCell(Cell * cell)
     col = cell->col;
     gen = cell->gen;
 
-    pairCell = findCell(row - 1, col - 1, gen);
+    pairCell = findCell(row - 1, col - 1, gen, g);
     cell->cul = pairCell;
     pairCell->cdr = cell;
 
-    pairCell = findCell(row - 1, col, gen);
+    pairCell = findCell(row - 1, col, gen, g);
     cell->cu = pairCell;
     pairCell->cd = cell;
 
-    pairCell = findCell(row - 1, col + 1, gen);
+    pairCell = findCell(row - 1, col + 1, gen, g);
     cell->cur = pairCell;
     pairCell->cdl = cell;
 
-    pairCell = findCell(row, col - 1, gen);
+    pairCell = findCell(row, col - 1, gen, g);
     cell->cl = pairCell;
     pairCell->cr = cell;
 
-    pairCell = findCell(row, col + 1, gen);
+    pairCell = findCell(row, col + 1, gen, g);
     cell->cr = pairCell;
     pairCell->cl = cell;
 
-    pairCell = findCell(row + 1, col - 1, gen);
+    pairCell = findCell(row + 1, col - 1, gen, g);
     cell->cdl = pairCell;
     pairCell->cur = cell;
 
-    pairCell = findCell(row + 1, col, gen);
+    pairCell = findCell(row + 1, col, gen, g);
     cell->cd = pairCell;
     pairCell->cu = cell;
 
-    pairCell = findCell(row + 1, col + 1, gen);
+    pairCell = findCell(row + 1, col + 1, gen, g);
     cell->cdr = pairCell;
     pairCell->cul = cell;
 }
@@ -1115,7 +1106,7 @@ linkCell(Cell * cell)
  * and are dynamically created as necessary.
  */
 Cell *
-findCell(int row, int col, int gen)
+findCell(int row, int col, int gen, const globals * const g)
 {
     Cell * cell;
     int i;
@@ -1123,11 +1114,11 @@ findCell(int row, int col, int gen)
     /*
      * If the cell is a normal cell, then we know where it is.
      */
-    if ((row >= 0) && (row <= rowMax + 1) &&
-        (col >= 0) && (col <= colMax + 1) &&
-        (gen >= 0) && (gen < genMax))
+    if ((row >= 0) && (row <= g->rowMax + 1) &&
+        (col >= 0) && (col <= g->colMax + 1) &&
+        (gen >= 0) && (gen < g->genMax))
     {
-        return cellTable[(col * (rowMax + 2) + row) * genMax + gen];
+        return cellTable[(col * (g->rowMax + 2) + row) * g->genMax + gen];
     }
 
     /*

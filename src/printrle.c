@@ -1,4 +1,5 @@
 #include "lifesrc.h"
+#include "globals.h"
 #include "state.h"
 
 #define max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -46,11 +47,11 @@ void printState(const State state, int * stateCounter, int * colCounter)
     return;
 }
 
-void engineRLE(const char *rule)
+void engineRLE(const char *rule, const globals * const g)
 {
-    int rmin = rowMax + 1;
+    int rmin = g->rowMax + 1;
     int rmax = 0;
-    int cmin = colMax + 1;
+    int cmin = g->colMax + 1;
     int cmax = 0;
     
     State state = 0, prevState = 0;
@@ -59,11 +60,11 @@ void engineRLE(const char *rule)
     int lineCounter = -1;
     
     /* first determine pattern limits */
-    for (int row = 1; row <= rowMax; row ++)
+    for (int row = 1; row <= g->rowMax; row ++)
     {
-        for (int col = 1; col <= colMax; col++)
+        for (int col = 1; col <= g->colMax; col++)
         {
-            if (buffer[col + row * colMax] != OFF)
+            if (buffer[col + row * g->colMax] != OFF)
             {
                 rmin = min(rmin, row);
                 rmax = max(rmax, row);
@@ -82,7 +83,7 @@ void engineRLE(const char *rule)
         stateCounter = 0;
         for (int col = cmin; col <= cmax; col++)
         {
-            state = buffer[col + row * colMax];
+            state = buffer[col + row * g->colMax];
             
             /* set prevState only at the very beginning of the pattern evaluation */
             if (lineCounter < 0)
@@ -120,21 +121,21 @@ void engineRLE(const char *rule)
     return;   
 }
 
-void printRLE(const int gen, const char *rule)
+void printRLE(const int gen, const char *rule, const globals * const g)
 {
     const Cell *cell;
 
     /* initialize buffer */
-    for (int row = 1; row <= rowMax; row ++)
+    for (int row = 1; row <= g->rowMax; row ++)
     {
-        for (int col = 1; col <= colMax; col++)
+        for (int col = 1; col <= g->colMax; col++)
         {
-            cell = findCell(row , col, gen);
-            buffer[col + row * colMax] = cell->state;
+            cell = findCell(row , col, gen, g);
+            buffer[col + row * g->colMax] = cell->state;
         }
     }
     
-    engineRLE(rule);
+    engineRLE(rule, g);
     
     return;
 }

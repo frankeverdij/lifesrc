@@ -1,5 +1,6 @@
 #include "lifesrc.h"
-#include "sortorder.h"
+#include "state.h"
+#include "globals.h"
 
 /*
  * The sort routine for searching->
@@ -15,14 +16,14 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 	int	dif1;
 	int	dif2;
 	int gen_diff;
-	globals_struct * g;
+	globals * g;
 
 	arg1 = (const Cell**) addr1;
 	arg2 = (const Cell**) addr2;
 
 	c1 = *arg1;
 	c2 = *arg2;
-    g = (globals_struct*) gvars;
+    g = (globals *) gvars;
 
 	// Put generation 0 first
 	// or if calculating parents, put generation 0 last
@@ -54,10 +55,10 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 		return gen_diff;
 	}
 	if(g->sortOrder==SORTORDER_BACKDIAG) {
-		if(colMax-c1->col+c1->row > colMax-c2->col+c2->row) return (g->orderInvert)?(-1):1;
-		if(colMax-c1->col+c1->row < colMax-c2->col+c2->row) return (g->orderInvert)?1:(-1);
-		if(abs(colMax-c1->col-c1->row) > abs(colMax-c2->col-c2->row)) return (g->orderWide)?1:(-1);
-		if(abs(colMax-c1->col-c1->row) < abs(colMax-c2->col-c2->row)) return (g->orderWide)?(-1):1;
+		if(g->colMax-c1->col+c1->row > g->colMax-c2->col+c2->row) return (g->orderInvert)?(-1):1;
+		if(g->colMax-c1->col+c1->row < g->colMax-c2->col+c2->row) return (g->orderInvert)?1:(-1);
+		if(abs(g->colMax-c1->col-c1->row) > abs(g->colMax-c2->col-c2->row)) return (g->orderWide)?1:(-1);
+		if(abs(g->colMax-c1->col-c1->row) < abs(g->colMax-c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
 	else if(g->sortOrder==SORTORDER_KNIGHT) {
@@ -152,14 +153,14 @@ orderSortFuncOld(const void * addr1, const void * addr2, const void *gvars)
 	int		midRow;
 	int		dif1;
 	int		dif2;
-    globals_struct *g;
+    globals * g;
 
 	cp1 = ((const Cell **) addr1);
 	cp2 = ((const Cell **) addr2);
 
 	c1 = *cp1;
 	c2 = *cp2;
-    g = (globals_struct*) gvars;
+    g = (globals *) gvars;
 
 	/*
 	 * If we do not order by all generations, then put all of
@@ -182,7 +183,7 @@ orderSortFuncOld(const void * addr1, const void * addr2, const void *gvars)
 	 */
 	if (g->orderMiddle)
 	{
-		midCol = (colMax + 1) / 2;
+		midCol = (g->colMax + 1) / 2;
 
 		dif1 = c1->col - midCol;
 
