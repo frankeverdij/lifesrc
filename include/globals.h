@@ -22,7 +22,6 @@ typedef	unsigned int	Status;
  * preferably at the end so as to minimize dump file incompatibilities.
  */
 typedef struct globals {
-    Status curStatus; /* current status of search */
     int	rowMax;       /* maximum number of rows */
     int	colMax;       /* maximum number of columns */
     int	genMax;       /* maximum number of generations */
@@ -54,7 +53,6 @@ typedef struct globals {
     Bool orderMiddle; /* ordering tries middle columns first */
     Bool followGens;  /* try to follow setting of other gens */
     State chooseUnknown; /* First choice for unknown cell, either ON or OFF */
-    long stepConfl;   /* step counter for one Proceed-Backup action */
     int sortOrder;    /* sort direction */
 } globals;
 
