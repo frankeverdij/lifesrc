@@ -458,23 +458,23 @@ main(int argc, char ** argv)
                             break;
 
                         case 'r':
-                            g.sortOrder = SORTORDER_TOPDOWN;
+                            g.sortOrder = TOPDOWN;
                             break;
 
                         case 'c':
-                            g.sortOrder = SORTORDER_LEFTRIGHT;
+                            g.sortOrder = LEFTRIGHT;
                             break;
 
                         case 'f':
-                            g.sortOrder = SORTORDER_DIAG;
+                            g.sortOrder = DIAG;
                             break;
 
                         case 'b':
-                            g.sortOrder = SORTORDER_BACKDIAG;
+                            g.sortOrder = BACKDIAG;
                             break;
 
                         case 'O':
-                            g.sortOrder = SORTORDER_CENTEROUT;
+                            g.sortOrder = CENTEROUT;
                             break;
 
                         default:
@@ -1386,7 +1386,7 @@ printGen(int gen, const globals * const g)
     if (g->bwdSym)
         ttyPrintf(" -sb");
 
-    if (g->orderGens || g->orderWide || g->orderInvert || g->orderMiddle || (g->sortOrder != SORTORDER_DEFAULT))
+    if (g->orderGens || g->orderWide || g->orderInvert || g->orderMiddle || (g->sortOrder != DEFAULT))
     {
         ttyPrintf(" -o");
 
@@ -1402,15 +1402,15 @@ printGen(int gen, const globals * const g)
         if (g->orderMiddle)
             ttyPrintf("m");
 
-        if (g->sortOrder == SORTORDER_DIAG)
+        if (g->sortOrder == DIAG)
             ttyPrintf("f");
-        else if (g->sortOrder == SORTORDER_BACKDIAG)
+        else if (g->sortOrder == BACKDIAG)
             ttyPrintf("b");
-        else if (g->sortOrder == SORTORDER_TOPDOWN)
+        else if (g->sortOrder == TOPDOWN)
             ttyPrintf("r");
-        else if (g->sortOrder == SORTORDER_LEFTRIGHT)
+        else if (g->sortOrder == LEFTRIGHT)
             ttyPrintf("c");
-        else if (g->sortOrder == SORTORDER_CENTEROUT)
+        else if (g->sortOrder == CENTEROUT)
             ttyPrintf("O");
     }
 

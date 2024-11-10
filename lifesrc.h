@@ -10,6 +10,7 @@
 #include <signal.h>
 
 #include "state.h"
+#include "enums.h"
 #include "cell.h"
 #include "globals.h"
 
@@ -56,26 +57,6 @@
 #endif
 
 #define	isBlank(ch)	(((ch) == ' ') || ((ch) == '\t'))
-
-/*
- * Bool type
- */
-typedef	int		Bool;
-
-#define	FALSE		((Bool) 0)
-#define	TRUE		((Bool) 1)
-
-
-/*
- * Status returned by routines
- */
-typedef	unsigned int	Status;
-
-#define	OK		((Status) 0)
-#define	ERROR		((Status) 1)
-#define	CONSISTENT	((Status) 2)
-#define	NOT_EXIST	((Status) 3)
-#define	FOUND		((Status) 4)
 
 
 /*

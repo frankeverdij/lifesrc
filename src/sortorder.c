@@ -1,4 +1,6 @@
-#include "lifesrc.h"
+#include <stdlib.h>
+#include "enums.h"
+#include "cell.h"
 #include "state.h"
 #include "globals.h"
 
@@ -47,28 +49,28 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 		// if we are here, it is the same Cell
 	}
 
-	if(g->sortOrder==SORTORDER_DIAG) {
+	if(g->sortOrder==DIAG) {
 		if(c1->col+c1->row > c2->col+c2->row) return (g->orderInvert)?(-1):1;
 		if(c1->col+c1->row < c2->col+c2->row) return (g->orderInvert)?1:(-1);
 		if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (g->orderWide)?1:(-1);
 		if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
-	if(g->sortOrder==SORTORDER_BACKDIAG) {
+	if(g->sortOrder==BACKDIAG) {
 		if(g->colMax-c1->col+c1->row > g->colMax-c2->col+c2->row) return (g->orderInvert)?(-1):1;
 		if(g->colMax-c1->col+c1->row < g->colMax-c2->col+c2->row) return (g->orderInvert)?1:(-1);
 		if(abs(g->colMax-c1->col-c1->row) > abs(g->colMax-c2->col-c2->row)) return (g->orderWide)?1:(-1);
 		if(abs(g->colMax-c1->col-c1->row) < abs(g->colMax-c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
-	else if(g->sortOrder==SORTORDER_KNIGHT) {
+	else if(g->sortOrder==KNIGHT) {
 		if(c1->col*2+c1->row > c2->col*2+c2->row) return (g->orderInvert)?(-1):1;
 		if(c1->col*2+c1->row < c2->col*2+c2->row) return (g->orderInvert)?1:(-1);
 		if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (g->orderWide)?1:(-1);
 		if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (g->orderWide)?(-1):1;
 		return gen_diff;
 	}
-	else if(g->sortOrder==SORTORDER_TOPDOWN) {
+	else if(g->sortOrder==TOPDOWN) {
 		if(c1->row > c2->row) return (g->orderInvert)?(-1):1;
 		if(c1->row < c2->row) return (g->orderInvert)?1:(-1);
 		midcol = (g->colMax + 1) / 2;
@@ -78,7 +80,7 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 		if (dif1 > dif2) return (g->orderWide ? 1 : -1);
 		return gen_diff;
 	}
-	else if(g->sortOrder==SORTORDER_LEFTRIGHT) {
+	else if(g->sortOrder==LEFTRIGHT) {
 		if(c1->col > c2->col) return (g->orderInvert)?(-1):1;
 		if(c1->col < c2->col) return (g->orderInvert)?1:(-1);
 		midrow = (g->rowMax + 1) / 2;
@@ -88,7 +90,7 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 		if (dif1 > dif2) return (g->orderWide ? 1 : -1);
 		return gen_diff;
 	}
-	else if(g->sortOrder==SORTORDER_CENTEROUT) {
+	else if(g->sortOrder==CENTEROUT) {
 		double midcolf, midrowf, d1, d2;
 		midcolf = (1.0+(double)g->colMax) / 2.0;
 		midrowf = (1.0+(double)g->rowMax) / 2.0;
@@ -101,7 +103,7 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 		if(d1 > d2) return (g->orderWide ? -1 : 1);
 		return gen_diff;
 	}
-	else if(g->orderMiddle || g->sortOrder==SORTORDER_MIDDLECOLOUT) {
+	else if(g->orderMiddle || g->sortOrder==MIDDLECOLOUT) {
 		// the ordering is from the center column outwards
 		midcol = (g->colMax + 1) / 2;
 		dif1 = abs(c1->col - midcol);

@@ -2,18 +2,7 @@
 #define GLOBALS_H
 
 #include "state.h"
-
-#define SORTORDER_DEFAULT 0
-#define SORTORDER_DIAG    1
-#define SORTORDER_BACKDIAG 2
-#define SORTORDER_KNIGHT  3
-#define SORTORDER_TOPDOWN 4
-#define SORTORDER_LEFTRIGHT 5
-#define SORTORDER_CENTEROUT 6
-#define SORTORDER_MIDDLECOLOUT 7
-
-typedef	int		Bool;
-typedef	unsigned int	Status;
+#include "enums.h"
 
 /*
  * Current parameter values for the program to be saved over runs.
@@ -53,7 +42,7 @@ typedef struct globals {
     Bool orderMiddle; /* ordering tries middle columns first */
     Bool followGens;  /* try to follow setting of other gens */
     State chooseUnknown; /* First choice for unknown cell, either ON or OFF */
-    int sortOrder;    /* sort direction */
+    SortOrder sortOrder;    /* sort direction */
 } globals;
 
 #endif /* GLOBALS_H */
