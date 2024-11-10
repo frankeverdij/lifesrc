@@ -1,13 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
-
-/*
- * Bool type
- */
-typedef	int		Bool;
-
-#define	FALSE		((Bool) 0)
-#define	TRUE		((Bool) 1)
+#include "enums.h"
 
 /*
  * Read a number from a string, eating any leading or trailing blanks.
