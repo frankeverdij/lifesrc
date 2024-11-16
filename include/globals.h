@@ -3,6 +3,10 @@
 
 #include "state.h"
 #include "enums.h"
+#include "cell.h"
+
+#define	ROW_MAX		49	/* maximum rows for search rectangle */
+#define	COL_MAX		132	/* maximum columns for search rectangle */
 
 /*
  * Current parameter values for the program to be saved over runs.
@@ -43,6 +47,32 @@ typedef struct globals {
     Bool followGens;  /* try to follow setting of other gens */
     State chooseUnknown; /* First choice for unknown cell, either ON or OFF */
     SortOrder sortOrder;    /* sort direction */
+
+    Bool inited;
+    int symmetry;
+	int	newcellcount; /* number of cells ready for allocation */
+	int	auxcellcount; /* number of cells in auxillary table */
+	Cell * newcells; /* cells ready for allocation */
+	Cell * searchlist; /* current list of cells to search */
+	RowInfo	dummyrowinfo; /* dummy info for ignored cells */
+	ColInfo	dummycolinfo; /* dummy info for ignored cells */
+	Cell ** celltable; /* table of (MAXCELLS) usual cells */
+	Cell ** auxtable; /* table of (auxtable_alloc) auxillary cells */
+	int auxtable_alloc;
+    int lifesrc_maxcells; // formerly the MAXCELLS macro
+
+    Cell ** settable;	/* table of (MAXCELLS) cells whose value is set */
+    Cell ** newset;		/* where to add new cells into setting table */
+    Cell ** nextset;	/* next cell in setting table to examine */
+    Cell ** searchtable; /* a stack of (MAXCELLS) searchlist positions */
+    Cell ** searchset;
+    RowInfo rowinfo[ROW_MAX];	/* information about rows of gen 0 */
+    ColInfo colinfo[COL_MAX];	/* information about columns of gen 0 */
+    int fullcolumns;	/* columns in gen 0 which are fully set */
+    int combinedcells;
+    int setcombinedcells;
+    int differentcombinedcells;
+
 } globals;
 
 #endif /* GLOBALS_H */
