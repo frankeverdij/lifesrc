@@ -739,7 +739,7 @@ getCommands(void)
 
         cp = buf;
 
-        while (isBlank(*cp))
+        while (isblank(*cp))
             cp++;
 
         cmd = cp;
@@ -747,7 +747,7 @@ getCommands(void)
         if (*cp)
             cp++;
 
-        while (isBlank(*cp))
+        while (isblank(*cp))
             cp++;
 
         switch (*cmd)
@@ -899,7 +899,7 @@ getSetting(const char * cp)
 
     state = getNum(&cp, 1);
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     if (*cp != '\0')
@@ -1030,7 +1030,7 @@ getClear(const char * cp)
         endGen = genMax - 1;
     }
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     /*
@@ -1102,7 +1102,7 @@ getExclude(const char * cp)
     int row;
     int col;
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     if (*cp == '\0')
@@ -1117,7 +1117,7 @@ getExclude(const char * cp)
     endRow = begRow;
     endCol = begCol;
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     if (*cp)
@@ -1187,7 +1187,7 @@ getFreeze(const char * cp)
     int row;
     int col;
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     if (*cp == '\0')
@@ -1202,7 +1202,7 @@ getFreeze(const char * cp)
     endRow = begRow;
     endCol = begCol;
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     if (*cp)
@@ -1780,7 +1780,7 @@ loadState(const char * file)
 
         cp = &buf[1];
 
-        while (isBlank(*cp))
+        while (isblank(*cp))
             cp++;
 
         if (!setRules(cp))
@@ -2087,7 +2087,7 @@ getStr(const char * str, const char * prompt)
         str = buf;
     }
 
-    while (isBlank(*str))
+    while (isblank(*str))
         str++;
 
     return str;
@@ -2127,7 +2127,7 @@ getNum(const char ** cpp, int defnum)
     isNeg = FALSE;
     cp = *cpp;
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     if (*cp == '-')
@@ -2151,7 +2151,7 @@ getNum(const char ** cpp, int defnum)
     if (isNeg)
         num = -num;
 
-    while (isBlank(*cp))
+    while (isblank(*cp))
         cp++;
 
     *cpp = cp;

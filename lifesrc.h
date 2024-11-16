@@ -55,8 +55,6 @@
 #define	DPRINTF(fmt, ...)
 #endif
 
-#define	isBlank(ch)	(((ch) == ' ') || ((ch) == '\t'))
-
 
 /*
  * Declare this macro so that by default the variables are defined external.
