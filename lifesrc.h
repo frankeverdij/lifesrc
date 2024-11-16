@@ -10,6 +10,8 @@
 #include <signal.h>
 
 #include "state.h"
+#include "cell.h"
+#include "cellflags.h"
 
 
 /*
@@ -44,15 +46,6 @@
 #define	AUX_CELLS	(TRANS_MAX * (COL_MAX + ROW_MAX + 4) * 2)
 
 /*
- * Flag bits
- */
-typedef unsigned short cellFlags;
-
-#define FREECELL	((cellFlags) 0x01) /* this cell still has free choice */
-#define FROZENCELL	((cellFlags) 0x02) /* this cell is frozen in all gens */
-#define CHOOSECELL	((cellFlags) 0x04) /* can choose this cell if unknown */
-
-/*
  * Debugging macros
  */
 #if DEBUG_FLAG
@@ -82,57 +75,6 @@ typedef	unsigned int	Status;
 #define	CONSISTENT	((Status) 2)
 #define	NOT_EXIST	((Status) 3)
 #define	FOUND		((Status) 4)
-
-
-/*
- * Information about a row.
- */
-typedef	struct
-{
-	int	onCount;	/* number of cells which are set on */
-} RowInfo;
-
-
-/*
- * Information about a column.
- */
-typedef struct
-{
-	int	setCount;	/* number of cells which are set */
-	int	onCount;	/* number of cells which are set on */
-	int	sumPos;		/* sum of row positions for on cells */
-} ColInfo;
-
-
-/*
- * Information about one cell of the search.
- */
-typedef	struct Cell Cell;
-
-struct Cell
-{
-	State		state;		/* current state */
-    cellFlags	flags;		/* the (C)hoose, fro(Z)en, and (F)ree flags */
-							/*  in a bitfield : 0x00000CZF */
-	short		gen;		/* generation number of this cell */
-	short		row;		/* row of this cell */
-	short		col;		/* column of this cell */
-	int			sumNear;	/* sum of states of neighbor cells */
-	int			index;
-	Cell *		past;		/* cell in past at this location */
-	Cell *		future;		/* cell in future at this location */
-	Cell *		cul;		/* cell to up and left */
-	Cell *		cu;		/* cell to up */
-	Cell *		cur;		/* cell to up and right */
-	Cell *		cl;		/* cell to left */
-	Cell *		cr;		/* cell to right */
-	Cell *		cdl;		/* cell to down and left */
-	Cell *		cd;		/* cell to down */
-	Cell *		cdr;		/* cell to down and right */
-	Cell *		loop;		/* next cell in this same loop */
-};
-
-#define	NULL_CELL	((Cell *) 0)
 
 
 /*
