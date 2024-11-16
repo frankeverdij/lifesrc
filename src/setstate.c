@@ -1,5 +1,5 @@
-#include "lifesrc.h"
 #include "state.h"
+#include "cell.h"
 
 void setState(Cell * const cell, const State state)
 {

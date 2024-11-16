@@ -1,4 +1,3 @@
-#include "lifesrc.h"
 #include "outputtimers.h"
 
 void setSigaction(struct sigaction * act, const int sig, void * handler)

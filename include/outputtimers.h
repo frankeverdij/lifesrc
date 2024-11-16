@@ -1,6 +1,7 @@
 #ifndef OUTPUTTIMERS_H
 #define OUTPUTTIMERS_H
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>

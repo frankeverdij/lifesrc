@@ -2,6 +2,7 @@
 #define SORTORDER_H
 
 #include "state.h"
+#include "enums.h"
 
 int orderSortFunc(const void * addr1, const void * addr2, void * gvars);
 
@@ -44,16 +45,7 @@ struct globals_struct {
 	Bool	orderMiddle;	/* ordering tries middle columns first */
 	Bool	followGens;	/* try to follow setting of other gens */
 	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
-
-#define SORTORDER_DEFAULT 0
-#define SORTORDER_DIAG    1
-#define SORTORDER_BACKDIAG 2
-#define SORTORDER_KNIGHT  3
-#define SORTORDER_TOPDOWN 4
-#define SORTORDER_LEFTRIGHT 5
-#define SORTORDER_CENTEROUT 6
-#define SORTORDER_MIDDLECOLOUT 7
-	int sortOrder;
+	SortOrder sortOrder;
 };
 
 #endif /* SORTORDER_H */

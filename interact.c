@@ -449,23 +449,23 @@ main(int argc, char ** argv)
                             break;
 
                         case 'r':
-                            sortOrder = SORTORDER_TOPDOWN;
+                            sortOrder = TOPDOWN;
                             break;
 
                         case 'c':
-                            sortOrder = SORTORDER_LEFTRIGHT;
+                            sortOrder = LEFTRIGHT;
                             break;
 
                         case 'f':
-                            sortOrder = SORTORDER_DIAG;
+                            sortOrder = DIAG;
                             break;
 
                         case 'b':
-                            sortOrder = SORTORDER_BACKDIAG;
+                            sortOrder = BACKDIAG;
                             break;
 
                         case 'O':
-                            sortOrder = SORTORDER_CENTEROUT;
+                            sortOrder = CENTEROUT;
                             break;
 
                         default:
@@ -1377,7 +1377,7 @@ printGen(int gen)
     if (bwdSym)
         ttyPrintf(" -sb");
 
-    if (orderGens || orderWide || orderInvert || orderMiddle || (sortOrder != SORTORDER_DEFAULT))
+    if (orderGens || orderWide || orderInvert || orderMiddle || (sortOrder != DEFAULT))
     {
         ttyPrintf(" -o");
 
@@ -1393,15 +1393,15 @@ printGen(int gen)
         if (orderMiddle)
             ttyPrintf("m");
 
-        if (sortOrder == SORTORDER_DIAG)
+        if (sortOrder == DIAG)
             ttyPrintf("f");
-        else if (sortOrder == SORTORDER_BACKDIAG)
+        else if (sortOrder == BACKDIAG)
             ttyPrintf("b");
-        else if (sortOrder == SORTORDER_TOPDOWN)
+        else if (sortOrder == TOPDOWN)
             ttyPrintf("r");
-        else if (sortOrder == SORTORDER_LEFTRIGHT)
+        else if (sortOrder == LEFTRIGHT)
             ttyPrintf("c");
-        else if (sortOrder == SORTORDER_CENTEROUT)
+        else if (sortOrder == CENTEROUT)
             ttyPrintf("O");
     }
 
