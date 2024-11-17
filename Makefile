@@ -8,20 +8,18 @@ CFLAGS = -Ofast -MP -MMD -Wall -Wno-unused-result -fomit-frame-pointer -Iinclude
 #CFLAGS = -O -g --coverage -MP -MMD -Wall -Wno-unused-result -Iinclude -I. -I.. -I/usr/include/ncurses
 #LDFLAGS = -lgcov
 
-SOURCES = $(wildcard src/*.c)
+#SOURCES = $(wildcard src/*.c)
 SOURCES += search.c interact.c
 OBJECTS = $(SOURCES:.c=.o)
 DEPS = $(SOURCES:.c=.d) 
 COVERAGE = $(SOURCES:.c=.gcda)
 COVERAGE += $(SOURCES:.c=.gcno)
 
-all:	lifesrcdumb lifesrc
+all:	lifesrc
 
-lifesrcdumb:	$(OBJECTS) dumbtty.o
-	$(CC) -o lifesrcdumb $(OBJECTS) dumbtty.o $(LDFLAGS)
+lifesrc:	$(OBJECTS)
+	$(CC) -o lifesrc $(OBJECTS) $(LDFLAGS)
 
-lifesrc:	$(OBJECTS) cursestty.o
-	$(CC) -o lifesrc $(OBJECTS) cursestty.o $(LDFLAGS) -lncursesw
 clean:
 	rm -f cursestty.o dumbtty.o $(OBJECTS) $(DEPS)
 	rm -f lifesrc lifesrcdumb

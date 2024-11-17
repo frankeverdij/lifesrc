@@ -1,175 +1,439 @@
 /*
  * Life search program include file.
- * Author: David I. Bell.
+ * Original author: David I. Bell.
  */
- 
-#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
+#include <ctype.h>
 
-#include "state.h"
-#include "cell.h"
-#include "cellflags.h"
-#include "enums.h"
+#define WLS_VERSION_STRING _T("0.71")
 
-
-/*
- * Maximum dimensions of the search
- */
-#define	ROW_MAX		49	/* maximum rows for search rectangle */
-#define	COL_MAX		132	/* maximum columns for search rectangle */
-#define	GEN_MAX		8	/* maximum number of generations */
-#define	TRANS_MAX	4	/* largest translation value allowed */
-
+#define	ROWMAX		250	/* maximum rows for search rectangle */
+#define	COLMAX		250	/* maximum columns for search rectangle */
+#define	GENMAX		20	/* maximum number of generations */
+#define	TRANSMAX	10	/* largest translation value allowed */
+#define MAX_PATH 256
 
 /*
  * Build options
  */
-#ifndef DEBUG_FLAG
-#define	DEBUG_FLAG	0	/* nonzero for debugging features */
+#ifndef DEBUGFLAG
+#define	DEBUGFLAG	0	/* nonzero for debugging features */
 #endif
+
+/*
+ * Bool type
+ */
+typedef	int		BOOL;
+
+#define	FALSE		((BOOL) 0)
+#define	TRUE		((BOOL) 1)
 
 
 /*
  * Other definitions
  */
-#define	DUMP_VERSION	7		/* version of dump file */
+#ifdef JS
+#define	DUMPVERSION	56		/* version of dump file  (was 6) */
+#else
+#define	DUMPVERSION	102		/* version of dump file */
+#endif
 
-#define	ALLOC_SIZE	50000		/* chunk size for cell allocation */
-#define	VIEW_MULT	1000000		/* viewing frequency multiplier */
-#define	DUMP_MULT	1000000		/* dumping frequency multiplier */
-#define	DUMP_FILE	"lifesrc.dmp"	/* default dump file name */
-#define	LINE_SIZE	132		/* size of input lines */
+#define	ALLOCSIZE	2048		/* chunk size for cell allocation */
+#define	LINESIZE	1000		/* size of input lines */
 
-#define	MAX_CELLS	((COL_MAX + 2) * (ROW_MAX + 2) * GEN_MAX)
-#define	AUX_CELLS	(TRANS_MAX * (COL_MAX + ROW_MAX + 4) * 2)
 
 /*
  * Debugging macros
  */
-#if DEBUG_FLAG
-#define	DPRINTF(fmt, ...)   if (debug) printf(fmt, ##__VA_ARGS__ )
+#if DEBUGFLAG
+#define	DPRINTF0(fmt)			if (debug) printf(fmt)
+#define	DPRINTF1(fmt,a1)		if (debug) printf(fmt,a1)
+#define	DPRINTF2(fmt,a1,a2)		if (debug) printf(fmt,a1,a2)
+#define	DPRINTF3(fmt,a1,a2,a3)		if (debug) printf(fmt,a1,a2,a3)
+#define	DPRINTF4(fmt,a1,a2,a3,a4)	if (debug) printf(fmt,a1,a2,a3,a4)
+#define	DPRINTF5(fmt,a1,a2,a3,a4,a5)	if (debug) printf(fmt,a1,a2,a3,a4,a5)
 #else
-#define	DPRINTF(fmt, ...)
+#define	DPRINTF0(fmt)
+#define	DPRINTF1(fmt,a1)
+#define	DPRINTF2(fmt,a1,a2)
+#define	DPRINTF3(fmt,a1,a2,a3)
+#define	DPRINTF4(fmt,a1,a2,a3,a4)
+#define	DPRINTF5(fmt,a1,a2,a3,a4,a5)
 #endif
+
+
+//#define	isdigit(ch)	(((ch) >= '0') && ((ch) <= '9'))
+//#define	isblank(ch)	(((ch) == ' ') || ((ch) == '\t'))
+
+typedef	unsigned char  PACKED_BOOL;
+typedef	unsigned char  STATE;
+typedef	unsigned int   STATUS;
+
+/*
+ * Status returned by routines
+ */
+#define	OK          ((STATUS) 0)
+#define	ERROR1      ((STATUS) 1)
+#define	CONSISTENT  ((STATUS) 2)
+#define	NOTEXIST    ((STATUS) 3)
+#define	FOUND       ((STATUS) 4)
 
 
 /*
- * Declare this macro so that by default the variables are defined external.
- * In the main program, this is defined as a null value so as to actually
- * define the variables.
+ * States of a cell
  */
-#ifndef	EXTERN
-#define	EXTERN	extern
+#ifdef JS
+#define	OFF	((STATE) 0x00)		/* cell is known off */
+#define	ON	((STATE) 0x01)		/* cell is known on */
+#define	UNK	((STATE) 0x10)		/* cell is unknown */
+#define	NSTATES	3			/* number of states */
+#else
+#define	UNK	((STATE) 0)		/* cell is unknown */
+#define	ON	((STATE) 1)		/* cell is known on */
+#define	OFF	((STATE) 9)		/* cell is known off */
+#define	NSTATES	3			/* number of states */
 #endif
 
+/*
+ * Information about a row.
+ */
+typedef	struct {
+	int	oncount;	/* number of cells which are set on */
+} ROWINFO;
 
+
+/*
+ * Information about a column.
+ */
+typedef struct {
+	int	setcount;	/* number of cells which are set */
+	int	oncount;	/* number of cells which are set on */
+	int	sumpos;		/* sum of row positions for on cells */
+} COLINFO;
+
+
+/*
+ * Information about one cell of the search.
+ */
+typedef	struct cell CELL;
+
+struct cell {
+	// state is the most used field so let's put it first
+
+	STATE	state;		/* current state */
+
+	// it makes one byte
+	// let's align the address before the pointers start
+
+	PACKED_BOOL free;	/* TRUE if this cell still has free choice */
+
+	// aligned to two bytes - let's round it up to four
+
+	short	gen;		/* generation number of this cell */
+	short	row;		/* row of this cell */
+	short	col;		/* column of this cell */
+
+	// and now for the pointers
+
+	CELL *	past;		/* cell in the past at this location */
+	CELL *	future;		/* cell in the future at this location */
+	CELL *	cul;		/* cell to up and left */
+	CELL *	cu;			/* cell to up */
+	CELL *	cur;		/* cell to up and right */
+	CELL *	cl;			/* cell to left */
+	CELL *	cr;			/* cell to right */
+	CELL *	cdl;		/* cell to down and left */
+	CELL *	cd;			/* cell to down */
+	CELL *	cdr;		/* cell to down and right */
+	CELL *	loop;		/* next cell in same loop as this one */
+	CELL *	search;		/* cell next to be searched for setting */
+
+	ROWINFO * rowinfo;	/* information about this cell's row */
+	COLINFO * colinfo;	/* information about this cell's column */
+
+	short	near1;		/* count of cells this cell is near */
+
+	PACKED_BOOL frozen;	/* TRUE if this cell is frozen in all gens */
+#ifdef JS
+	PACKED_BOOL choose;	/* TRUE if can choose this cell if unknown */
+#else
+	PACKED_BOOL active; /* FALSE if mirror by a symmetry */
+	PACKED_BOOL unchecked; /* TRUE for unchecked cells */
+
+	STATE combined;
+#endif
+};
+
+
+typedef	unsigned char   FLAGS;
+/*
+typedef unsigned char WLS_CELLVAL;
+
+struct field_struct {
+	// Except for brief periods when allocating new fields, it's assumed that
+	// ngens==g.period, nrows==g.nrows, ncols==g.ncols.
+	int ngens;
+	int nrows;
+	int ncols;
+	int gen_stride;
+	int row_stride;
+
+#define CV_FORCEDOFF  0  // cell values - These must not be changed
+#define CV_FORCEDON   1
+#define CV_CLEAR      2
+#define CV_UNCHECKED  3
+#define CV_FROZEN     4
+#define CV_INVALID    255
+	WLS_CELLVAL *c;
+};
+*/
+// These may be implemented as functions or as macros.
+// It's not okay to use wlsCellVal() as an lvalue.
+/*#define wlsCellVal(f,k,i,j) ((f)->c[(k)*(f)->gen_stride + (j)*(f)->row_stride + (i)])
+#define wlsSetCellVal(f,k,i,j,v) ((f)->c[(k)*(f)->gen_stride + (j)*(f)->row_stride + (i)])=(v)
+
+void wlsSetCellVal_Safe(struct field_struct *field, int k, int i, int j, WLS_CELLVAL v);
+*/
+struct globals_struct {
 /*
  * Current parameter values for the program to be saved over runs.
  * These values are dumped and loaded by the dump and load commands.
- * If you add another parameter, be sure to also add it to paramTable,
+ * If you add another parameter, be sure to also add it to param_table,
  * preferably at the end so as to minimize dump file incompatibilities.
  */
-EXTERN	Status	curStatus;	/* current status of search */
-EXTERN	int	rowMax;		/* maximum number of rows */
-EXTERN	int	colMax;		/* maximum number of columns */
-EXTERN	int	genMax;		/* maximum number of generations */
-EXTERN	int	rowTrans;	/* translation of rows */
-EXTERN	int	colTrans;	/* translation of columns */
-EXTERN	Bool	rowSym;		/* enable row symmetry starting at column */
-EXTERN	Bool	colSym;		/* enable column symmetry starting at row */
-EXTERN	Bool	pointSym;	/* enable symmetry with central point */
-EXTERN	Bool	fwdSym;		/* enable forward diagonal symmetry */
-EXTERN	Bool	bwdSym;		/* enable backward diagonal symmetry */
-EXTERN	Bool	flipRows;	/* flip rows at column number from last to first generation */
-EXTERN	Bool	flipCols;	/* flip columns at row number from last to first generation */
-EXTERN	Bool	flipFwd;	/* flip forward diagonal (/) from last to first gen */
-EXTERN	Bool	flipBwd;	/* flip backward diagonal (\) from last to first gen */
-EXTERN	Bool	flipQuads;	/* flip quadrants from last to first gen */
-EXTERN	Bool	parent;		/* only look for parents */
-EXTERN	Bool	allObjects;	/* look for all objects including subPeriods */
-EXTERN	Bool	setDeep;	/* set cleared cells deeply from init file */
-EXTERN	int	nearCols;	/* maximum distance to be near columns */
-EXTERN	int	maxCount;	/* maximum number of cells in generation 0 */
-EXTERN	int	useRow;		/* row that must have at least one ON cell */
-EXTERN	int	useCol;		/* column that must have at least one ON cell */
-EXTERN	int	colCells;	/* maximum cells in a column */
-EXTERN	int	colWidth;	/* maximum width of each column */
-EXTERN	Bool	follow;		/* follow average position of previous column */
-EXTERN	Bool	orderWide;	/* ordering tries to find wide objects */
-EXTERN	Bool	orderGens;	/* ordering tries all gens first */
-EXTERN	Bool	orderInvert;	/* Inverts direction of non-wide orderings */
-EXTERN	Bool	orderMiddle;	/* ordering tries middle columns first */
-EXTERN	Bool	followGens;	/* try to follow setting of other gens */
-EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
-EXTERN  long stepConfl; /* step counter for one Proceed-Backup action */
-EXTERN  int sortOrder; /* sort direction */
+	STATUS curstatus; /* current status of search */
+	int nrows; /* number of rows available to the current search */
+	int ncols; /* number of columns available to the current search */
+	int period; /* number of generations in the current search */
+	int	rowtrans;   /* translation of rows */
+	int	coltrans;   /* translation of columns */
+	BOOL rowsym;    /* enable row symmetry starting at column */
+	BOOL colsym;    /* enable column symmetry starting at row */
+	BOOL pointsym;  /* enable symmetry with central point */
+	BOOL fwdsym;    /* enable forward diagonal symmetry */
+	BOOL bwdsym;    /* enable backward diagonal symmetry */
+	BOOL fliprows;  /* flip rows at column number from last to first generation */
+	BOOL flipcols;  /* flip columns at row number from last to first generation */
+	BOOL flipquads; /* flip quadrants from last to first gen */
+	BOOL parent;    /* only look for parents */
+	BOOL allobjects;  /* look for all objects including subperiods */
+	int nearcols;     /* maximum distance to be near columns */
+	int maxcount;     /* maximum number of cells in generation 0 */
+	int userow;       /* row that must have at least one ON cell */
+	int usecol;       /* column that must have at least one ON cell */
+	int colcells;     /* maximum cells in a column */
+	int	colwidth;     /* maximum width of each column */
+	BOOL follow;      /* follow average position of previous column */
+	BOOL orderwide;   /* ordering tries to find wide objects */
+	BOOL ordergens;   /* ordering tries all gens first */
+	BOOL ordermiddle; /* ordering tries middle columns first (deprecated) */
+	BOOL followgens;  /* try to follow setting of other gens */
+
+#ifndef JS
+	BOOL smart;      /* use smart method (KAS) */
+	BOOL smarton;
+	BOOL combine;
+	BOOL combining;
+	int smartwindow; /* no. of cells to check */
+	int smartthreshold; /* check threshold */
+	int smartstatlen;
+	int smartstatwnd;
+	int smartstatsumlen;
+	int smartstatsumwnd;
+	int smartstatsumlenc;
+	int smartstatsumwndc;
+#endif
+
+#define SORTORDER_DEFAULT 0
+#define SORTORDER_DIAG    1
+#define SORTORDER_KNIGHT  2
+#define SORTORDER_TOPDOWN 3
+#define SORTORDER_CENTEROUT 4
+#define SORTORDER_MIDDLECOLOUT 5
+	int sortorder;
+
+	int knightsort; // deprecated
+
+#ifdef JS
+	int fastsym;
+#endif
+	int symmetry;
+	int trans_rotate;
+	int trans_flip;
+	int trans_x;
+	int trans_y;
 
 /*
  * These values are not affected when dumping and loading since they
  * do not affect the status of a search in progress.
- * They are either setTable on the command line or are computed.
+ * They are either settable on the command line or are computed.
  */
-EXTERN	Bool	quiet;		/* don't output */
-EXTERN	Bool	debug;		/* enable debugging output (if compiled so) */
-EXTERN	Bool	quitOk;		/* ok to quit without confirming */
-EXTERN	Bool	inited;		/* initialization has been done */
-EXTERN	State	bornRules[9];	/* rules for whether a cell is to be born */
-EXTERN	State	liveRules[9];	/* rules for whether a live cell stays alive */
-EXTERN	int	curGen;		/* current generation for display */
-EXTERN	int	outputCols;	/* number of columns to save for output */
-EXTERN	int	outputLastCols;	/* last number of columns output */
-EXTERN	int	cellCount;	/* number of live cells in generation 0 */
-EXTERN	int	dumpFreq;	/* how often to perform dumps */
-EXTERN	sig_atomic_t	dumpFlag;	/* sigaction flag for dumps */
-EXTERN	int	viewFreq;	/* how often to view results */
-EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
-EXTERN	char *	dumpFile;	/* dump file name */
-EXTERN	char *	outputFile;	/* file to output results to */
-
+	BOOL debug;      /* enable debugging output (if compiled so) */
+	BOOL inited;     /* initialization has been done */
+#ifdef JS
+	STATE bornrules[16]; /* rules for whether a cell is to be born */
+	STATE liverules[16]; /* rules for whether a live cell stays alive */
+#else
+	BOOL bornrules[16];	/* rules for whether a cell is to be born */
+	BOOL liverules[16];	/* rules for whether a live cell stays alive */
+#endif
+	int curgen;      /* current generation for display */
+	int	outputcols;  /* number of columns to save for output */
+	int	outputlastcols;  /* last number of columns output */
+#ifndef JS
+	int g0oncellcount;	/* number of live cells in generation 0 */
+#endif
+	int	cellcount;   /* number of live cells in generation 0 */
+	long dumpfreq;   /* how often to perform dumps */
+	long dumpcount;  /* counter for dumps */
+	int viewfreq;   /* how often to view results */
+	long viewcount;  /* counter for viewing */
+	char * dumpfile[80];   /* dump file name */
+	char * outputfile[80]; /* file to output results to */
+#ifndef JS
+	int smartlen0;
+	int smartlen1;
+	int smartcomb;
+	STATE smartchoice; /* preferred state for the selected cell */
+	STATE prevstate; /* the state of the last free cell before backup() */
+#endif
 
 /*
  * Data about all of the cells.
  */
-EXTERN	Cell *	setTable[MAX_CELLS];	/* table of cells whose value is set */
-EXTERN	Cell **	newSet;		/* where to add new cells into setting table */
-EXTERN	Cell **	nextSet;	/* next cell in setting table to examine */
-EXTERN	Cell **	baseSet;	/* base of changeable part of setting table */
-EXTERN	Cell *	fullSearchList;	/* complete list of cells to search */
-EXTERN	RowInfo	rowInfo[ROW_MAX];	/* information about rows of gen 0 */
-EXTERN	ColInfo	colInfo[COL_MAX];	/* information about columns of gen 0 */
-EXTERN	int	fullColumns;	/* columns in gen 0 which are fully set */
+	CELL ** settable;	/* table of (MAXCELLS) cells whose value is set */
+	CELL ** newset;		/* where to add new cells into setting table */
+	CELL ** nextset;	/* next cell in setting table to examine */
+#ifdef JS
+	CELL ** baseset;	/* base of changeable part of setting table */
+	CELL * fullsearchlist;	/* complete list of cells to search */
+#else
+	CELL ** searchtable; /* a stack of (MAXCELLS) searchlist positions */
+	CELL ** searchset;
+#endif
+	ROWINFO rowinfo[ROWMAX];	/* information about rows of gen 0 */
+	COLINFO colinfo[COLMAX];	/* information about columns of gen 0 */
+	int fullcolumns;	/* columns in gen 0 which are fully set */
+#ifndef JS
+	int combinedcells;
+	int setcombinedcells;
+	int differentcombinedcells;
+#endif
+
+	// Represents the editable cells
+	struct field_struct *field;
+	// Used for the current state of the search, and other temporary things
+	struct field_struct *tmpfield;
+
+#define WLS_RULESTRING_LEN 50
+	char * rulestring[WLS_RULESTRING_LEN];
+	int saveoutput;
+#ifndef JS
+	int saveoutputallgen;
+	int stoponfound;
+	int stoponstep;
+#endif
+	char * state_filename[MAX_PATH];
+	int foundcount;
+	int writecount;
+#ifdef JS
+	BOOL islife;  /* whether the rules are for standard Life */
+#endif
+
+#ifdef JS
+	/*
+	 * Table of transitions.
+	 * Given the state of a cell and its neighbors in one generation,
+	 * this table determines the state of the cell in the next generation.
+	 * The table is indexed by the descriptor value of a cell.
+	 */
+	STATE transit[256];
+#endif
+
+	/*
+	 * Table of implications.
+	 * Given the state of a cell and its neighbors in one generation,
+	 * this table determines deductions about the cell and its neighbors
+	 * in the previous generation.
+	 * The table is indexed by the descriptor value of a cell.
+	 */
+#ifdef JS
+#define WLS_IMPLIC_LEN 256
+#else
+#define WLS_IMPLIC_LEN 1000
+#endif
+	FLAGS implic[WLS_IMPLIC_LEN];
+
+	int	newcellcount; /* number of cells ready for allocation */
+	int	auxcellcount; /* number of cells in auxillary table */
+	CELL * newcells; /* cells ready for allocation */
+	CELL * searchlist; /* current list of cells to search */
+	ROWINFO	dummyrowinfo; /* dummy info for ignored cells */
+	COLINFO	dummycolinfo; /* dummy info for ignored cells */
+#ifdef JS
+	CELL * deadcell; /* boundary cell value */
+#endif
+	CELL ** celltable; /* table of (MAXCELLS) usual cells */
+	CELL ** auxtable; /* table of (auxtable_alloc) auxillary cells */
+	int auxtable_alloc;
+
+	void *memblks[2000];
+	int memblks_used;
+
+	int lifesrc_maxcells; // formerly the MAXCELLS macro
+};
 
 
 /*
  * Global procedures
  */
-extern	void	getCommands(void);
-extern	void	initCells(void);
-extern	void	printGen(int);
-extern	void	writeGen(const char *, Bool);
-extern	void	dumpState(const char *);
-extern	void	adjustNear(Cell *, int);
-extern	Status	search(const Bool);
-extern	Status	proceed(Cell *, State, Bool);
-extern	Status	go(Cell *, State, Bool);
-extern	Status	setCell(Cell * const , const State, const Bool);
-extern	Cell *	findCell(int, int, int);
-extern	Cell *	backup(void);
-extern	Bool	subPeriods(void);
-extern	void	loopCells(Cell *, Cell *);
-extern	void	fatal(const char *);
-extern	Bool	ttyOpen(void);
-extern	Bool	ttyCheck(void);
-extern	Bool	ttyRead(const char *, char *, int);
-extern	void	ttyPrintf(const char *, ...);
-extern	void	ttyStatus(const char *, ...);
-extern	void	ttyWrite(const char *, int);
-extern	void	ttyHome(void);
-extern	void	ttyEEop(void);
-extern	void	ttyFlush(void);
-extern	void	ttyClose(void);
 
-/* END CODE */
+BOOL initcells(void);
+
+#ifndef JS
+void initsearchorder(void);
+#endif
+/*
+void wlsUpdateAndShowTmpField(void);
+void wlsUpdateAndShowTmpField_Sync(void);
+void wlsWriteCurrentFieldToFile(HWND hwndParent, TCHAR *file1, BOOL append);
+void wlsWriteCurrentFieldToFile_internal(const TCHAR *filename, BOOL append);
+void dumpstate(HWND hwndParent, TCHAR *file1, BOOL echo);
+void dumpstate_internal(const TCHAR *filename, BOOL echo);
+*/
+void adjustnear(CELL *, int);
+STATUS search(void);
+BOOL proceed(CELL *, STATE, BOOL);
+BOOL go(CELL *, STATE, BOOL);
+BOOL setcell(CELL *, STATE, BOOL);
+#ifndef JS
+STATUS examinenext(void);
+#endif
+
+CELL * findcell(int, int, int);
+CELL * backup(void);
+BOOL subperiods(void);
+BOOL loopcells(CELL *, CELL *);
+#ifdef JS
+void excludecone(int, int, int);
+#endif
+BOOL freezecell(int, int);
+BOOL setrules(char *);
+BOOL setrulesA(char *);
+BOOL loadstate_from_filename(const char *filename);
+void getbackup(char *cp);
+/*
+struct wcontext;
+void wlsErrorf(struct wcontext *ctx, TCHAR *fmt, ...);
+void wlsMessagef(struct wcontext *ctx, TCHAR *fmt, ...);
+void wlsStatusf(struct wcontext *ctx, TCHAR *fmt, ...);*/
+void ttystatus(char *, ...);
+void record_malloc(int func,void *m);
+#ifndef JS
+BOOL set_initial_cells(void);
+#endif
+/*void wlsUpdateProgressCounter(void);
+void wlsNewField(void);*/
