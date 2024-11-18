@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <signal.h>
 
 #define WLS_VERSION_STRING _T("0.71")
 
@@ -167,6 +168,17 @@ struct cell {
 #endif
 };
 
+/*
+ * Declare this macro so that by default the variables are defined external.
+ * In the main program, this is defined as a null value so as to actually
+ * define the variables.
+ */
+#ifndef EXTERN
+#define EXTERN  extern
+#endif
+
+EXTERN  sig_atomic_t    dumpFlag;       /* sigaction flag for dumps */
+EXTERN  sig_atomic_t    viewFlag;       /* sigaction flag for viewing */
 
 typedef	unsigned char   FLAGS;
 /*
@@ -197,7 +209,7 @@ struct field_struct {
 
 void wlsSetCellVal_Safe(struct field_struct *field, int k, int i, int j, WLS_CELLVAL v);
 */
-struct globals_struct {
+extern struct globals_struct {
 /*
  * Current parameter values for the program to be saved over runs.
  * These values are dumped and loaded by the dump and load commands.
@@ -291,8 +303,8 @@ struct globals_struct {
 	long dumpcount;  /* counter for dumps */
 	int viewfreq;   /* how often to view results */
 	long viewcount;  /* counter for viewing */
-	char * dumpfile[80];   /* dump file name */
-	char * outputfile[80]; /* file to output results to */
+	char * dumpfile;   /* dump file name */
+	char * outputfile; /* file to output results to */
 #ifndef JS
 	int smartlen0;
 	int smartlen1;
