@@ -230,6 +230,8 @@ extern struct globals_struct {
 	BOOL fliprows;  /* flip rows at column number from last to first generation */
 	BOOL flipcols;  /* flip columns at row number from last to first generation */
 	BOOL flipquads; /* flip quadrants from last to first gen */
+	BOOL flipfwd;
+	BOOL flipbwd;
 	BOOL parent;    /* only look for parents */
 	BOOL allobjects;  /* look for all objects including subperiods */
 	int nearcols;     /* maximum distance to be near columns */
@@ -260,11 +262,13 @@ extern struct globals_struct {
 #endif
 
 #define SORTORDER_DEFAULT 0
-#define SORTORDER_DIAG    1
-#define SORTORDER_KNIGHT  2
-#define SORTORDER_TOPDOWN 3
-#define SORTORDER_CENTEROUT 4
-#define SORTORDER_MIDDLECOLOUT 5
+#define SORTORDER_DIAG 1
+#define SORTORDER_BACKDIAG 2
+#define SORTORDER_KNIGHT  3
+#define SORTORDER_TOPDOWN 4
+#define SORTORDER_LEFTRIGHT 5
+#define SORTORDER_CENTEROUT 6
+#define SORTORDER_MIDDLECOLOUT 7
 	int sortorder;
 
 	int knightsort; // deprecated
@@ -396,7 +400,7 @@ extern struct globals_struct {
 	int memblks_used;
 
 	int lifesrc_maxcells; // formerly the MAXCELLS macro
-};
+} globals_struct;
 
 
 /*

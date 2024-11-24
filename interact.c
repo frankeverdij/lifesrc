@@ -27,8 +27,12 @@ extern struct globals_struct g;
 /*
  * Local data.
  */
+static BOOL quiet;
+static BOOL quitOk;
+static BOOL debug;
 static BOOL noWait;          /* don't wait for commands after loading */
 static BOOL setAll;          /* set all cells from initial file */
+static BOOL setDeep;
 static BOOL isLife;          /* whether the rules are for standard Life */
 static char ruleString[20];  /* rule string for printouts */
 static long foundCount;      /* number of objects found */
@@ -57,6 +61,7 @@ static BOOL confirm(const char *);
 static BOOL setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
+static void fatal(const char *);
 
 void alarm_handler(const int signo)
 {
@@ -1162,7 +1167,7 @@ excludeCone(int row, int col, int gen)
             for (tCol = col - dist; tCol <= col + dist; tCol++)
             {
                 cell = findCell(tRow, tCol, tGen);
-                cell->flags &= ~CHOOSECELL;
+                /* cell->choose = FALSE; */
             }
         }
     }
@@ -1245,7 +1250,7 @@ freezeCell(int row, int col)
     {
         cell = findCell(row, col, gen);
 
-        cell->flags |= FROZENCELL;
+        cell->frozen = TRUE;
 
         loopCells(cell0, cell);
     }
@@ -1563,8 +1568,7 @@ writeGen(const char * file, BOOL append)
             {
                 case OFF:    ch = '.'; break;
                 case ON:    ch = '*'; break;
-                case UNK:    ch =
-                        ((cell->flags & CHOOSECELL) ? '?' : 'X');
+                case UNK:    ch = '?'; break;
                         break;
                 default:
                     ttyStatus("Bad cell state");
@@ -1656,7 +1660,7 @@ dumpState(const char * file)
         cell = *set++;
 
         fprintf(fp, "S %d %d %d %d %d\n", cell->row, cell->col,
-            cell->gen, cell->state, (cell->flags & FREECELL) ? 1 : 0);
+            cell->gen, cell->state, (cell->free) ? 1 : 0);
     }
 
     /*
@@ -1668,8 +1672,8 @@ dumpState(const char * file)
     {
         cell = findCell(row, col, gen);
 
-        if (cell->flags & CHOOSECELL)
-            continue;
+        /*if (cell->choose)
+            continue;*/
 
         fprintf(fp, "X %d %d %d\n", row, col, gen);
     }
@@ -1684,7 +1688,7 @@ dumpState(const char * file)
     {
         cell = findCell(row, col, 0);
 
-        if (cell->flags & FROZENCELL)
+        if (cell->frozen)
             fprintf(fp, "F %d %d\n", row, col);
     }
 
@@ -1737,7 +1741,7 @@ loadState(const char * file)
     {
         ttyStatus("Cannot open state file \"%s\"\n", file);
 
-        return ERROR;
+        return ERROR1;
     }
 
     buf[0] = '\0';
@@ -1748,7 +1752,7 @@ loadState(const char * file)
         ttyStatus("Missing version line in file \"%s\"\n", file);
         fclose(fp);
 
-        return ERROR;
+        return ERROR1;
     }
 
     cp = &buf[1];
@@ -1758,7 +1762,7 @@ loadState(const char * file)
         ttyStatus("Unknown version in state file \"%s\"\n", file);
         fclose(fp);
 
-        return ERROR;
+        return ERROR1;
     }
 
     fgets(buf, LINESIZE, fp);
@@ -1784,7 +1788,7 @@ loadState(const char * file)
             ttyStatus("Bad Life rules in state file\n");
             fclose(fp);
 
-            return ERROR;
+            return ERROR1;
         }
 
         fgets(buf, LINESIZE, fp);
@@ -1799,7 +1803,7 @@ loadState(const char * file)
         ttyStatus("Missing parameter line in state file\n");
         fclose(fp);
 
-        return ERROR;
+        return ERROR1;
     }
 
     cp = &buf[1];
@@ -1842,7 +1846,7 @@ loadState(const char * file)
 
             fclose(fp);
 
-            return ERROR;
+            return ERROR1;
         }
     }
 
@@ -1857,7 +1861,7 @@ loadState(const char * file)
         gen = getNum(&cp, 0);
 
         cell = findCell(row, col, gen);
-        cell->flags &= ~CHOOSECELL;
+        /* cell->choose = FALSE; */
 
         buf[0] = '\0';
         fgets(buf, LINESIZE, fp);
@@ -1883,7 +1887,7 @@ loadState(const char * file)
         ttyStatus("Missing table line in state file\n");
         fclose(fp);
 
-        return ERROR;
+        return ERROR1;
     }
 
     cp = &buf[1];
@@ -1897,14 +1901,14 @@ loadState(const char * file)
         ttyStatus("Missing end of file line in state file\n");
         fclose(fp);
 
-        return ERROR;
+        return ERROR1;
     }
 
     if (fclose(fp))
     {
         ttyStatus("Error reading \"%s\"\n", file);
 
-        return ERROR;
+        return ERROR1;
     }
 
     ttyStatus("State loaded from \"%s\"\n", file);
@@ -1946,7 +1950,7 @@ readFile(const char * file)
     {
         ttyStatus("Cannot open \"%s\"\n", file);
 
-        return ERROR;
+        return ERROR1;
     }
 
     activeGen = (g.parent ? (g.period - 1) : 0);
@@ -2030,7 +2034,7 @@ readFile(const char * file)
                         row);
                     fclose(fp);
 
-                    return ERROR;
+                    return ERROR1;
             }
 
             for (gen = minGen; gen <= maxGen; gen++)
@@ -2044,7 +2048,7 @@ readFile(const char * file)
 
                     fclose(fp);
 
-                    return ERROR;
+                    return ERROR1;
                 }
             }
         }
@@ -2054,7 +2058,7 @@ readFile(const char * file)
     {
         ttyStatus("Error reading \"%s\"\n", file);
 
-        return ERROR;
+        return ERROR1;
     }
 
     return OK;
