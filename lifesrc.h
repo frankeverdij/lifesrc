@@ -323,8 +323,8 @@ extern struct globals_struct {
 	CELL ** settable;	/* table of (MAXCELLS) cells whose value is set */
 	CELL ** newset;		/* where to add new cells into setting table */
 	CELL ** nextset;	/* next cell in setting table to examine */
-#ifdef JS
 	CELL ** baseset;	/* base of changeable part of setting table */
+#ifdef JS
 	CELL * fullsearchlist;	/* complete list of cells to search */
 #else
 	CELL ** searchtable; /* a stack of (MAXCELLS) searchlist positions */

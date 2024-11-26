@@ -33,6 +33,8 @@ static BOOL debug;
 static BOOL noWait;          /* don't wait for commands after loading */
 static BOOL setAll;          /* set all cells from initial file */
 static BOOL setDeep;
+static int stepConfl;
+static int chooseUnknown;
 static BOOL isLife;          /* whether the rules are for standard Life */
 static char ruleString[20];  /* rule string for printouts */
 static long foundCount;      /* number of objects found */
@@ -441,10 +443,6 @@ main(int argc, char ** argv)
                             g.ordergens = TRUE;
                             break;
 
-                        case 'i':
-                            orderInvert = TRUE;
-                            break;
-
                         case 'm':
                             g.ordermiddle = TRUE;
                             break;
@@ -610,7 +608,7 @@ main(int argc, char ** argv)
     else
         getCommands();
 
-    inited = TRUE;
+    g.inited = TRUE;
 
     /*
      * Arm the output timers
@@ -640,7 +638,7 @@ main(int argc, char ** argv)
         if (g.curstatus == OK)
         {
             time(&startTime);
-            g.curstatus = search(noWait);
+            g.curstatus = search();
             time(&end);
             dif = end - startTime;
             secToHMS(dif, timeBuf);
@@ -792,7 +790,7 @@ getCommands(void)
                 /*
                  * Set viewing frequency.
                  */
-                g.viewfreq = atol(cp) * VIEW_MULT;
+                g.viewfreq = atol(cp) * 1000000;
                 printGen(g.curgen);
                 break;
 
@@ -815,7 +813,7 @@ getCommands(void)
                  * Find next object.
                  */
                 if (g.curstatus == FOUND)
-                    g.curstatus = OK;
+                    g.curstatus = OK; 
 
                 return;
 
@@ -970,7 +968,7 @@ getBackup(const char * cp)
     {
         cell = backup();
 
-        if (cell == NULL_CELL)
+        if (cell == NULL)
         {
             printGen(g.curgen);
             ttyStatus("Backed up over all possibilities\n");
@@ -1378,7 +1376,7 @@ printGen(int gen)
     if (g.bwdsym)
         ttyPrintf(" -sb");
 
-    if (g.ordergens || g.orderwide || orderInvert || g.ordermiddle || (g.sortorder != DEFAULT))
+    if (g.ordergens || g.orderwide || g.ordermiddle || (g.sortorder != SORTORDER_DEFAULT))
     {
         ttyPrintf(" -o");
 
@@ -1387,9 +1385,6 @@ printGen(int gen)
 
         if (g.orderwide)
             ttyPrintf("w");
-
-        if (orderInvert)
-            ttyPrintf("i");
 
         if (g.ordermiddle)
             ttyPrintf("m");
