@@ -631,6 +631,8 @@ main(int argc, char ** argv)
         exit(EXIT_FAILURE);
     }
 
+    time(&startTime);
+
     /*
      * Initial commands are complete, now look for the object.
      */
@@ -638,7 +640,6 @@ main(int argc, char ** argv)
     {
         if (curStatus == OK)
         {
-            time(&startTime);
             curStatus = search(noWait);
             time(&end);
             dif = end - startTime;
