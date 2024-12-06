@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
+#include <assert.h>
 
 #include "lifesrc.h"
 #include "state.h"
@@ -35,6 +36,7 @@ static Bool RLEOutput;       /* print additional RLE code */
 static Bool augmentOutput;   /* print additional UTF8 code for stateList info */
 static time_t startTime;
 static char timeBuf[256] = {0};
+static char * argstr;
 
 /*
  * Local procedures
@@ -53,7 +55,6 @@ static Bool confirm(const char *);
 static Bool setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
-
 void alarm_handler(const int signo)
 {
     if (signo == SIGUSR1) dumpFlag = TRUE;
@@ -91,7 +92,9 @@ main(int argc, char ** argv)
 
     time_t end;
     long dif = 0;
-    const char *    str;
+    const char * str;
+
+    size_t asize = 1;
 
     setSigaction(&actDump, SIGUSR1, &alarm_handler);
     setSigaction(&actView, SIGUSR2, &alarm_handler);
@@ -99,9 +102,23 @@ main(int argc, char ** argv)
     /*
      * echo the command line, before the program alters argc
      */
+    for (int i = 1; i < argc; i++) {
+        asize += strlen(argv[i]) + 1;
+    }
+    argstr = (char *) malloc(asize);
+    if (!argstr) {
+        fatal("No memory");
+    }
+    asize = 0;
+    for (int i = 1; i < argc; i++) {
+        asize += sprintf(argstr + asize, "%s ", argv[i]);
+        assert(argstr[asize] == '\0');
+    }
+    if (asize > 0)
+        argstr[--asize] = '\0';
+
     ttyPrintf("Command line: \n");
-    for (int i = 0; i < argc; i++) ttyPrintf("%s ", argv[i]);
-    ttyPrintf("\n\n");
+    ttyPrintf("%s\n", argstr);
 
     if (--argc <= 0)
     {
@@ -1328,130 +1345,8 @@ printGen(int gen)
         }
     }
 
-    ttyPrintf(" -r%d -c%d -g%d", rowMax, colMax, genMax);
-
-    if (rowTrans)
-        ttyPrintf(" -tr%d", rowTrans);
-
-    if (colTrans)
-        ttyPrintf(" -tc%d", colTrans);
-
-    if (flipRows == 1)
-        ttyPrintf(" -fr");
-
-    if (flipRows > 1)
-        ttyPrintf(" -fr%d", flipRows);
-
-    if (flipCols == 1)
-        ttyPrintf(" -fc");
-
-    if (flipCols > 1)
-        ttyPrintf(" -fc%d", flipCols);
-
-    if (flipFwd)
-        ttyPrintf(" -ff");
-
-    if (flipBwd)
-        ttyPrintf(" -fb");
-
-    if (flipQuads)
-        ttyPrintf(" -fq");
-
-    if (rowSym == 1)
-        ttyPrintf(" -sr");
-
-    if (rowSym > 1)
-        ttyPrintf(" -sr%d", rowSym);
-
-    if (colSym == 1)
-        ttyPrintf(" -sc");
-
-    if (colSym > 1)
-        ttyPrintf(" -sc%d", colSym);
-
-    if (pointSym)
-        ttyPrintf(" -sp");
-
-    if (fwdSym)
-        ttyPrintf(" -sf");
-
-    if (bwdSym)
-        ttyPrintf(" -sb");
-
-    if (orderGens || orderWide || orderInvert || orderMiddle || (sortOrder != DEFAULT))
-    {
-        ttyPrintf(" -o");
-
-        if (orderGens)
-            ttyPrintf("g");
-
-        if (orderWide)
-            ttyPrintf("w");
-
-        if (orderInvert)
-            ttyPrintf("i");
-
-        if (orderMiddle)
-            ttyPrintf("m");
-
-        if (sortOrder == DIAG)
-            ttyPrintf("f");
-        else if (sortOrder == BACKDIAG)
-            ttyPrintf("b");
-        else if (sortOrder == TOPDOWN)
-            ttyPrintf("r");
-        else if (sortOrder == LEFTRIGHT)
-            ttyPrintf("c");
-        else if (sortOrder == CENTEROUT)
-            ttyPrintf("O");
-    }
-
-    if (follow)
-        ttyPrintf(" -f");
-
-    if (followGens)
-        ttyPrintf(" -fg");
-
-    if (chooseUnknown)
-        ttyPrintf(" -fo");
-
-    if (parent)
-        ttyPrintf(" -p");
-
-    if (allObjects)
-        ttyPrintf(" -a");
-
-    if (useRow)
-        ttyPrintf(" -ur%d", useRow);
-
-    if (useCol)
-        ttyPrintf(" -uc%d", useCol);
-
-    if (nearCols)
-        ttyPrintf(" -nc%d", nearCols);
-
-    if (maxCount)
-        ttyPrintf(" -mt%d", maxCount);
-
-    if (colCells)
-        ttyPrintf(" -mc%d", colCells);
-
-    if (colWidth)
-        ttyPrintf(" -wc%d", colWidth);
-
-    if (viewFreq)
-        ttyPrintf(" -v%d", viewFreq);
-
-    if (dumpFreq)
-        ttyPrintf(" -d%d %s", dumpFreq, dumpFile);
-
     if (outputFile)
     {
-        if (outputCols)
-            ttyPrintf(" -o%d %s", outputCols, outputFile);
-        else
-            ttyPrintf(" -o %s", outputFile);
-
         if (foundCount)
             ttyPrintf(" [%d]", foundCount);
     }
