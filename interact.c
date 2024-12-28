@@ -17,12 +17,24 @@
 #include "printrle.h"
 #include "sortorder.h"
 #include "sectohms.h"
-#include "outputtimers.h"
 */
+#include "outputtimers.h"
 #define VERSION "3.8"
 #define	DUMP_FILE	"lifesrc.dmp"
 
 extern struct globals_struct g;
+
+extern  BOOL    ttyOpen(void);
+extern  BOOL    ttyCheck(void);
+extern  BOOL    ttyRead(const char *, char *, int);
+extern  void    ttyPrintf(const char *, ...);
+extern  void    ttyStatus(const char *, ...);
+extern  void    ttyWrite(const char *, int);
+extern  void    ttyHome(void);
+extern  void    ttyEEop(void);
+extern  void    ttyFlush(void);
+extern  void    ttyClose(void);
+
 
 /*
  * Local data.

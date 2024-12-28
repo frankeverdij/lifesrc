@@ -420,6 +420,7 @@ void wlsWriteCurrentFieldToFile_internal(const TCHAR *filename, BOOL append);
 void dumpstate(HWND hwndParent, TCHAR *file1, BOOL echo);
 void dumpstate_internal(const TCHAR *filename, BOOL echo);
 */
+void dumpstate(void *, const char *, BOOL);
 void adjustnear(CELL *, int);
 STATUS search(void);
 BOOL proceed(CELL *, STATE, BOOL);
