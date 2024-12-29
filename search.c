@@ -71,10 +71,12 @@ static Cell * symCell(const Cell *);
 static Cell * mapCell(const Cell *, Bool);
 static Cell * allocateCell(void);
 static Cell * getNormalUnknown(void);
+static Cell * getAverageUnknown(void);
 static Status consistify(Cell * const);
 static Status consistify10(Cell * const);
 static Status examineNext(void);
 static int getDesc(const Cell * const);
+static Cell * (* getUnknown)(void);
 
 
 /*
@@ -200,6 +202,11 @@ initCells(void)
     }
 
     initSearchOrder();
+
+    if (0)
+        getUnknown = getAverageUnknown;
+    else
+        getUnknown = getNormalUnknown;
 
     newSet = setTable;
     nextSet = setTable;
@@ -677,6 +684,17 @@ getNormalUnknown(void)
 
 
 /*
+ * Find another unknown cell when averaging is done.
+ * Returns NULL_CELL if there are no more unknown cells.
+ */
+static Cell *
+getAverageUnknown(void)
+{
+    return NULL_CELL;
+}
+
+
+/*
  * Choose a state for an unknown cell, either OFF or ON.
  * Normally, we try to choose OFF cells first to terminate an object.
  * But for follow generations mode, we try to choose the same setting
@@ -720,7 +738,7 @@ search(const Bool batch)
     Bool needWrite;
     State state;
 
-    cell = getNormalUnknown();
+    cell = (*getUnknown)();
 
     if (cell == NULL_CELL)
     {
@@ -777,7 +795,7 @@ search(const Bool batch)
         /*
          * Get the next unknown cell and choose its state.
          */
-        cell = getNormalUnknown();
+        cell = (*getUnknown)();
 
         if (cell == NULL_CELL)
             return FOUND;
