@@ -463,9 +463,9 @@ main(argc, argv)
 				ttyclose();
 				exit(1);
 			}
-
 			//baseset = nextset;
 		}
+        initsearchorder();
 	}
 
 	/*
