@@ -62,6 +62,18 @@ static	int *	param_table[] =
 	NULL
 };
 
+void smartinit(void)
+{
+	smart=TRUE;
+	smartwindow = 50;
+	smartthreshold = 4;
+	smartstatlen = 0;
+	smartstatwnd = 0;
+	smartstatsumlen = 0;
+	smartstatsumwnd = 0;
+	smartstatsumlenc = 0;
+	smartstatsumwndc = 0;
+}
 
 int
 main(argc, argv)
@@ -155,6 +167,10 @@ main(argc, argv)
 
 					case 'g':
 						followgens = TRUE;
+						break;
+
+					case 's':
+						smartinit();
 						break;
 
 					case '\0':
