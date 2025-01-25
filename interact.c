@@ -456,6 +456,55 @@ main(argc, argv)
 		exit(1);
 	}
 
+    symmetry = 0;
+    if (rowsym)
+    {
+        if (colsym)
+        {
+            symmetry = 6;
+        }
+        else
+        {
+            symmetry = 2;
+        }
+    }
+    else
+    {
+        if (colsym)
+        {
+            symmetry = 1;
+        }
+    }
+
+    if (fwdsym)
+    {
+        if (bwdsym)
+        {
+            symmetry = 7;
+        }
+        else
+        {
+            symmetry = 3;
+        }
+    }
+    else
+    {
+        if (bwdsym)
+        {
+            symmetry = 4;
+        }
+    }
+    
+    if (pointsym)
+    {
+        symmetry = 8;
+    }
+    
+    if (colsym && rowsym && fwdsym && bwdsym)
+    {
+        symmetry = 9;
+    }
+
 	/*
 	 * Check for loading state from file or reading initial
 	 * object from file.
