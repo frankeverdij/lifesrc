@@ -1171,17 +1171,12 @@ search()
 	}
 
 	for (;;) {
-		//if(abortthread) 
-		if(0) 
-		{
-			return OK;
-		}
 
 		// Set the state of the new cell.
 
 		if (!go(cell, state, free)) 
 		{
-			//showcount();
+			viewcount = 0;
 			printgen(curgen);
 
 			return NOTEXIST;
@@ -1217,7 +1212,7 @@ search()
 
 		if (needwrite || (viewfreq && (++viewcount >= viewfreq)))
 		{
-			//showcount();
+			viewcount = 0;
 			printgen(curgen);
 		}
 
@@ -1237,14 +1232,6 @@ search()
 
 		if (cell == NULL)
 			return FOUND;
-
-		//if (stoponstep) {
-		if (0) {
-			//showcount();
-			printgen(curgen);
-			//abortthread = 1;
-			return OK;
-		}
 
 		state = choose(cell);
 		free = TRUE;
