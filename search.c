@@ -750,7 +750,7 @@ examinenext()
 		cell->row, cell->col, cell->gen,
 		(cell->free ? "free" : "forced"));
 
-	return consistify10(cell) ? OK : ERROR;
+	return consistify10(cell) ? OK : ERROR1;
 }
 
 
@@ -1158,7 +1158,7 @@ search()
 		cell = backup();
 
 		if (cell == NULL)
-			return ERROR;
+			return ERROR1;
 
 		free = FALSE;
 		state = (ON + OFF) - prevstate;

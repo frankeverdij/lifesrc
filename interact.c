@@ -1752,7 +1752,7 @@ readfile(file)
 	{
 		ttystatus("Cannot open \"%s\"\n", file);
 
-		return ERROR;
+		return ERROR1;
 	}
 
 	gen = (parent ? (genmax - 1) : 0);
@@ -1802,7 +1802,7 @@ readfile(file)
 						row);
 					fclose(fp);
 
-					return ERROR;
+					return ERROR1;
 			}
 
 			if (proceed(findcell(row, col, gen), state, FALSE)
@@ -1812,7 +1812,7 @@ readfile(file)
 					row, col);
 				fclose(fp);
 
-				return ERROR;
+				return ERROR1;
 			}
 		}
 	}
@@ -1821,7 +1821,7 @@ readfile(file)
 	{
 		ttystatus("Error reading \"%s\"\n", file);
 
-		return ERROR;
+		return ERROR1;
 	}
 
 	return OK;

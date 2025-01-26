@@ -43,10 +43,10 @@
 #define	DUMPVERSION	100		/* version of dump file   JES-was 6 */
 
 #define	ALLOCSIZE	100		/* chunk size for cell allocation */
+#define	LINESIZE	132		/* size of input lines */
 #define	VIEWMULT	1000		/* viewing frequency multiplier */
 #define	DUMPMULT	1000		/* dumping frequency multiplier */
 #define	DUMPFILE	"lifesrc.dmp"	/* default dump file name */
-#define	LINESIZE	132		/* size of input lines */
 
 #define	MAXCELLS	((COLMAX + 2) * (ROWMAX + 2) * GENMAX)
 #define	AUXCELLS	(TRANSMAX * (COLMAX + ROWMAX + 4) * 2)
@@ -74,16 +74,13 @@
 
 //#define	isblank(ch)	(((ch) == ' ') || ((ch) == '\t'))
 
-
-typedef	int		BOOL;
 typedef	char		PACKED_BOOL;
 typedef	unsigned char	STATE;
 typedef	unsigned int	STATUS;
-
+typedef	int		BOOL;
 
 #define	FALSE		((BOOL) 0)
 #define	TRUE		((BOOL) 1)
-
 
 /*
  * Status returned by routines
@@ -91,7 +88,7 @@ typedef	unsigned int	STATUS;
 #define	OK		((STATUS) 0)
 
 // JES
-#define	ERROR 		((STATUS) 1)
+#define	ERROR1		((STATUS) 1)
 #define	CONSISTENT	((STATUS) 2)
 #define	NOTEXIST	((STATUS) 3)
 #define	FOUND		((STATUS) 4)
@@ -242,8 +239,8 @@ EXTERN  int  trans_y;        /* JES */
  * They are either settable on the command line or are computed.
  */
 EXTERN	BOOL	quiet;		/* don't output */
-EXTERN	BOOL	debug;		/* enable debugging output (if compiled so) */
 EXTERN	BOOL	quitok;		/* ok to quit without confirming */
+EXTERN	BOOL	debug;		/* enable debugging output (if compiled so) */
 EXTERN	BOOL	inited;		/* initialization has been done */
 EXTERN	BOOL	bornrules[16];	/* rules for whether a cell is to be born */
 EXTERN	BOOL	liverules[16];	/* rules for whether a live cell stays alive */
