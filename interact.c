@@ -728,6 +728,7 @@ main(int argc, char ** argv)
         {
             printf("Search completed, file \"%s\" contains %ld object%s\n",
                 outputFile, foundCount, (foundCount == 1) ? "" : "s");
+            printf("Total time searched%s.\n", timeBuf);
         }
         exit(0);
     }
