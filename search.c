@@ -1171,6 +1171,10 @@ search()
 	}
 
 	for (;;) {
+		if(ttycheck()) 
+		{
+			getcommands();
+		}
 
 		// Set the state of the new cell.
 
