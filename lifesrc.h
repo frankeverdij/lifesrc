@@ -168,6 +168,8 @@ struct cell
 	PACKED_BOOL active; /* FALSE if mirror by a symmetry */
 	PACKED_BOOL unchecked; /* TRUE for unchecked cells */
 
+    STATE combined;
+
 	long potential;
 };
 
@@ -215,6 +217,9 @@ EXTERN	BOOL	ordergens;	/* ordering tries all gens first */
 EXTERN	BOOL	ordermiddle;	/* ordering tries middle columns first */
 EXTERN	BOOL	followgens;	/* try to follow setting of other gens */
 EXTERN  BOOL    smart;      /* use smart method (KAS) */
+EXTERN  BOOL    smarton;
+EXTERN  BOOL    combine;
+EXTERN  BOOL    combining;
 EXTERN  int smartwindow; /* no. of cells to check */
 EXTERN  int smartthreshold; /* check threshold */
 EXTERN  int smartstatlen;
@@ -258,6 +263,7 @@ EXTERN	char *	outputfile;	/* file to output results to */
 
 EXTERN  int smartlen0;
 EXTERN  int smartlen1;
+EXTERN  int smartcomb;
 EXTERN  STATE smartchoice; /* preferred state for the selected cell */
 
 EXTERN  STATE prevstate; /* the state of the last free cell before backup() */
@@ -273,6 +279,9 @@ EXTERN  CELL ** searchset;
 EXTERN	ROWINFO	rowinfo[ROWMAX];	/* information about rows of gen 0 */
 EXTERN	COLINFO	colinfo[COLMAX];	/* information about columns of gen 0 */
 EXTERN	int	fullcolumns;	/* columns in gen 0 which are fully set */
+EXTERN  int combinedcells;
+EXTERN  int setcombinedcells;
+EXTERN  int differentcombinedcells;
 
 
 /*

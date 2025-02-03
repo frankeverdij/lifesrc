@@ -73,6 +73,9 @@ void smartinit(void)
 	smartstatsumwnd = 0;
 	smartstatsumlenc = 0;
 	smartstatsumwndc = 0;
+	smarton=TRUE;
+	combine=FALSE;
+	combining=FALSE;
 }
 
 int
