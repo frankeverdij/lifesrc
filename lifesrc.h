@@ -296,7 +296,7 @@ extern	void	printgen PROTO((int));
 extern	void	writegen PROTO((char *, BOOL));
 extern	void	dumpstate PROTO((const char *));
 extern	void	adjustnear PROTO((CELL *, int));
-extern	STATUS	search PROTO((void));
+extern	STATUS	search PROTO((const BOOL));
 extern	BOOL	proceed PROTO((CELL *, STATE, BOOL));
 extern	BOOL	go PROTO((CELL *, STATE, BOOL));
 extern	BOOL	setcell PROTO((CELL *, STATE, BOOL));

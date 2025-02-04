@@ -180,6 +180,13 @@ main(argc, argv)
 
 		switch (*str++)
 		{
+            case 'b':
+                /*
+                 * Don't enter command mode.
+                 */
+                nowait = TRUE;
+                break;
+
 			case 'q':
 				quiet = TRUE;		/* don't output */
 				break;
@@ -648,7 +655,7 @@ main(argc, argv)
 	while (TRUE)
 	{
 		if (curstatus == OK)
-			curstatus = search();
+			curstatus = search(nowait);
 
 		if ((curstatus == FOUND) && userow &&
 			(rowinfo[userow].oncount == 0))
@@ -675,8 +682,11 @@ main(argc, argv)
 
 		if (outputfile == NULL)
 		{
-			getcommands();
+            if (!nowait)
+            {
+                getcommands();
 			continue;
+            }
 		}
 
 		/*
@@ -692,7 +702,13 @@ main(argc, argv)
 				ttystatus("Object %ld found.\n", ++foundcount);
 			}
 
-			writegen(outputfile, TRUE);
+            writegen(outputfile, TRUE);
+            if (nowait)
+            {
+                if (allobjects)
+                    continue;
+            }
+            else
 			continue;
 		}
 
@@ -2180,6 +2196,7 @@ usage()
 	"   -d   Dump status to file every N thousand searches",
 	"   -l   Load status from file",
 	"   -ln  Load status without entering command mode",
+    "   -b   Batch. Don't enter command mode",
 	"   -i   Read initial object setting both ON and OFF cells",
 	"   -in  Read initial object from file setting only ON cells",
 	"   -o   Output objects to file (appending) every N columns",

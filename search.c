@@ -1283,7 +1283,7 @@ CELL *combinebackup(void);
  * Returns if an object is found, or is impossible.
  */
 STATUS
-search()
+search(const BOOL batch)
 {
 	CELL *	cell;
 	BOOL	free;
@@ -1314,11 +1314,12 @@ search()
 	}
 
 	for (;;) {
+        if (!batch) {
 		if(ttycheck()) 
 		{
 			getcommands();
 		}
-
+        }
 		// Set the state of the new cell.
 
 		if (!go(cell, state, free)) 
