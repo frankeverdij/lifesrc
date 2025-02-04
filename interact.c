@@ -78,6 +78,75 @@ void smartinit(void)
 	combining=FALSE;
 }
 
+
+// copy my format to dbells format...
+// ... and make a backup of the current state (KAS)
+BOOL set_initial_cells(void)
+{
+	CELL *cell;
+	CELL **setpos;
+	BOOL change;
+	char buf[80];
+	int i,j,g;
+
+	newset = settable;
+	nextset = settable;
+
+	// now let's try all UNK cells for ON and OFF state
+	// set those which allow only one
+
+	setpos = newset;
+	do {
+		change = FALSE;
+		for(g=0;g<genmax;g++) {
+			for(i=0;i<colmax;i++) {
+				for(j=0;j<rowmax;j++) {
+					cell = findcell(j+1,i+1,g);
+					if (cell->active && (cell->state == UNK)) {
+						if (proceed(cell, OFF, TRUE))
+						{
+							backup();
+							if (proceed(cell, ON, TRUE))
+							{
+								backup();
+							} else {
+								// OFF possible, ON impossible
+								if (setpos != newset) backup();
+								if (proceed(cell, OFF, TRUE))
+								{
+									change = TRUE;
+								} else {
+									// we should never get here
+									// because it's already tested that the OFF state is possible
+									ttystatus("Program inconsistency found\n");
+									return FALSE;
+								}
+							}							
+						} else {
+							// can't set OFF state
+							// let's try ON state
+							if (setpos != newset) backup();
+							if (proceed(cell, ON, TRUE))
+							{
+								change = TRUE;
+							} else {
+								// can't set neither ON nor OFF state
+								ttyprintf("Inconsistent UNK state for cell (col %d,row %d,gen %d)\n",i+1,j+1,g);
+								return FALSE;
+							}
+						}
+					}
+				}
+			}
+		}
+	} while (change);
+
+	newset = settable;
+	nextset = settable;
+
+	return TRUE;
+}
+
 int
 main(argc, argv)
 	int	argc;
@@ -544,8 +613,6 @@ main(argc, argv)
 	else
 	{
 		initcells();
-		newset = settable;
-    	nextset = settable;
 
 		if (initfile)
 		{
@@ -556,6 +623,7 @@ main(argc, argv)
 			}
 			//baseset = nextset;
 		}
+		set_initial_cells();
         initsearchorder();
 	}
 
