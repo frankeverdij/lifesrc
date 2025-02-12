@@ -58,7 +58,7 @@ void initTransit(const State * states, State * transit)
 	int	desc;
 	int	i;
 
-    memset(transit, -1, 1024*sizeof(State));
+    memset(transit, -1, TRIMSIZE*sizeof(State));
 	for (i = 0; i < nStates; i++)
 	{
 		state = states[i];
@@ -67,7 +67,7 @@ void initTransit(const State * states, State * transit)
 		{
 			for (onCount = 0; onCount + offCount <= 8; onCount++)
 			{
-				sum = onCount + (8 - onCount - offCount) * UNK;
+				sum = onCount * ON + offCount * OFF + (8 - onCount - offCount) * UNK;
 				desc = SUMTODESC(state, sum);
 
 				transit[desc] =

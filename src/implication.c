@@ -143,7 +143,7 @@ void initImplic(const State * states, Flags *implic)
 		{
 			for (onCount = 0; onCount + offCount <= 8; onCount++)
 			{
-				sum = onCount + (8 - onCount - offCount) * UNK;
+				sum = onCount * ON + offCount * OFF + (8 - onCount - offCount) * UNK;
 				desc = SUMTODESC(state, sum);
 
 				implic[desc] =

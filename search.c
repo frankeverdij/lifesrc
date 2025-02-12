@@ -34,7 +34,7 @@ static State states[nStates] = {OFF, ON, UNK};
  * this table determines the state of the cell in the next generation.
  * The table is indexed by the descriptor value of a cell.
  */
-static State transit[1024];
+static State transit[TRIMSIZE];
 
 
 /*
@@ -44,7 +44,7 @@ static State transit[1024];
  * in the previous generation.
  * The table is indexed by the descriptor value of a cell.
  */
-static Flags implic[1024];
+static Flags implic[TRIMSIZE];
 
 
 /*
