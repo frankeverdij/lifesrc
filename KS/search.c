@@ -1331,11 +1331,13 @@ search(const BOOL batch)
 	}
 
 	for (;;) {
-        if (!batch) {
 		if(ttycheck()) 
 		{
-			getcommands();
-		}
+            if (!batch) {
+    			getcommands();
+    		} else {
+    		    exit(0);
+    		}
         }
 		// Set the state of the new cell.
 
