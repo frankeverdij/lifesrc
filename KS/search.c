@@ -22,7 +22,7 @@
 
 
 #define SUMCOUNT 8
-
+#define SUMTODESC(a, b, c)  ((a) + 2 * (b) + 4 * (c))
 //extern volatile int abortthread;
 extern int symmetry;
 //extern int stoponstep;
@@ -48,7 +48,7 @@ typedef	unsigned char	FLAGS;
  * in the previous generation.
  * The table is indexed by the descriptor value of a cell.
  */
-static	FLAGS	implic[1000];
+static	FLAGS	implic[2304];
 
 /*
  * Other local data.
@@ -635,7 +635,7 @@ setcell(CELL *cell, STATE state, BOOL free)
 	return TRUE;
 }
 
-static __inline int
+/*static __inline int
 sumtodesc(STATE futurestate, STATE currentstate, int neighborsum)
 {
 	// UNK = 0
@@ -647,7 +647,7 @@ sumtodesc(STATE futurestate, STATE currentstate, int neighborsum)
 	// if you don't believe it, just try it
 	
 	return (neighborsum*10 + currentstate*3 + futurestate);
-}
+}*/
 
 /*
  * Calculate the current descriptor for a cell.
@@ -655,7 +655,7 @@ sumtodesc(STATE futurestate, STATE currentstate, int neighborsum)
 static __inline short
 getdesc(CELL *cell)
 {
-	return sumtodesc(cell->future->state, cell->state, 
+	return SUMTODESC(cell->future->state, cell->state, 
 					cell->cul->state + cell->cu->state + cell->cur->state
 					+ cell->cdl->state + cell->cd->state + cell->cdr->state
 					+ cell->cl->state + cell->cr->state);
@@ -1932,7 +1932,7 @@ initimplic(void)
 					for (funk=0; funk<=1; funk++) { // unknown future cell
 						for (fon=0; fon+funk<=1; fon++) { // on future cell
 							foff=1-(fon+funk); // off future cell
-							desc = sumtodesc((STATE)(funk*UNK+fon*ON+foff*OFF), (STATE)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
+							desc = SUMTODESC((STATE)(funk*UNK+fon*ON+foff*OFF), (STATE)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
 							if (implic[desc] != IMPVOID) {
 								ttystatus("Duplicate descriptor!!!");
 								exit(1);

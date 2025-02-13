@@ -96,9 +96,9 @@ typedef	int		BOOL;
 /*
  * States of a cell
  */
-#define	UNK	((STATE) 0)		/* cell is unknown */
-#define	ON	((STATE) 1)		/* cell is known on */
-#define	OFF	((STATE) 9)		/* cell is known off */
+#define	UNK	((STATE) 0x40)		/* cell is unknown */
+#define	ON	((STATE) 0x01)		/* cell is known on */
+#define	OFF	((STATE) 0x00)		/* cell is known off */
 #define	NSTATES	3			/* number of states */
 
 
