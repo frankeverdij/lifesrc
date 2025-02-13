@@ -955,7 +955,7 @@ getbackup(cp)
 		if (blankstoo || (state == ON))
 			count--;
 
-		cell->state = UNK;
+		setState(cell, UNK);
 
 		if (go(cell, state, FALSE) != OK)
 		{

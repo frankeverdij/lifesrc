@@ -144,6 +144,7 @@ struct cell
 	short	row;		/* row of this cell */
 	short	col;		/* column of this cell */
 
+    int     sumnear;
 	// and now for the pointers
 
 	CELL *	past;		/* cell in the past at this location */
@@ -305,6 +306,7 @@ extern	CELL *	findcell PROTO((int, int, int));
 extern	CELL *	backup PROTO((void));
 extern	BOOL	subperiods PROTO((void));
 extern	void	loopcells PROTO((CELL *, CELL *));
+extern void setState(CELL * const cell, const STATE state);
 
 extern	BOOL	ttyopen PROTO((void));
 extern	BOOL	ttycheck PROTO((void));

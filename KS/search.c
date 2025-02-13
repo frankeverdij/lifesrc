@@ -82,6 +82,25 @@ static	BOOL	consistify10 PROTO((CELL *));
 static	BOOL	checkwidth PROTO((CELL *));
 static	CELL *	(*getunknown) PROTO((void));
 
+
+void setState(CELL * const cell, const STATE state)
+{
+    /* backup previous state */
+    int diffState = state - cell->state;
+    /* set cell state */
+    cell->state = state;
+    /* correct the neighbor sum for cells touching this cell */
+    cell->cul->sumnear += diffState;
+    cell->cu->sumnear += diffState;
+    cell->cur->sumnear += diffState;
+    cell->cl->sumnear += diffState;
+    cell->cr->sumnear += diffState;
+    cell->cdl->sumnear += diffState;
+    cell->cd->sumnear += diffState;
+    cell->cdr->sumnear += diffState;
+
+    return;
+}
 /*
  * Initialize the table of cells.
  * Each cell in the active area is set to unknown state.
@@ -149,7 +168,7 @@ initcells()
 				if (!edge)
 				{
 					linkcell(cell);
-					cell->state = UNK;
+					setState(cell, UNK);
 					cell->combined = UNK;
 					cell->free = TRUE;
 				}
@@ -422,7 +441,7 @@ rescell(CELL *cell)
 	if (cell->state == ON) {
 // if it was previously ON, we have some more stats to hassle
 		do {
-			cell->state = UNK;
+			setState(cell, UNK);
 			cell->free = TRUE;
 			if (cell->gen == 0) { // cannot move the test outwards due to looped frozen cells
 				--cell->rowinfo->oncount;
@@ -449,7 +468,7 @@ rescell(CELL *cell)
 	} else {
 // OFF is a little easier to do
 		do {
-			cell->state = UNK;
+			setState(cell, UNK);
 			cell->free = TRUE;
 			if (cell->gen == 0) {
 				if (cell->colinfo->setcount == rowmax) --fullcolumns;
@@ -551,7 +570,7 @@ setcell(CELL *cell, STATE state, BOOL free)
 				g0oncellcount++;
 			}
 
-			cell->state = ON;
+			setState(cell, ON);
 			cell->free = free;
 
 			if (cell->active) {
@@ -598,7 +617,7 @@ setcell(CELL *cell, STATE state, BOOL free)
 				if (cell->colinfo->setcount == rowmax) fullcolumns++;
 			}
 
-			cell->state = OFF;
+			setState(cell, OFF);
 			cell->free = free;
 
 			if (cell->active) {
@@ -656,9 +675,7 @@ static __inline short
 getdesc(CELL *cell)
 {
 	return SUMTODESC(cell->future->state, cell->state, 
-					cell->cul->state + cell->cu->state + cell->cur->state
-					+ cell->cdl->state + cell->cd->state + cell->cdr->state
-					+ cell->cl->state + cell->cr->state);
+					cell->sumnear);
 }
 
 /*
@@ -685,7 +702,7 @@ static BOOL consistify(CELL *cell)
 	// Now get the descriptor for the cell, its parent and its parent neighborhood
 
 	prevcell = cell->past;
-	desc = getdesc(prevcell);
+	desc = SUMTODESC(cell->state, prevcell->state, prevcell->sumnear);
 
 	// the implic table will tell us everything we need to know
 
@@ -1895,6 +1912,7 @@ allocatecell()
 	cell->gen = -1;
 	cell->row = -1;
 	cell->col = -1;
+	cell->sumnear = 0;
 	cell->past = cell;
 	cell->future = cell;
 	cell->cul = cell;
