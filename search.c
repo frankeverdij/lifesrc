@@ -53,7 +53,6 @@ static Flags implic[TRIMSIZE];
 static int newCellCount; /* cells ready for allocation */
 static int auxCellCount; /* cells in auxillary table */
 static int searchIdx;
-static int searchCount;
 static Cell *  newCells; /* cells ready for allocation */
 static Cell *  deadCell; /* boundary cell value */
 static Cell ** searchList; /* current list of cells to search */
@@ -249,7 +248,7 @@ initSearchOrder(void)
      * Make a table of cells that will be searched.
      * Ignore cells that are not relevant to the search due to symmetry.
      */
-    searchCount = 0;
+    count = 0;
 
     for (gen = 0; gen < genMax; gen++)
         for (col = 1; col <= colMax; col++)
@@ -267,26 +266,26 @@ initSearchOrder(void)
         if (bwdSym && (col > row ))
             continue;
 
-        table[searchCount++] = findCell(row, col, gen);
+        table[count++] = findCell(row, col, gen);
     }
 
     /*
      * Now sort the table based on our desired search order.
      */
-    qsort_r((char *) table, searchCount, sizeof(Cell *), &orderSortFunc, &g);
+    qsort_r((char *) table, count, sizeof(Cell *), &orderSortFunc, &g);
 
     /*
      * Finally build the search list from the table elements in the
      * final order.
      */
-    searchList = (Cell **) malloc(sizeof(Cell *) * (searchCount + 1));
+    searchList = (Cell **) malloc(sizeof(Cell *) * (count + 1));
 
-    for (int i = 0; i < searchCount; i++)
+    for (int i = 0; i < count; i++)
     {
         searchList[i] = table[i];
         searchList[i]->index = i;
     }
-    searchList[searchCount] = NULL;
+    searchList[count] = NULL;
     searchIdx = 0;
 }
 
@@ -664,10 +663,8 @@ getNormalUnknown(void)
 {
     Cell * cell;
 
-    for (int i = searchIdx; i < searchCount; i++)
+    for (int i = searchIdx; cell = searchList[i]; i++)
     {
-        cell = searchList[i];
-
         if (cell->state == UNK)
         {
             if (cell->flags & CHOOSECELL)
