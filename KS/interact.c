@@ -630,8 +630,8 @@ main(argc, argv)
 			}
 			//baseset = nextset;
 		}
-		set_initial_cells();
         initsearchorder();
+		set_initial_cells();
 	}
 
 	/*
