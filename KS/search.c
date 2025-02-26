@@ -438,56 +438,12 @@ rescell(CELL *cell)
 
 	c1 = cell;
 
-	if (cell->state == ON) {
-// if it was previously ON, we have some more stats to hassle
-		do {
-			setState(cell, UNK);
-			cell->free = TRUE;
-			if (cell->gen == 0) { // cannot move the test outwards due to looped frozen cells
-				--cell->rowinfo->oncount;
-				--cell->colinfo->oncount;
-				cell->colinfo->sumpos -= cell->row;
-				if (nearcols) adjustnear(cell, -1);
-				--g0oncellcount;
-				if (cell->colinfo->setcount == rowmax) --fullcolumns;
-				--cell->colinfo->setcount;
-			}
+	do {
+		setState(cell, UNK);
+		cell->free = TRUE;
 
-			if (combining && (cell->combined != UNK))
-			{
-				if (cell->combined == ON) 
-				{
-					++differentcombinedcells;
-				}
-				--setcombinedcells;
-			}
-
-			cell = cell->loop;
-		} while (cell != c1);
-
-	} else {
-// OFF is a little easier to do
-		do {
-			setState(cell, UNK);
-			cell->free = TRUE;
-			if (cell->gen == 0) {
-				if (cell->colinfo->setcount == rowmax) --fullcolumns;
-				--cell->colinfo->setcount;
-
-			}
-
-			if (combining && (cell->combined != UNK))
-			{
-				if (cell->combined == OFF) 
-				{
-					++differentcombinedcells;
-				}
-				--setcombinedcells;
-			}
-
-			cell = cell->loop;
-		} while (cell != c1);
-	}
+		cell = cell->loop;
+	} while (cell != c1);
 }
 
 /*
@@ -519,135 +475,25 @@ setcell(CELL *cell, STATE state, BOOL free)
 		return FALSE;
 	}
 
-	if (combining && (differentcombinedcells == 0)) return FALSE;
-
 	c1 = cell;
 
-	if (state == ON) {
-		// setting state ON
-		// first let's examine the stats
-		do {
-			if (cell->gen == 0) {
-				if ((usecol != 0)
-					&& (colinfo[usecol].oncount == 0)
-					&& (colinfo[usecol].setcount == rowmax) && inited)
-				{
-					return FALSE;
-				}
+	do {
+		setState(cell, state);
+		cell->free = free;
 
-				if ((maxcount != 0) && (g0oncellcount >= maxcount))
-				{
-					return FALSE;
-				}
+		if (cell->active) {
+			*newset++ = cell;
+			*searchset++ = searchlist;
 
-				if (nearcols && (cell->near1 <= 0) && (cell->col > 1)
-					&& inited)
-				{
-					return FALSE;
-				}
-
-				if (colcells && (cell->colinfo->oncount >= colcells)
-					&& inited)
-				{
-					return FALSE;
-				}
-
-				if (colwidth && inited && checkwidth(cell))
-					return FALSE;
-
-				if (nearcols) adjustnear(cell, 1);
-
-				cell->rowinfo->oncount++;
-
-				cell->colinfo->oncount++;
-
-				cell->colinfo->setcount++;
-
-				if (cell->colinfo->setcount == rowmax) fullcolumns++;
-
-				cell->colinfo->sumpos += cell->row;
-
-				g0oncellcount++;
+			while ((searchlist != NULL) && (searchlist->state != UNK)) {
+				searchlist = searchlist->search;
 			}
 
-			setState(cell, ON);
-			cell->free = free;
+			free = FALSE; // all following cells in the loop are not free
 
-			if (cell->active) {
-				*newset++ = cell;
-
-				*searchset++ = searchlist;
-
-				while ((searchlist != NULL) && (searchlist->state != UNK)) {
-					searchlist = searchlist->search;
-				}
-
-				free = FALSE; // all following cells in the loop are not free
-
-			}
-
-			if (combining &&(cell->combined != UNK))
-			{
-				if (cell->combined == ON) 
-				{
-					--differentcombinedcells;
-				}
-				++setcombinedcells;
-				if ((setcombinedcells == combinedcells) && (differentcombinedcells == 0)) 
-				{
-					return FALSE;
-				}
-			}
-
-			cell = cell->loop;
-		} while (c1 != cell);
-	} else {
-		// setting state OFF is somewhat easier
-		do {
-			if (cell->gen == 0) {
-				if ((usecol != 0)
-					&& (colinfo[usecol].oncount == 0)
-					&& (colinfo[usecol].setcount == rowmax) && inited)
-				{
-					return FALSE;
-				}
-
-				cell->colinfo->setcount++;
-
-				if (cell->colinfo->setcount == rowmax) fullcolumns++;
-			}
-
-			setState(cell, OFF);
-			cell->free = free;
-
-			if (cell->active) {
-				*newset++ = cell;
-
-				*searchset++ = searchlist;
-
-				while ((searchlist != NULL) && (searchlist->state != UNK)) {
-					searchlist = searchlist->search;
-				}
-
-				free = FALSE;
-			}
-
-			if (combining && (cell->combined != UNK))
-			{
-				if (cell->combined == OFF) 
-				{
-					--differentcombinedcells;
-				}
-				++setcombinedcells;
-				if ((setcombinedcells == combinedcells) && (differentcombinedcells == 0)) 
-				{
-					return FALSE;
-				}
-			}
-
-			cell = cell->loop;
-		} while (c1 != cell);
-	}
+		}
+		cell = cell->loop;
+	} while (c1 != cell);
 
 	++cellcount; // take whole loop as a single cell
 
