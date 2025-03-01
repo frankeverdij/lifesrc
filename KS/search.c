@@ -13,7 +13,7 @@
  * Define this as a null value so as to define the global variables
  * defined in lifesrc.h here.
  */
-#define	EXTERN
+#define    EXTERN
 
 //#include <windows.h>
 //#include "wls.h"
@@ -30,14 +30,14 @@ extern int symmetry;
 /*
  * IMPLIC flag values.
  */
-typedef	unsigned char	FLAGS;
-#define IMPBAD	((FLAGS) 0x00)	// the cell state is inconsistent
-#define IMPUN	((FLAGS) 0x01)	// change unknown neighbors (there are some)
-#define IMPUN1	((FLAGS) 0x02)	// change unknown neighbors to 1 (if not set, then change to 0)
-#define IMPC	((FLAGS) 0x04)	// change current cell (it is unknown)
-#define IMPC1	((FLAGS) 0x08)	// change current cell to 1 (if not set, change it to 0)
-#define IMPN	((FLAGS) 0x10)	// change new cell (it is unknown)
-#define IMPN1	((FLAGS) 0x20)	// change new cell to 1 (if not set, change it to 0)
+typedef unsigned char FLAGS;
+#define IMPBAD  ((FLAGS) 0x00)  // the cell state is inconsistent
+#define IMPUN   ((FLAGS) 0x01)  // change unknown neighbors (there are some)
+#define IMPUN1  ((FLAGS) 0x02)  // change unknown neighbors to 1 (if not set, then change to 0)
+#define IMPC    ((FLAGS) 0x04)  // change current cell (it is unknown)
+#define IMPC1   ((FLAGS) 0x08)  // change current cell to 1 (if not set, change it to 0)
+#define IMPN    ((FLAGS) 0x10)  // change new cell (it is unknown)
+#define IMPN1   ((FLAGS) 0x20)  // change new cell to 1 (if not set, change it to 0)
 #define IMPVOID ((FLAGS) 0x40)  // invalid/unset implication
 #define IMPOK   ((FLAGS) 0x80)  // valid state
 
@@ -48,39 +48,39 @@ typedef	unsigned char	FLAGS;
  * in the previous generation.
  * The table is indexed by the descriptor value of a cell.
  */
-static	FLAGS	implic[2304];
+static FLAGS implic[2304];
 
 /*
  * Other local data.
  */
-static	int	newcellcount;	/* number of cells ready for allocation */
-static	int	auxcellcount;	/* number of cells in auxillary table */
-static	CELL *	newcells;	/* cells ready for allocation */
-static	CELL *	searchlist;	/* current list of cells to search */
-static	CELL *	celltable[MAXCELLS];	/* table of usual cells */
-static	CELL *	auxtable[AUXCELLS];	/* table of auxillary cells */
-static	ROWINFO	dummyrowinfo;	/* dummy info for ignored cells */
-static	COLINFO	dummycolinfo;	/* dummy info for ignored cells */
+static int    newcellcount;    /* number of cells ready for allocation */
+static int    auxcellcount;    /* number of cells in auxillary table */
+static CELL *    newcells;    /* cells ready for allocation */
+static CELL *    searchlist;    /* current list of cells to search */
+static CELL *    celltable[MAXCELLS];    /* table of usual cells */
+static CELL *    auxtable[AUXCELLS];    /* table of auxillary cells */
+static ROWINFO    dummyrowinfo;    /* dummy info for ignored cells */
+static COLINFO    dummycolinfo;    /* dummy info for ignored cells */
 
 
 /*
  * Local procedures
  */
-static	void	initimplic PROTO((void));
-static	void	linkcell PROTO((CELL *));
-static __inline	STATE	transition PROTO((STATE, int, int));
-static	STATE	choose PROTO((CELL *));
-static	FLAGS	implication PROTO((STATE, int, int));
-static	CELL *	symcell PROTO((CELL *));
-static	CELL *	mapcell PROTO((CELL *));
-static	CELL *	allocatecell PROTO((void));
-static	CELL *	getnormalunknown PROTO((void));
-static	CELL *	getaverageunknown PROTO((void));
-static	CELL *	getsmartunknown PROTO((void)); // KAS
-static	BOOL	consistify PROTO((CELL *));
-static	BOOL	consistify10 PROTO((CELL *));
-static	BOOL	checkwidth PROTO((CELL *));
-static	CELL *	(*getunknown) PROTO((void));
+static void initimplic PROTO((void));
+static void linkcell PROTO((CELL *));
+static __inline STATE transition PROTO((STATE, int, int));
+static STATE choose PROTO((CELL *));
+static FLAGS implication PROTO((STATE, int, int));
+static CELL * symcell PROTO((CELL *));
+static CELL * mapcell PROTO((CELL *));
+static CELL * allocatecell PROTO((void));
+static CELL * getnormalunknown PROTO((void));
+static CELL * getaverageunknown PROTO((void));
+static CELL * getsmartunknown PROTO((void)); // KAS
+static BOOL consistify PROTO((CELL *));
+static BOOL consistify10 PROTO((CELL *));
+static BOOL checkwidth PROTO((CELL *));
+static CELL * (*getunknown) PROTO((void));
 
 
 void setState(CELL * const cell, const STATE state)
@@ -109,166 +109,171 @@ void setState(CELL * const cell, const STATE state)
 void
 initcells()
 {
-	int	row, col, gen;
-	int	i;
-	BOOL	edge;
-	CELL *	cell;
-	CELL *	cell2;
+    int row, col, gen;
+    int i;
+    BOOL edge;
+    CELL * cell;
+    CELL * cell2;
 
-	inited = FALSE;
+    inited = FALSE;
 
-	newcellcount=0;
-	auxcellcount=0;
-	newcells=NULL;
-	searchlist=NULL;
-	dummyrowinfo.oncount=0;
-	dummycolinfo.oncount=0;
-
-
-	if ((rowmax <= 0) || (rowmax > ROWMAX) ||
-		(colmax <= 0) || (colmax > COLMAX) ||
-		(genmax <= 0) || (genmax > GENMAX) ||
-		(rowtrans < -TRANSMAX) || (rowtrans > TRANSMAX) ||
-		(coltrans < -TRANSMAX) || (coltrans > TRANSMAX))
-	{
-		ttystatus("ROW, COL, GEN, or TRANS out of range\n");
-		exit(1);
-	}
-
-	for (i = 0; i < MAXCELLS; i++)
-		celltable[i] = allocatecell();
-
-	/*
-	 * Link the cells together.
-	 */
-	for (col = 0; col <= colmax+1; col++)
-	{
-		for (row = 0; row <= rowmax+1; row++)
-		{
-			for (gen = 0; gen < genmax; gen++)
-			{
-				edge = ((row == 0) || (col == 0) ||
-					(row > rowmax) || (col > colmax));
-
-				cell = findcell(row, col, gen);
-				cell->gen = gen;
-				cell->row = row;
-				cell->col = col;
-				cell->rowinfo = &dummyrowinfo;
-				cell->colinfo = &dummycolinfo;
-
-				cell->active = TRUE;
-				cell->unchecked = FALSE;
-
-				/*
-				 * If this is not an edge cell, then its state
-				 * is unknown and it needs linking to its
-				 * neighbors.
-				 */
-				if (!edge)
-				{
-					linkcell(cell);
-					setState(cell, UNK);
-					cell->combined = UNK;
-					cell->free = TRUE;
-				}
-
-				/*
-				 * Map time forwards and backwards,
-				 * wrapping around at the ends.
-				 */
-				cell->past = findcell(row, col,
-					(gen+genmax-1) % genmax);
-
-				cell->future = findcell(row, col,
-					(gen+1) % genmax);
-
-				/*
-				 * If this is not an edge cell, and
-				 * there is some symmetry, then put
-				 * this cell in the same loop as the
-				 * next symmetrical cell.
-				 */
-				if(symmetry && !edge)
-				{
-					loopcells(cell, symcell(cell));
-				}
-			}
-		}
-	}
-
-	/*
-	 * Now for the symmetry
-	 * Let's look for all loops
-	 * and select one cell from each loop as active
-	 */
-
-	for (col = 1; col <= colmax; col++) {
-		for (row = 1; row <= rowmax; row++) {
-			for (gen = 0; gen < genmax; gen++) {
-				cell = findcell(row, col, gen);
-
-				if (cell->active) {
-					cell2 = cell->loop;
-					while (cell2 != cell) {
-						cell2->active = FALSE;
-						cell2 = cell2->loop;
-					}
-				}
-			}
-		}
-	}
+    newcellcount = 0;
+    auxcellcount = 0;
+    newcells = NULL;
+    searchlist = NULL;
+    dummyrowinfo.oncount = 0;
+    dummycolinfo.oncount = 0;
 
 
-	/*
-	 * If there is a non-standard mapping between the last generation
-	 * and the first generation, then change the future and past pointers
-	 * to implement it.  This is for translations and flips.
-	 */
-	if (rowtrans || coltrans || fliprows || flipcols || flipquads)
-	{
-		for (row = 0; row <= rowmax+1; row++)
-		{
-			for (col = 0; col <= colmax+1; col++)
-			{
-				cell = findcell(row, col, 0);
-				cell2 = mapcell(cell);
-				cell->past = cell2;
-				cell2->future = cell;
-			}
-		}
-	}
+    if ((rowmax <= 0) || (rowmax > ROWMAX) ||
+        (colmax <= 0) || (colmax > COLMAX) ||
+        (genmax <= 0) || (genmax > GENMAX) ||
+        (rowtrans < -TRANSMAX) || (rowtrans > TRANSMAX) ||
+        (coltrans < -TRANSMAX) || (coltrans > TRANSMAX))
+    {
+        ttystatus("ROW, COL, GEN, or TRANS out of range\n");
+        exit(1);
+    }
 
-	/*
-	 * Initialize the row and column info addresses for generation 0.
-	 */
-	for (row = 1; row <= rowmax; row++)
-	{
-		for (col = 1; col <= colmax; col++)
-		{
-			cell = findcell(row, col, 0);
-			cell->rowinfo = &rowinfo[row];
-			cell->colinfo = &colinfo[col];
-		}
-	}
+    for (i = 0; i < MAXCELLS; i++)
+        celltable[i] = allocatecell();
 
-	if (smart) {
-		getunknown = getsmartunknown; // KAS
-	} else if (follow) {
-		getunknown = getaverageunknown;
-	} else {
-		getunknown = getnormalunknown;
-	}
+    /*
+     * Link the cells together.
+     */
+    for (col = 0; col <= colmax+1; col++)
+    {
+        for (row = 0; row <= rowmax+1; row++)
+        {
+            for (gen = 0; gen < genmax; gen++)
+            {
+                edge = ((row == 0) || (col == 0) ||
+                    (row > rowmax) || (col > colmax));
 
-	newset = settable;
-	nextset = settable;
+                cell = findcell(row, col, gen);
+                cell->gen = gen;
+                cell->row = row;
+                cell->col = col;
+                cell->rowinfo = &dummyrowinfo;
+                cell->colinfo = &dummycolinfo;
 
-	searchset = searchtable;
+                cell->active = TRUE;
+                cell->unchecked = FALSE;
 
-	curstatus = OK;
-	initimplic();
+                /*
+                 * If this is not an edge cell, then its state
+                 * is unknown and it needs linking to its
+                 * neighbors.
+                 */
+                if (!edge)
+                {
+                    linkcell(cell);
+                    setState(cell, UNK);
+                    cell->combined = UNK;
+                    cell->free = TRUE;
+                }
 
-	inited = TRUE;
+                /*
+                 * Map time forwards and backwards,
+                 * wrapping around at the ends.
+                 */
+                cell->past = findcell(row, col,
+                    (gen+genmax-1) % genmax);
+
+                cell->future = findcell(row, col,
+                    (gen+1) % genmax);
+
+                /*
+                 * If this is not an edge cell, and
+                 * there is some symmetry, then put
+                 * this cell in the same loop as the
+                 * next symmetrical cell.
+                 */
+                if(symmetry && !edge)
+                {
+                    loopcells(cell, symcell(cell));
+                }
+            }
+        }
+    }
+
+    /*
+     * Now for the symmetry
+     * Let's look for all loops
+     * and select one cell from each loop as active
+     */
+
+    for (col = 1; col <= colmax; col++)
+    {
+        for (row = 1; row <= rowmax; row++)
+        {
+            for (gen = 0; gen < genmax; gen++)
+            {
+                cell = findcell(row, col, gen);
+
+                if (cell->active)
+                {
+                    cell2 = cell->loop;
+                    while (cell2 != cell)
+                    {
+                        cell2->active = FALSE;
+                        cell2 = cell2->loop;
+                    }
+                }
+            }
+        }
+    }
+
+
+    /*
+     * If there is a non-standard mapping between the last generation
+     * and the first generation, then change the future and past pointers
+     * to implement it.  This is for translations and flips.
+     */
+    if (rowtrans || coltrans || fliprows || flipcols || flipquads)
+    {
+        for (row = 0; row <= rowmax+1; row++)
+        {
+            for (col = 0; col <= colmax+1; col++)
+            {
+                cell = findcell(row, col, 0);
+                cell2 = mapcell(cell);
+                cell->past = cell2;
+                cell2->future = cell;
+            }
+        }
+    }
+
+    /*
+     * Initialize the row and column info addresses for generation 0.
+     */
+    for (row = 1; row <= rowmax; row++)
+    {
+        for (col = 1; col <= colmax; col++)
+        {
+            cell = findcell(row, col, 0);
+            cell->rowinfo = &rowinfo[row];
+            cell->colinfo = &colinfo[col];
+        }
+    }
+
+    if (smart) {
+        getunknown = getsmartunknown; // KAS
+    } else if (follow) {
+        getunknown = getaverageunknown;
+    } else {
+        getunknown = getnormalunknown;
+    }
+
+    newset = settable;
+    nextset = settable;
+
+    searchset = searchtable;
+
+    curstatus = OK;
+    initimplic();
+
+    inited = TRUE;
 }
 
 
@@ -276,97 +281,97 @@ initcells()
  * The sort routine for searching.
  */
 static int
-ordersortfunc(const void *xxx1, const void *xxx2)
+ordersortfunc(const void * xxx1, const void * xxx2)
 {
-	CELL **	arg1;
-	CELL **	arg2;
-	CELL *	c1;
-	CELL *	c2;
-	int	midcol;
-	int	midrow;
-	int	dif1;
-	int	dif2;
+    CELL ** arg1;
+    CELL ** arg2;
+    CELL * c1;
+    CELL * c2;
+    int midcol;
+    int midrow;
+    int dif1;
+    int dif2;
 
-	arg1=(CELL**)xxx1;
-	arg2=(CELL**)xxx2;
+    arg1 = (CELL**)xxx1;
+    arg2 = (CELL**)xxx2;
 
-	c1 = *arg1;
-	c2 = *arg2;
+    c1 = *arg1;
+    c2 = *arg2;
 
-	/*
-	 * If on equal position or not ordering by all generations
-	 * then sort primarily by generations
-	 */
-	if (((c1->row == c2->row) && (c1->col == c2->col)) || !ordergens)
-	{
-		// Put generation 0 first
-		// or if calculating parents, put generation 0 last
-		if (parent)
-		{
-			if (c1->gen < c2->gen) return 1;
-			if (c1->gen > c2->gen) return -1;
-		} else {
-			if (c1->gen < c2->gen) return -1;
-			if (c1->gen > c2->gen) return 1;
-		}
-		// if we are here, it is the same cell
-	}
+    /*
+     * If on equal position or not ordering by all generations
+     * then sort primarily by generations
+     */
+    if (((c1->row == c2->row) && (c1->col == c2->col)) || !ordergens)
+    {
+        // Put generation 0 first
+        // or if calculating parents, put generation 0 last
+        if (parent)
+        {
+            if (c1->gen < c2->gen) return 1;
+            if (c1->gen > c2->gen) return -1;
+        } else {
+            if (c1->gen < c2->gen) return -1;
+            if (c1->gen > c2->gen) return 1;
+        }
+        // if we are here, it is the same cell
+    }
 
-	if(diagsort) {
-		if(c1->col+c1->row > c2->col+c2->row) return 1;
-		if(c1->col+c1->row < c2->col+c2->row) return -1;
-		if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (orderwide)?1:(-1);
-		if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (orderwide)?(-1):1;
-	}
-	if(knightsort) {
-		if(c1->col*2+c1->row > c2->col*2+c2->row) return 1;
-		if(c1->col*2+c1->row < c2->col*2+c2->row) return -1;
-		if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (orderwide)?1:(-1);
-		if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (orderwide)?(-1):1;
-	}
-	
-	/*
-	 * Sort on the column number.
-	 * By default this is from left to right.
-	 * But if middle ordering is set, the ordering is from the center
-	 * column outwards.
-	 */
-	if (ordermiddle)
-	{
-		midcol = (colmax + 1) / 2;
+    if(diagsort) {
+        if(c1->col+c1->row > c2->col+c2->row) return 1;
+        if(c1->col+c1->row < c2->col+c2->row) return -1;
+        if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (orderwide)?1:(-1);
+        if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (orderwide)?(-1):1;
+    }
+    if(knightsort) {
+        if(c1->col*2+c1->row > c2->col*2+c2->row) return 1;
+        if(c1->col*2+c1->row < c2->col*2+c2->row) return -1;
+        if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (orderwide)?1:(-1);
+        if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (orderwide)?(-1):1;
+    }
+    
+    /*
+     * Sort on the column number.
+     * By default this is from left to right.
+     * But if middle ordering is set, the ordering is from the center
+     * column outwards.
+     */
+    if (ordermiddle)
+    {
+        midcol = (colmax + 1) / 2;
 
-		dif1 = abs(c1->col - midcol);
+        dif1 = abs(c1->col - midcol);
 
-		dif2 = abs(c2->col - midcol);
+        dif2 = abs(c2->col - midcol);
 
-		if (dif1 < dif2) return -1;
+        if (dif1 < dif2) return -1;
 
-		if (dif1 > dif2) return 1;
-	} else {
-		if (c1->col < c2->col) return -1;
+        if (dif1 > dif2) return 1;
+    } else {
+        if (c1->col < c2->col) return -1;
 
-		if (c1->col > c2->col) return 1;
-	}
+        if (c1->col > c2->col) return 1;
+    }
 
-	/*
-	 * Sort on the row number.
-	 * By default, this is from the middle row outwards.
-	 * But if wide ordering is set, the ordering is from the edge
-	 * inwards.  Note that we actually set the ordering to be the
-	 * opposite of the desired order because the initial setting
-	 * for new cells is OFF.
-	 */
-	midrow = (rowmax + 1) / 2;
+    /*
+     * Sort on the row number.
+     * By default, this is from the middle row outwards.
+     * But if wide ordering is set, the ordering is from the edge
+     * inwards.  Note that we actually set the ordering to be the
+     * opposite of the desired order because the initial setting
+     * for new cells is OFF.
+     */
+    midrow = (rowmax + 1) / 2;
 
-	dif1 = abs(c1->row - midrow);
+    dif1 = abs(c1->row - midrow);
 
-	dif2 = abs(c2->row - midrow);
+    dif2 = abs(c2->row - midrow);
 
-	if (dif1 < dif2) return (orderwide ? -1 : 1);
+    if (dif1 < dif2) return (orderwide ? -1 : 1);
 
-	if (dif1 > dif2) return (orderwide ? 1 : -1);
+    if (dif1 > dif2) return (orderwide ? 1 : -1);
 
-	return 0;
+    return 0;
 }
 
 
@@ -379,47 +384,49 @@ ordersortfunc(const void *xxx1, const void *xxx2)
 void
 initsearchorder()
 {
-	int	row, col, gen;
-	int	count;
-	CELL *	cell;
-	CELL *	table[MAXCELLS];
-	/*
-	 * Make a table of cells that will be searched.
-	 * Ignore cells that are not relevant to the search due to symmetry.
-	 */
-	count = 0;
+    int row, col, gen;
+    int count;
+    CELL * cell;
+    CELL * table[MAXCELLS];
+    /*
+     * Make a table of cells that will be searched.
+     * Ignore cells that are not relevant to the search due to symmetry.
+     */
+    count = 0;
 
-	for (gen = 0; gen < genmax; gen++) {
-		for (col = 1; col <= colmax; col++) {
-			for (row = 1; row <= rowmax; row++)	{
-				cell = findcell(row, col, gen);
-				// cells must be already loaded!!!
-				if ((cell->active) && (cell->state == UNK) && (!cell->unchecked))
-				{
-					table[count++] = findcell(row, col, gen);
-				}
+    for (gen = 0; gen < genmax; gen++)
+    {
+        for (col = 1; col <= colmax; col++)
+        {
+            for (row = 1; row <= rowmax; row++)
+            {
+                cell = findcell(row, col, gen);
+                // cells must be already loaded!!!
+                if ((cell->active) && (cell->state == UNK) && (!cell->unchecked))
+                {
+                    table[count++] = findcell(row, col, gen);
+                }
+            }
+        }
+    }
 
-			}
-		}
-	}
+    /*
+     * Now sort the table based on our desired search order.
+     */
+    qsort((char *) table, count, sizeof(CELL *), ordersortfunc);
 
-	/*
-	 * Now sort the table based on our desired search order.
-	 */
-	qsort((char *) table, count, sizeof(CELL *), ordersortfunc);
+    /*
+     * Finally build the search list from the table elements in the
+     * final order.
+     */
+    searchlist = NULL;
 
-	/*
-	 * Finally build the search list from the table elements in the
-	 * final order.
-	 */
-	searchlist = NULL;
-
-	while (--count >= 0)
-	{
-		cell = table[count];
-		cell->search = searchlist;
-		searchlist = cell;
-	}
+    while (--count >= 0)
+    {
+        cell = table[count];
+        cell->search = searchlist;
+        searchlist = cell;
+    }
 }
 
 /*
@@ -428,22 +435,22 @@ initsearchorder()
  */
 
 void
-rescell(CELL *cell)
+rescell(CELL * cell)
 {
-	CELL *c1;
+    CELL * c1;
 
-	if (cell->state == UNK) return;
+    if (cell->state == UNK) return;
 
-	--cellcount; // take all loops as a single cell
+    --cellcount; // take all loops as a single cell
 
-	c1 = cell;
+    c1 = cell;
 
-	do {
-		setState(cell, UNK);
-		cell->free = TRUE;
+    do {
+        setState(cell, UNK);
+        cell->free = TRUE;
 
-		cell = cell->loop;
-	} while (cell != c1);
+        cell = cell->loop;
+    } while (cell != c1);
 }
 
 /*
@@ -454,74 +461,73 @@ rescell(CELL *cell)
  */
 
 BOOL
-setcell(CELL *cell, STATE state, BOOL free)
+setcell(CELL * cell, STATE state, BOOL free)
 {
-	CELL *c1;
-	if (cell->state == state)
-	{
-		DPRINTF4("setcell %d %d %d to state %s already set\n",
-			cell->row, cell->col, cell->gen,
-			(state == ON) ? "on" : "off");
+    CELL * c1;
+    if (cell->state == state)
+    {
+        DPRINTF4("setcell %d %d %d to state %s already set\n",
+            cell->row, cell->col, cell->gen,
+            (state == ON) ? "on" : "off");
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
-	if (cell->state != UNK)
-	{
-		DPRINTF4("setcell %d %d %d to state %s inconsistent\n",
-			cell->row, cell->col, cell->gen,
-			(state == ON) ? "on" : "off");
+    if (cell->state != UNK)
+    {
+        DPRINTF4("setcell %d %d %d to state %s inconsistent\n",
+            cell->row, cell->col, cell->gen,
+            (state == ON) ? "on" : "off");
 
-		return FALSE;
-	}
+        return FALSE;
+    }
 
-	c1 = cell;
+    c1 = cell;
 
-	do {
-		setState(cell, state);
-		cell->free = free;
+    do {
+        setState(cell, state);
+        cell->free = free;
 
-		if (cell->active) {
-			*newset++ = cell;
-			*searchset++ = searchlist;
+        if (cell->active) {
+            *newset++ = cell;
+            *searchset++ = searchlist;
 
-			while ((searchlist != NULL) && (searchlist->state != UNK)) {
-				searchlist = searchlist->search;
-			}
+            while ((searchlist != NULL) && (searchlist->state != UNK)) {
+                searchlist = searchlist->search;
+            }
 
-			free = FALSE; // all following cells in the loop are not free
+            free = FALSE; // all following cells in the loop are not free
 
-		}
-		cell = cell->loop;
-	} while (c1 != cell);
+        }
+        cell = cell->loop;
+    } while (c1 != cell);
 
-	++cellcount; // take whole loop as a single cell
+    ++cellcount; // take whole loop as a single cell
 
-	return TRUE;
+    return TRUE;
 }
 
 /*static __inline int
 sumtodesc(STATE futurestate, STATE currentstate, int neighborsum)
 {
-	// UNK = 0
-	// ON = 1
-	// OFF = 9
+    // UNK = 0
+    // ON = 1
+    // OFF = 9
 
-	// using the following expression, all different
-	// combinations are mapped to different numbers
-	// if you don't believe it, just try it
-	
-	return (neighborsum*10 + currentstate*3 + futurestate);
+    // using the following expression, all different
+    // combinations are mapped to different numbers
+    // if you don't believe it, just try it
+    
+    return (neighborsum*10 + currentstate*3 + futurestate);
 }*/
 
 /*
  * Calculate the current descriptor for a cell.
  */
 static __inline short
-getdesc(CELL *cell)
+getdesc(CELL * cell)
 {
-	return SUMTODESC(cell->future->state, cell->state, 
-					cell->sumnear);
+    return SUMTODESC(cell->future->state, cell->state, cell->sumnear);
 }
 
 /*
@@ -530,85 +536,86 @@ getdesc(CELL *cell)
  * make sure that the previous generation can validly produce the
  * current cell.  Returns FALSE if the cell is inconsistent.
  */
-static BOOL consistify(CELL *cell)
+static BOOL consistify(CELL * cell)
 {
-	CELL *prevcell;
-	CELL *neighbor;
-	int	desc;
-	STATE state;
-	FLAGS	flags;
+    CELL * prevcell;
+    CELL * neighbor;
+    int desc;
+    STATE state;
+    FLAGS flags;
 
-	/*
-	 * If we are searching for parents and this is generation 0, then
-	 * the cell is consistent with respect to the previous generation.
-	 */
-	if (parent && (cell->gen == 0))
-		return TRUE;
+    /*
+     * If we are searching for parents and this is generation 0, then
+     * the cell is consistent with respect to the previous generation.
+     */
+    if (parent && (cell->gen == 0))
+        return TRUE;
 
-	// Now get the descriptor for the cell, its parent and its parent neighborhood
+    // Now get the descriptor for the cell, its parent and its parent neighborhood
 
-	prevcell = cell->past;
-	desc = SUMTODESC(cell->state, prevcell->state, prevcell->sumnear);
+    prevcell = cell->past;
+    desc = SUMTODESC(cell->state, prevcell->state, prevcell->sumnear);
 
-	// the implic table will tell us everything we need to know
+    // the implic table will tell us everything we need to know
 
-	flags = implic[desc];
+    flags = implic[desc];
 
-	// first check if the state is consistent
+    // first check if the state is consistent
 
-	if (flags == IMPBAD) return FALSE;
+    if (flags == IMPBAD) return FALSE;
 
-	// the state is consistent
-	// now for the implications
+    // the state is consistent
+    // now for the implications
 
-	// change the cell if needed
-	if (((flags & IMPN) != 0) &&
-		!setcell(cell, ((flags & IMPN1) != 0) ? ON : OFF, FALSE)) return FALSE;
+    // change the cell if needed
+    if (((flags & IMPN) != 0) &&
+        !setcell(cell, ((flags & IMPN1) != 0) ? ON : OFF, FALSE)) return FALSE;
 
-	// change the parent cell if needed
-	if (((flags & IMPC) != 0) &&
-		!setcell(prevcell, ((flags & IMPC1) != 0) ? ON : OFF, FALSE)) return FALSE;
+    // change the parent cell if needed
+    if (((flags & IMPC) != 0) &&
+        !setcell(prevcell, ((flags & IMPC1) != 0) ? ON : OFF, FALSE)) return FALSE;
 
-	if ((flags & IMPUN) != 0) {
-		// let's change the parent neighborhood
-		state = ((flags & IMPUN1) != 0) ? ON : OFF;
+    if ((flags & IMPUN) != 0)
+    {
+        // let's change the parent neighborhood
+        state = ((flags & IMPUN1) != 0) ? ON : OFF;
 
-		neighbor = prevcell->cul;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
+        neighbor = prevcell->cul;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
 
-		neighbor = prevcell->cu;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
+        neighbor = prevcell->cu;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
 
-		neighbor = prevcell->cur;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
+        neighbor = prevcell->cur;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
 
-		neighbor = prevcell->cr;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
+        neighbor = prevcell->cr;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
 
-		neighbor = prevcell->cdr;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
+        neighbor = prevcell->cdr;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
 
-		neighbor = prevcell->cd;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
+        neighbor = prevcell->cd;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
 
-		neighbor = prevcell->cdl;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
+        neighbor = prevcell->cdl;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
 
-		neighbor = prevcell->cl;
-		if ((neighbor->state == UNK) &&
-			!setcell(neighbor, state, FALSE)) return FALSE;
-	}
+        neighbor = prevcell->cl;
+        if ((neighbor->state == UNK) &&
+            !setcell(neighbor, state, FALSE)) return FALSE;
+    }
 
-	DPRINTF0("Implications successful\n");
+    DPRINTF0("Implications successful\n");
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -617,22 +624,22 @@ static BOOL consistify(CELL *cell)
  * neighbors in the next generation.
  */
 static BOOL
-consistify10(CELL *cell)
+consistify10(CELL * cell)
 {
-	if (!consistify(cell))
-		return FALSE;
+    if (!consistify(cell))
+        return FALSE;
 
-	cell = cell->future;
+    cell = cell->future;
 
-	return consistify(cell)
-		   && consistify(cell->cul)
-		   && consistify(cell->cu)
-		   && consistify(cell->cur)
-		   && consistify(cell->cl)
-		   && consistify(cell->cr)
-		   && consistify(cell->cdl)
-		   && consistify(cell->cd)
-		   && consistify(cell->cdr);
+    return consistify(cell)
+       && consistify(cell->cul)
+       && consistify(cell->cu)
+       && consistify(cell->cur)
+       && consistify(cell->cl)
+       && consistify(cell->cr)
+       && consistify(cell->cdl)
+       && consistify(cell->cd)
+       && consistify(cell->cdr);
 }
 
 
@@ -642,26 +649,26 @@ consistify10(CELL *cell)
 STATUS
 examinenext()
 {
-	CELL *	cell;
+    CELL * cell;
 
-	/*
-	 * If there are no more cells to examine, then what we have
-	 * is consistent.
-	 */
-	if (nextset == newset)
-		return CONSISTENT;
+    /*
+     * If there are no more cells to examine, then what we have
+     * is consistent.
+     */
+    if (nextset == newset)
+        return CONSISTENT;
 
-	/*
-	 * Get the next cell to examine, and check it out for symmetry
-	 * and for consistency with its previous and next generations.
-	 */
-	cell = *nextset++;
+    /*
+     * Get the next cell to examine, and check it out for symmetry
+     * and for consistency with its previous and next generations.
+     */
+    cell = *nextset++;
 
-	DPRINTF4("Examining saved cell %d %d %d (%s) for consistency\n",
-		cell->row, cell->col, cell->gen,
-		(cell->free ? "free" : "forced"));
+    DPRINTF4("Examining saved cell %d %d %d (%s) for consistency\n",
+        cell->row, cell->col, cell->gen,
+        (cell->free ? "free" : "forced"));
 
-	return consistify10(cell) ? OK : ERROR1;
+    return consistify10(cell) ? OK : ERROR1;
 }
 
 
@@ -671,20 +678,20 @@ examinenext()
  */
 BOOL
 proceed(cell, state, free)
-	CELL *	cell;
-	STATE	state;
-	BOOL	free;
+    CELL * cell;
+    STATE state;
+    BOOL free;
 {
-	int	status;
+    int status;
 
-	if (!setcell(cell, state, free))
-		return FALSE;
+    if (!setcell(cell, state, free))
+        return FALSE;
 
-	do {
-		status = examinenext();
-	} while (status == OK);
+    do {
+        status = examinenext();
+    } while (status == OK);
 
-	return (status == CONSISTENT);
+    return (status == CONSISTENT);
 }
 
 
@@ -696,41 +703,41 @@ proceed(cell, state, free)
 CELL *
 backup()
 {
-	CELL *	cell;
+    CELL * cell;
 
-	// first let's find how far to backup
+    // first let's find how far to backup
 
-	nextset = newset;
+    nextset = newset;
 
-	while (nextset != settable)
-	{
-		cell = *--nextset;
-		--searchset;
+    while (nextset != settable)
+    {
+        cell = *--nextset;
+        --searchset;
 
-		if (!cell->free) continue;
+        if (!cell->free) continue;
 
-		// free cell found
-		// record old status
-		prevstate = cell->state;
+        // free cell found
+        // record old status
+        prevstate = cell->state;
 
-		searchlist = *searchset;
+        searchlist = *searchset;
 
-		// reset the stack and return the cell
-		while (newset != nextset) {
-			rescell(*--newset);
-		}
+        // reset the stack and return the cell
+        while (newset != nextset) {
+            rescell(*--newset);
+        }
 
-		return cell;
-	}
+        return cell;
+    }
 
-	// free cell not found
-	// let's reset the stack anyway
+    // free cell not found
+    // let's reset the stack anyway
 
-	while (newset != nextset) {
-		rescell(*--newset);
-	}
+    while (newset != nextset) {
+        rescell(*--newset);
+    }
 
-	return NULL;
+    return NULL;
 }
 
 
@@ -739,32 +746,31 @@ backup()
  * Returns ERROR if an inconsistency was found.
  */
 BOOL
-go(CELL *cell, STATE state, BOOL free)
+go(CELL * cell, STATE state, BOOL free)
 {
-	CELL ** setpos;
+    CELL ** setpos;
 
-	for (;;)
-	{
+    for (;;)
+    {
+        setpos = nextset;
 
-		setpos = nextset;
+        if (proceed(cell, state, free)) return TRUE;
 
-		if (proceed(cell, state, free)) return TRUE;
+        if ((setpos == nextset) && free)
+        {
+            // no cell added to stack
+            // no backup required
+            // but prevstate is not defined now
+            state = (ON + OFF) - state;
+        } else {
+            cell = backup();
 
-		if ((setpos == nextset) && free)
-		{
-			// no cell added to stack
-			// no backup required
-			// but prevstate is not defined now
-			state = (ON + OFF) - state;
-		} else {
-			cell = backup();
+            if (cell == NULL) return FALSE;
 
-			if (cell == NULL) return FALSE;
-
-			state = (ON + OFF) - prevstate;
-		}
-		free = FALSE;
-	}
+            state = (ON + OFF) - prevstate;
+        }
+        free = FALSE;
+    }
 }
 
 
@@ -775,19 +781,19 @@ go(CELL *cell, STATE state, BOOL free)
 static CELL *
 getnormalunknown()
 {
-	CELL *	cell;
+    CELL * cell;
 
-	for (cell = searchlist; cell != NULL; cell = cell->search)
-	{
-		if (cell->state == UNK)
-		{
-			searchlist = cell;
+    for (cell = searchlist; cell != NULL; cell = cell->search)
+    {
+        if (cell->state == UNK)
+        {
+            searchlist = cell;
 
-			return cell;
-		}
-	}
+            return cell;
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
 /*
@@ -798,148 +804,148 @@ getnormalunknown()
 static CELL *
 getaverageunknown()
 {
-	CELL *	cell;
-	CELL *	bestcell;
-	int	bestdist;
-	int	curdist;
-	int	wantrow;
-	int	curcol;
-	int	testcol;
+    CELL * cell;
+    CELL * bestcell;
+    int bestdist;
+    int curdist;
+    int wantrow;
+    int curcol;
+    int testcol;
 
-	bestcell = NULL;
-	bestdist = -1;
+    bestcell = NULL;
+    bestdist = -1;
 
-	cell = searchlist;
+    cell = searchlist;
 
-	while (cell)
-	{
-		searchlist = cell;
-		curcol = cell->col;
+    while (cell)
+    {
+        searchlist = cell;
+        curcol = cell->col;
 
-		testcol = curcol - 1;
+        testcol = curcol - 1;
 
-		while ((testcol > 0) && (colinfo[testcol].oncount <= 0))
-			testcol--;
+        while ((testcol > 0) && (colinfo[testcol].oncount <= 0))
+            testcol--;
 
-		if (testcol > 0)
-		{
-			wantrow = colinfo[testcol].sumpos /
-				colinfo[testcol].oncount;
-		}
-		else
-			wantrow = (rowmax + 1) / 2;
+        if (testcol > 0)
+        {
+            wantrow = colinfo[testcol].sumpos /
+                colinfo[testcol].oncount;
+        }
+        else
+            wantrow = (rowmax + 1) / 2;
 
-		for (; (cell != NULL) && (cell->col == curcol); cell = cell->search)
-		{
-			if (cell->state == UNK)
-			{
-				curdist = cell->row - wantrow;
+        for (; (cell != NULL) && (cell->col == curcol); cell = cell->search)
+        {
+            if (cell->state == UNK)
+            {
+                curdist = cell->row - wantrow;
 
-				if (curdist < 0)
-					curdist = -curdist;
+                if (curdist < 0)
+                    curdist = -curdist;
 
-				if (curdist > bestdist)
-				{
-					bestcell = cell;
-					bestdist = curdist;
-				}
-			}
-		}
+                if (curdist > bestdist)
+                {
+                    bestcell = cell;
+                    bestdist = curdist;
+                }
+            }
+        }
 
-		if (bestcell)
-			return bestcell;
-	}
+        if (bestcell)
+            return bestcell;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 // calculate how many cells will change
 // if we change the current cell to ON or OFF
 // set smartlen1 and smartlen0 to appropriate numbers
 
-static BOOL getsmartnumbers(CELL *cell)
+static BOOL getsmartnumbers(CELL * cell)
 {
-	int cellno;
-	int comb0, comb1;
-	CELL ** setpos;
+    int cellno;
+    int comb0, comb1;
+    CELL ** setpos;
 
-	// known and inactive cells are unimportant
-	if (cell->state != UNK) return 2;
+    // known and inactive cells are unimportant
+    if (cell->state != UNK) return 2;
 
-	// remember set position for proper backup
-	setpos = newset;
+    // remember set position for proper backup
+    setpos = newset;
 
-	// remember cell count to calculate the change
-	cellno = cellcount;
+    // remember cell count to calculate the change
+    cellno = cellcount;
 
-	comb0 = comb1 = differentcombinedcells + setcombinedcells;
-	// test the cell
-	if (proceed(cell, ON, TRUE))
-	{
-		smartlen1 = cellcount - cellno;
-		comb1 = differentcombinedcells  + setcombinedcells - comb1;
+    comb0 = comb1 = differentcombinedcells + setcombinedcells;
+    // test the cell
+    if (proceed(cell, ON, TRUE))
+    {
+        smartlen1 = cellcount - cellno;
+        comb1 = differentcombinedcells  + setcombinedcells - comb1;
 
-		// back up
-		backup(); 
+        // back up
+        backup(); 
 
-		// and now let's try the OFF choice
+        // and now let's try the OFF choice
 
-		if (proceed(cell, OFF, TRUE))
-		{
-			smartlen0 = cellcount - cellno;
-			comb0 = differentcombinedcells + setcombinedcells - comb0;
+        if (proceed(cell, OFF, TRUE))
+        {
+            smartlen0 = cellcount - cellno;
+            comb0 = differentcombinedcells + setcombinedcells - comb0;
 
-			if (smarton)
-			{
-				if (comb0 == comb1)
-				{
-					smartcomb = comb0;
-					smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
-				}
-				else if (comb0 > comb1)
-				{
-					smartcomb = comb0;
-					smartchoice = OFF;
-				}
-				else
-				{
-					smartcomb = comb1;
-					smartchoice = ON;
-				}
-			}
-			else
-			{
-				smartcomb = 0;
-				smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
-			}
+            if (smarton)
+            {
+                if (comb0 == comb1)
+                {
+                    smartcomb = comb0;
+                    smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
+                }
+                else if (comb0 > comb1)
+                {
+                    smartcomb = comb0;
+                    smartchoice = OFF;
+                }
+                else
+                {
+                    smartcomb = comb1;
+                    smartchoice = ON;
+                }
+            }
+            else
+            {
+                smartcomb = 0;
+                smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
+            }
 
-			// back up
-			backup();
+            // back up
+            backup();
 
-			return TRUE;
+            return TRUE;
 
-		} else {
-			// OFF state inconsistent
-			// makes a good candidate
-			smartchoice = OFF;
+        } else {
+            // OFF state inconsistent
+            // makes a good candidate
+            smartchoice = OFF;
 
-			// back up if something changed
-			if (setpos != newset) backup();
+            // back up if something changed
+            if (setpos != newset) backup();
 
-			return FALSE;
-		}
+            return FALSE;
+        }
 
-	} else {
-		// ON state inconsistent
-		// it's actually a good candidate
-		smartchoice = ON;
+    } else {
+        // ON state inconsistent
+        // it's actually a good candidate
+        smartchoice = ON;
 
-		// back up if something changed
-		if (setpos != newset) backup();
+        // back up if something changed
+        if (setpos != newset) backup();
 
-		return FALSE;
+        return FALSE;
 
-	}
+    }
 }
 
 // Smart cell ordering
@@ -947,155 +953,157 @@ static BOOL getsmartnumbers(CELL *cell)
 static CELL *
 getsmartunknown()
 {
-	CELL *cell;
-	CELL *best;
-	STATE bestchoice;
-	int max, window, threshold, bestlen1, bestlen0, bestcomb, wnd, n1, n2, a, b, c, d;
+    CELL * cell;
+    CELL * best;
+    STATE bestchoice;
+    int max, window, threshold, bestlen1, bestlen0, bestcomb, wnd, n1, n2, a, b, c, d;
 
-	// Move the searchlist over all known cells
-	while ((searchlist != NULL) && (searchlist->state != UNK)) {
-		searchlist = searchlist->search;
-	}
+    // Move the searchlist over all known cells
+    while ((searchlist != NULL) && (searchlist->state != UNK)) {
+        searchlist = searchlist->search;
+    }
 
-	// Return NULL if no unknown cells
-	if (searchlist == NULL) return NULL;
+    // Return NULL if no unknown cells
+    if (searchlist == NULL) return NULL;
 
-	// Prepare threshold
-	threshold = smartthreshold;
-	if (threshold <= 0) threshold = MAXCELLS;
+    // Prepare threshold
+    threshold = smartthreshold;
+    if (threshold <= 0) threshold = MAXCELLS;
 
-	// Prepare the dummy maximum
-	max = 2; // at least 3 cells must change
-	bestlen0 = 1;
-	bestlen1 = 1;
-	bestcomb = 0;
+    // Prepare the dummy maximum
+    max = 2; // at least 3 cells must change
+    bestlen0 = 1;
+    bestlen1 = 1;
+    bestcomb = 0;
 
-	best = NULL;
+    best = NULL;
 
-	wnd = 0;
+    wnd = 0;
 
-	window = smartwindow;
-	cell = searchlist;
+    window = smartwindow;
+    cell = searchlist;
 
-	while ((cell != NULL) && (window > 0) && (max < threshold)) {
-		++wnd;
-		--window; // count known cells too
-		if (cell->state == UNK)
-		{
-			if (getsmartnumbers(cell))
-			{
-				if (bestcomb == smartcomb)
-				{
-					// (smartlen0, smartlen1) is better than (bestlen0, bestlen1) if
-					// 1/2**smartlen0 + 1/2**smartlen1 < 1/2**bestlen0 + 1/2**bestlen1
-					// i.e.
-					// 2**(b0+b1+s0) + 2**(b0+b1+s1) < 2**(s0+s1+b0) + 2**(s0+s1+b1)
-					//
-					// both sides are binary numbers with one or two 1's
-					// so let's compare the exponents
+    while ((cell != NULL) && (window > 0) && (max < threshold)) {
+        ++wnd;
+        --window; // count known cells too
+        if (cell->state == UNK)
+        {
+            if (getsmartnumbers(cell))
+            {
+                if (bestcomb == smartcomb)
+                {
+                    // (smartlen0, smartlen1) is better than (bestlen0, bestlen1) if
+                    // 1/2**smartlen0 + 1/2**smartlen1 < 1/2**bestlen0 + 1/2**bestlen1
+                    // i.e.
+                    // 2**(b0+b1+s0) + 2**(b0+b1+s1) < 2**(s0+s1+b0) + 2**(s0+s1+b1)
+                    //
+                    // both sides are binary numbers with one or two 1's
+                    // so let's compare the exponents
 
-					n1 = smartlen0 + smartlen1;
-					n2 = n1 + bestlen1;
-					n1 += bestlen0;
+                    n1 = smartlen0 + smartlen1;
+                    n2 = n1 + bestlen1;
+                    n1 += bestlen0;
 
-					if (n1 > n2) 
-					{
-						a = n1;
-						b = n2;
-					} else if (n1 == n2) {
-						a = n1 + 1;
-						b = -1;
-					} else {
-						a = n2;
-						b = n1;
-					}
+                    if (n1 > n2) 
+                    {
+                        a = n1;
+                        b = n2;
+                    } else if (n1 == n2) {
+                        a = n1 + 1;
+                        b = -1;
+                    } else {
+                        a = n2;
+                        b = n1;
+                    }
 
-					// max = bestlen0 + bestlen1
+                    // max = bestlen0 + bestlen1
 
-					n1 = max + smartlen0;
-					n2 = max + smartlen1;
+                    n1 = max + smartlen0;
+                    n2 = max + smartlen1;
 
-					if (n1 > n2)
-					{
-						c = n1;
-						d = n2;
-					} else if (n1 == n2) {
-						c = n1 + 1;
-						d = -1;
-					} else {
-						c = n2;
-						d = n1;
-					}
+                    if (n1 > n2)
+                    {
+                        c = n1;
+                        d = n2;
+                    } else if (n1 == n2) {
+                        c = n1 + 1;
+                        d = -1;
+                    } else {
+                        c = n2;
+                        d = n1;
+                    }
 
-					if ((a > c) || ((a = c) && (b > d)))
-					{
-						best = cell;
-						bestchoice = smartchoice;
-						// bestcomb = smartcomb; -- it's equal anyway
-						bestlen1 = smartlen1;
-						bestlen0 = smartlen0;
-						max = bestlen0 + bestlen1;
-					}
-				}
-				else if (bestcomb < smartcomb)
-				{
-					best = cell;
-					bestchoice = smartchoice;
-					bestcomb = smartcomb;
-					bestlen1 = smartlen1;
-					bestlen0 = smartlen0;
-					max = bestlen0 + bestlen1;
-				}
-			} else {
-				// the cell can be set only one way
-				best = cell;
-				bestchoice = smartchoice;
-				max = MAXCELLS + 1;
-				window = 0;
-			}
-		}
-		cell = cell->search;
-	}
+                    if ((a > c) || ((a = c) && (b > d)))
+                    {
+                        best = cell;
+                        bestchoice = smartchoice;
+                        // bestcomb = smartcomb; -- it's equal anyway
+                        bestlen1 = smartlen1;
+                        bestlen0 = smartlen0;
+                        max = bestlen0 + bestlen1;
+                    }
+                }
+                else if (bestcomb < smartcomb)
+                {
+                    best = cell;
+                    bestchoice = smartchoice;
+                    bestcomb = smartcomb;
+                    bestlen1 = smartlen1;
+                    bestlen0 = smartlen0;
+                    max = bestlen0 + bestlen1;
+                }
+            } else {
+                // the cell can be set only one way
+                best = cell;
+                bestchoice = smartchoice;
+                max = MAXCELLS + 1;
+                window = 0;
+            }
+        }
+        cell = cell->search;
+    }
 
-	// Found something?
-	if (best != NULL) {
+    // Found something?
+    if (best != NULL)
+    {
+        if (MAXCELLS >= max)
+        {
+            smartstatsumwnd += wnd;
+            ++smartstatsumwndc;
+            smartstatsumlen += max;
+            ++smartstatsumlenc;
+        
+            if (smartstatsumwndc >= 100000)
+            {
+                smartstatwnd = smartstatsumwnd / smartstatsumwndc;
+                smartstatsumwnd = 0;
+                smartstatsumwndc = 0;
+                if (smartstatsumlenc >= 10000)
+                {
+                    smartstatlen = smartstatsumlen / smartstatsumlenc;
+                    smartstatsumlen = 0;
+                    smartstatsumlenc = 0;
+                }
+            }
+        }
 
+        if (smarton)
+        {
+            // propose the shorter tree
+            smartchoice = bestchoice;
+        } else {
+            smartchoice = UNK;
+        }
+        return best;
+    }
 
-		if (MAXCELLS >= max) {
-			smartstatsumwnd += wnd;
-			++smartstatsumwndc;
-			smartstatsumlen += max;
-			++smartstatsumlenc;
-		
-			if (smartstatsumwndc >= 100000) {
-				smartstatwnd = smartstatsumwnd / smartstatsumwndc;
-				smartstatsumwnd = 0;
-				smartstatsumwndc = 0;
-				if (smartstatsumlenc >= 10000) {
-					smartstatlen = smartstatsumlen / smartstatsumlenc;
-					smartstatsumlen = 0;
-					smartstatsumlenc = 0;
-				}
-			}
-		}
+    // fall back to standard
+    smartchoice = UNK;
 
-		if (smarton)
-		{
-			// propose the shorter tree
-			smartchoice = bestchoice;
-		} else {
-			smartchoice = UNK;
-		}
-		return best;
-	}
+    // Just return the first UNK cell
+    // This shouldn't be often anyway
 
-	// fall back to standard
-	smartchoice = UNK;
-
-	// Just return the first UNK cell
-	// This shouldn't be often anyway
-
-	return searchlist;
+    return searchlist;
 }
 
 /*
@@ -1107,39 +1115,39 @@ getsmartunknown()
 
 static STATE
 choose(cell)
-	CELL *	cell;
+    CELL * cell;
 {
-	/* 
-	 * if something pre-set by the select algorithm,
-	 * use the selection
-	 */
+    /* 
+     * if something pre-set by the select algorithm,
+     * use the selection
+     */
 
-	if (smartchoice != UNK) return smartchoice;
+    if (smartchoice != UNK) return smartchoice;
 
-	/*
-	 * If we are following cells in other generations,
-	 * then try to do that.
-	 */
+    /*
+     * If we are following cells in other generations,
+     * then try to do that.
+     */
 
-	if (followgens)
-	{
-		if ((cell->past->state == ON) ||
-			(cell->future->state == ON))
-		{
-			return ON;
-		}
+    if (followgens)
+    {
+        if ((cell->past->state == ON) ||
+            (cell->future->state == ON))
+        {
+            return ON;
+        }
 
-	}
+    }
 
-	/* 
-	 * In all other cases
-	 * try the OFF state first
-	 */
+    /* 
+     * In all other cases
+     * try the OFF state first
+     */
 
-	return OFF;
+    return OFF;
 }
 
-CELL *combinebackup(void);
+CELL * combinebackup(void);
 
 /*
  * The top level search routine.
@@ -1148,107 +1156,107 @@ CELL *combinebackup(void);
 STATUS
 search(const BOOL batch)
 {
-	CELL *	cell;
-	BOOL	free;
-	BOOL	needwrite;
-	STATE	state;
+    CELL * cell;
+    BOOL free;
+    BOOL needwrite;
+    STATE state;
 
- 	cell = (*getunknown)();
+    cell = (*getunknown)();
 
-	if (cell == NULL)
-	{
-		// nothing to search
-		// so we are at a solution
-		// let's start search for another one
+    if (cell == NULL)
+    {
+        // nothing to search
+        // so we are at a solution
+        // let's start search for another one
 
-		cell = backup();
+        cell = backup();
 
-		if (cell == NULL)
-			return ERROR1;
+        if (cell == NULL)
+            return ERROR1;
 
-		free = FALSE;
-		state = (ON + OFF) - prevstate;
+        free = FALSE;
+        state = (ON + OFF) - prevstate;
 
-	} else {
+    } else {
 
-		state = choose(cell);
-		free = TRUE;
+        state = choose(cell);
+        free = TRUE;
 
-	}
+    }
 
-	for (;;) {
-		if(ttycheck()) 
-		{
+    for (;;) {
+        if(ttycheck()) 
+        {
             if (!batch) {
-    			getcommands();
-    		} else {
-    		    exit(0);
-    		}
+                getcommands();
+            } else {
+                exit(0);
+            }
         }
-		// Set the state of the new cell.
+        // Set the state of the new cell.
 
-		if (!go(cell, state, free)) 
-		{
-			viewcount = 0;
-			printgen(curgen);
+        if (!go(cell, state, free)) 
+        {
+            viewcount = 0;
+            printgen(curgen);
 
-			return NOTEXIST;
-		}
-
-
-		// If it is time to dump our state, then do that.
-
-		if (dumpfreq && (++dumpcount >= dumpfreq))
-		{
-			dumpcount = 0;
-			dumpstate(dumpfile);
-		}
+            return NOTEXIST;
+        }
 
 
-		// If we have enough columns found, then remember to
-		// write it to the output file.  Also keep the last
-		// columns count values up to date.
+        // If it is time to dump our state, then do that.
 
-		needwrite = FALSE;
-
-		if (outputcols &&
-			(fullcolumns >= outputlastcols + outputcols))
-		{
-			outputlastcols = fullcolumns;
-			needwrite = TRUE;
-		}
-
-		if (outputlastcols > fullcolumns)
-			outputlastcols = fullcolumns;
-
-		// If it is time to view the progress,then show it.
-
-		if (needwrite || (viewfreq && (++viewcount >= viewfreq)))
-		{
-			viewcount = 0;
-			printgen(curgen);
-		}
-
-		// Write the progress to the output file if needed.
-		// This is done after viewing it so that the write
-		// message will stay visible for a while.
-
-		if (needwrite)
-		{
-			writegen(outputfile, TRUE);
-		}
+        if (dumpfreq && (++dumpcount >= dumpfreq))
+        {
+            dumpcount = 0;
+            dumpstate(dumpfile);
+        }
 
 
-		// Get the next unknown cell and choose its state.
+        // If we have enough columns found, then remember to
+        // write it to the output file.  Also keep the last
+        // columns count values up to date.
 
-		cell = (*getunknown)();
+        needwrite = FALSE;
 
-		if (cell == NULL)
-			return FOUND;
+        if (outputcols &&
+            (fullcolumns >= outputlastcols + outputcols))
+        {
+            outputlastcols = fullcolumns;
+            needwrite = TRUE;
+        }
 
-		state = choose(cell);
-		free = TRUE;
-	}
+        if (outputlastcols > fullcolumns)
+            outputlastcols = fullcolumns;
+
+        // If it is time to view the progress,then show it.
+
+        if (needwrite || (viewfreq && (++viewcount >= viewfreq)))
+        {
+            viewcount = 0;
+            printgen(curgen);
+        }
+
+        // Write the progress to the output file if needed.
+        // This is done after viewing it so that the write
+        // message will stay visible for a while.
+
+        if (needwrite)
+        {
+            writegen(outputfile, TRUE);
+        }
+
+
+        // Get the next unknown cell and choose its state.
+
+        cell = (*getunknown)();
+
+        if (cell == NULL)
+            return FOUND;
+
+        state = choose(cell);
+        free = TRUE;
+    }
 }
 
 
@@ -1260,25 +1268,25 @@ search(const BOOL batch)
  */
 
 void
-adjustnear(CELL *cell, int inc)
+adjustnear(CELL * cell, int inc)
 {
-	CELL *	curcell;
-	int	count;
-	int	colcount;
+    CELL * curcell;
+    int count;
+    int colcount;
 
-	for (colcount = nearcols; colcount > 0; colcount--)
-	{
-		cell = cell->cr;
-		curcell = cell;
+    for (colcount = nearcols; colcount > 0; colcount--)
+    {
+        cell = cell->cr;
+        curcell = cell;
 
-		for (count = nearcols; count-- >= 0; curcell = curcell->cu)
-			curcell->near1 += inc;
+        for (count = nearcols; count-- >= 0; curcell = curcell->cu)
+            curcell->near1 += inc;
 
-		curcell = cell->cd;
+        curcell = cell->cd;
 
-		for (count = nearcols; count-- > 0; curcell = curcell->cd)
-			curcell->near1 += inc;
-	}
+        for (count = nearcols; count-- > 0; curcell = curcell->cd)
+            curcell->near1 += inc;
+    }
 }
 
 
@@ -1291,77 +1299,77 @@ adjustnear(CELL *cell, int inc)
 
 static BOOL
 checkwidth(cell)
-	CELL *	cell;
+    CELL * cell;
 {
-	int	left;
-	int	width;
-	int	minrow;
-	int	maxrow;
-	int	srcminrow;
-	int	srcmaxrow;
-	CELL *	ucp;
-	CELL *	dcp;
-	BOOL	full;
+    int left;
+    int width;
+    int minrow;
+    int maxrow;
+    int srcminrow;
+    int srcmaxrow;
+    CELL * ucp;
+    CELL * dcp;
+    BOOL full;
 
-	if (!colwidth || !inited || cell->gen)
-		return FALSE;
+    if (!colwidth || !inited || cell->gen)
+        return FALSE;
 
-	left = cell->colinfo->oncount;
+    left = cell->colinfo->oncount;
 
-	if (left <= 0)
-		return FALSE;
+    if (left <= 0)
+        return FALSE;
 
-	ucp = cell;
-	dcp = cell;
-	width = colwidth;
-	minrow = cell->row;
-	maxrow = cell->row;
-	srcminrow = 1;
-	srcmaxrow = rowmax;
-	full = TRUE;
+    ucp = cell;
+    dcp = cell;
+    width = colwidth;
+    minrow = cell->row;
+    maxrow = cell->row;
+    srcminrow = 1;
+    srcmaxrow = rowmax;
+    full = TRUE;
 
-	if ((rowsym && (cell->col >= rowsym)) ||
-		(fliprows && (cell->col >= fliprows)))
-	{
-		full = FALSE;
-		srcmaxrow = (rowmax + 1) / 2;
+    if ((rowsym && (cell->col >= rowsym)) ||
+        (fliprows && (cell->col >= fliprows)))
+    {
+        full = FALSE;
+        srcmaxrow = (rowmax + 1) / 2;
 
-		if (cell->row > srcmaxrow)
-		{
-			srcminrow = (rowmax / 2) + 1;
-			srcmaxrow = rowmax;
-		}
-	}
+        if (cell->row > srcmaxrow)
+        {
+            srcminrow = (rowmax / 2) + 1;
+            srcmaxrow = rowmax;
+        }
+    }
 
-	while (left > 0)
-	{
-		if (full && (--width <= 0))
-			return TRUE;
+    while (left > 0)
+    {
+        if (full && (--width <= 0))
+            return TRUE;
 
-		ucp = ucp->cu;
-		dcp = dcp->cd;
+        ucp = ucp->cu;
+        dcp = dcp->cd;
 
-		if (ucp->state == ON)
-		{
-			if (ucp->row >= srcminrow)
-				minrow = ucp->row;
+        if (ucp->state == ON)
+        {
+            if (ucp->row >= srcminrow)
+                minrow = ucp->row;
 
-			left--;
-		}
+            left--;
+        }
 
-		if (dcp->state == ON)
-		{
-			if (dcp->row <= srcmaxrow)
-				maxrow = dcp->row;
+        if (dcp->state == ON)
+        {
+            if (dcp->row <= srcmaxrow)
+                maxrow = dcp->row;
 
-			left--;
-		}
-	}
+            left--;
+        }
+    }
 
-	if (maxrow - minrow >= colwidth)
-		return TRUE;
+    if (maxrow - minrow >= colwidth)
+        return TRUE;
 
-	return FALSE;
+    return FALSE;
 }
 
 
@@ -1374,34 +1382,34 @@ checkwidth(cell)
 BOOL
 subperiods()
 {
-	int	row;
-	int	col;
-	int	gen;
-	CELL *	cellg0;
-	CELL *	cellgn;
+    int row;
+    int col;
+    int gen;
+    CELL * cellg0;
+    CELL * cellgn;
 
-	for (gen = 1; gen < genmax; gen++)
-	{
-		if (genmax % gen)
-			continue;
+    for (gen = 1; gen < genmax; gen++)
+    {
+        if (genmax % gen)
+            continue;
 
-		for (row = 1; row <= rowmax; row++)
-		{
-			for (col = 1; col <= colmax; col++)
-			{
-				cellg0 = findcell(row, col, 0);
-				cellgn = findcell(row, col, gen);
+        for (row = 1; row <= rowmax; row++)
+        {
+            for (col = 1; col <= colmax; col++)
+            {
+                cellg0 = findcell(row, col, 0);
+                cellgn = findcell(row, col, gen);
 
-				if (cellg0->state != cellgn->state)
-					goto nextgen;
-			}
-		}
+                if (cellg0->state != cellgn->state)
+                    goto nextgen;
+            }
+        }
 
-		return TRUE;
+        return TRUE;
 nextgen:;
-	}
+    }
 
-	return FALSE;
+    return FALSE;
 }
 
 
@@ -1413,45 +1421,45 @@ nextgen:;
  */
 static CELL *
 mapcell(cell)
-	CELL *	cell;
+    CELL * cell;
 {
-	int	row;
-	int	col;
-	int	tmp;
-	BOOL	forward;
+    int row;
+    int col;
+    int tmp;
+    BOOL forward;
 
-	row = cell->row;
-	col = cell->col;
-	forward = (cell->gen != 0);
+    row = cell->row;
+    col = cell->col;
+    forward = (cell->gen != 0);
 
-	if (fliprows && (col >= fliprows))
-		row = rowmax + 1 - row;
+    if (fliprows && (col >= fliprows))
+        row = rowmax + 1 - row;
 
-	if (flipcols && (row >= flipcols))
-		col = colmax + 1 - col;
+    if (flipcols && (row >= flipcols))
+        col = colmax + 1 - col;
 
-	if (flipquads)
-	{				/* NEED TO GO BACKWARDS */
-		tmp = col;
-		col = row;
-		row = colmax + 1 - tmp;
-	}
+    if (flipquads)
+    {                /* NEED TO GO BACKWARDS */
+        tmp = col;
+        col = row;
+        row = colmax + 1 - tmp;
+    }
 
-	if (forward)
-	{
-		row += rowtrans;
-		col += coltrans;
-	}
-	else
-	{
-		row -= rowtrans;
-		col -= coltrans;
-	}
+    if (forward)
+    {
+        row += rowtrans;
+        col += coltrans;
+    }
+    else
+    {
+        row -= rowtrans;
+        col -= coltrans;
+    }
 
-	if (forward)
-		return findcell(row, col, 0);
-	else
-		return findcell(row, col, genmax - 1);
+    if (forward)
+        return findcell(row, col, 0);
+    else
+        return findcell(row, col, genmax - 1);
 }
 
 
@@ -1462,54 +1470,54 @@ mapcell(cell)
  * Symmetry uses this feature, and so does setting stable cells.
  * If any cells in the loop are frozen, then they all are.
  */
-void loopcells(CELL *cell1, CELL *cell2)
+void loopcells(CELL * cell1, CELL * cell2)
 {
-	CELL *	cell;
-	BOOL	frozen;
+    CELL * cell;
+    BOOL frozen;
 
-	if (cell2==NULL) return;
+    if (cell2 == NULL) return;
 
-	if (cell1 == cell2) return;
+    if (cell1 == cell2) return;
 
-	/*
-	 * See if the second cell is already part of the first cell's loop.
-	 * If so, they they are already joined.  We don't need to
-	 * check the other direction.
-	 */
-	for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-	{
-		if (cell == cell2) return;
-	}
+    /*
+     * See if the second cell is already part of the first cell's loop.
+     * If so, they they are already joined.  We don't need to
+     * check the other direction.
+     */
+    for (cell = cell1->loop; cell != cell1; cell = cell->loop)
+    {
+        if (cell == cell2) return;
+    }
 
-	/*
-	 * The two cells belong to separate loops.
-	 * Break each of those loops and make one big loop from them.
-	 */
-	cell = cell1->loop;
-	cell1->loop = cell2->loop;
-	cell2->loop = cell;
+    /*
+     * The two cells belong to separate loops.
+     * Break each of those loops and make one big loop from them.
+     */
+    cell = cell1->loop;
+    cell1->loop = cell2->loop;
+    cell2->loop = cell;
 
-	/*
-	 * See if any of the cells in the loop are frozen.
-	 * If so, then mark all of the cells in the loop frozen
-	 * since they effectively are anyway.  This lets the
-	 * user see that fact.
-	 */
-	frozen = cell1->frozen;
+    /*
+     * See if any of the cells in the loop are frozen.
+     * If so, then mark all of the cells in the loop frozen
+     * since they effectively are anyway.  This lets the
+     * user see that fact.
+     */
+    frozen = cell1->frozen;
 
-	for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-	{
-		if (cell->frozen)
-			frozen = TRUE;
-	}
+    for (cell = cell1->loop; cell != cell1; cell = cell->loop)
+    {
+        if (cell->frozen)
+            frozen = TRUE;
+    }
 
-	if (frozen)
-	{
-		cell1->frozen = TRUE;
+    if (frozen)
+    {
+        cell1->frozen = TRUE;
 
-		for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-			cell->frozen = TRUE;
-	}
+        for (cell = cell1->loop; cell != cell1; cell = cell->loop)
+            cell->frozen = TRUE;
+    }
 }
 
 
@@ -1522,94 +1530,94 @@ void loopcells(CELL *cell1, CELL *cell2)
  */
 
 
-static CELL *symcell(CELL *cell)
+static CELL * symcell(CELL * cell)
 {
-	int	row;
-	int	col;
-	int	nrow;
-	int	ncol;
+    int row;
+    int col;
+    int nrow;
+    int ncol;
 
-	if(!symmetry)
-		return NULL;
+    if(!symmetry)
+        return NULL;
 
-	row = cell->row;
-	col = cell->col;
-	nrow = rowmax + 1 - row;
-	ncol = colmax + 1 - col;
+    row = cell->row;
+    col = cell->col;
+    nrow = rowmax + 1 - row;
+    ncol = colmax + 1 - col;
 
-	if(symmetry==1)  // col sym
-		return findcell(row,ncol,cell->gen);
+    if(symmetry == 1)  // col sym
+        return findcell(row,ncol,cell->gen);
 
-	if(symmetry==2) { // row sym
-		return findcell(nrow,col,cell->gen);
-	}
+    if(symmetry == 2) { // row sym
+        return findcell(nrow,col,cell->gen);
+    }
 
-	if(symmetry==3)       // fwd diag
-		return findcell(ncol,nrow,cell->gen);
+    if(symmetry == 3)       // fwd diag
+        return findcell(ncol,nrow,cell->gen);
 
-	if(symmetry==4)    {   // bwd diag
-		return findcell(col,row,cell->gen);
-	}
+    if(symmetry == 4)    {   // bwd diag
+        return findcell(col,row,cell->gen);
+    }
 
-	if(symmetry==5)       // origin
-		return findcell(nrow, ncol, cell->gen);
+    if(symmetry == 5)       // origin
+        return findcell(nrow, ncol, cell->gen);
 
-	if(symmetry==6) {
-		/*
-		 * Here is there is both row and column symmetry.
-		 * First see if the cell is in the middle row or middle column,
-		 * and if so, then this is easy.
-		 */
-		if ((nrow == row) || (ncol == col))
-			return findcell(nrow, ncol, cell->gen);
+    if(symmetry == 6) {
+        /*
+         * Here is there is both row and column symmetry.
+         * First see if the cell is in the middle row or middle column,
+         * and if so, then this is easy.
+         */
+        if ((nrow == row) || (ncol == col))
+            return findcell(nrow, ncol, cell->gen);
 
-		/*
-		 * The cell is really in one of the four quadrants, and therefore
-		 * has four cells making up the symmetry.  Link this cell to the
-		 * symmetrical cell in the next quadrant clockwise.
-		 */
-		if ((row < nrow) == (col < ncol))
-			return findcell(row, ncol, cell->gen);  // quadrant 2 or 4
-		else
-			return findcell(nrow, col, cell->gen);  // quadrant 1 or 3
-	}
+        /*
+         * The cell is really in one of the four quadrants, and therefore
+         * has four cells making up the symmetry.  Link this cell to the
+         * symmetrical cell in the next quadrant clockwise.
+         */
+        if ((row < nrow) == (col < ncol))
+            return findcell(row, ncol, cell->gen);  // quadrant 2 or 4
+        else
+            return findcell(nrow, col, cell->gen);  // quadrant 1 or 3
+    }
 
-	if(symmetry==7) {  // diagonal 4-fold
-		// if on a diagonal...
-		if(row==col || row==ncol)
-			return findcell(nrow,ncol,cell->gen);
+    if(symmetry == 7) {  // diagonal 4-fold
+        // if on a diagonal...
+        if(row==col || row==ncol)
+            return findcell(nrow,ncol,cell->gen);
 
-		// Not on a diagonal.
-		if((col<row)==(col<nrow))
-			return findcell(col,row,cell->gen);
-		else
-			return findcell(ncol,nrow,cell->gen);
-	}
+        // Not on a diagonal.
+        if((col<row)==(col<nrow))
+            return findcell(col,row,cell->gen);
+        else
+            return findcell(ncol,nrow,cell->gen);
+    }
 
-	if(symmetry==8) {      // origin*4 symmetry 
-		// this is surprisingly simple
-			return findcell(ncol,row,cell->gen);
-	}
+    if(symmetry == 8) {      // origin*4 symmetry 
+        // this is surprisingly simple
+            return findcell(ncol,row,cell->gen);
+    }
 
-	if(symmetry==9) {    // octagonal, this is gonna be tough
-		// if on an axis
-		if(nrow==row || ncol==col)
-			return findcell(ncol,row,cell->gen);
-		// if on a diagonal
-		if(row==col || row==ncol)
-			return findcell(ncol,row,cell->gen);
-		if((col>nrow && row<nrow)||(col<nrow && row>nrow)) // octants 1,5
-			return findcell(nrow,col,cell->gen);  // flip rows
-		if((col<nrow && col>ncol)||(col>nrow && col<ncol)) // 2,6
-			return findcell(ncol,nrow,cell->gen);  // fwd diag
-		if((col>row && col<ncol)||(col<row && col>ncol))   // 3,7
-			return findcell(row,ncol,cell->gen);  // flip cols
-		if((col<row && row<nrow)||(col>row && row>nrow))   // 4,8
-			return findcell(col,row,cell->gen);   // bwd diag
+    if(symmetry == 9) {    // octagonal, this is gonna be tough
+        // if on an axis
+        if(nrow==row || ncol==col)
+            return findcell(ncol,row,cell->gen);
+        // if on a diagonal
+        if(row==col || row==ncol)
+            return findcell(ncol,row,cell->gen);
+        if((col>nrow && row<nrow)||(col<nrow && row>nrow)) // octants 1,5
+            return findcell(nrow,col,cell->gen);  // flip rows
+        if((col<nrow && col>ncol)||(col>nrow && col<ncol)) // 2,6
+            return findcell(ncol,nrow,cell->gen);  // fwd diag
+        if((col>row && col<ncol)||(col<row && col>ncol))   // 3,7
+            return findcell(row,ncol,cell->gen);  // flip cols
+        if((col<row && row<nrow)||(col>row && row>nrow))   // 4,8
+            return findcell(col,row,cell->gen);   // bwd diag
 
-	}
+    }
 
-	return NULL;   // crash if we get here :)
+    return NULL;   // crash if we get here :)
 }
 
 /*
@@ -1618,48 +1626,48 @@ static CELL *symcell(CELL *cell)
  */
 static void
 linkcell(cell)
-	CELL *	cell;
+    CELL * cell;
 {
-	int	row;
-	int	col;
-	int	gen;
-	CELL *	paircell;
+    int row;
+    int col;
+    int gen;
+    CELL * paircell;
 
-	row = cell->row;
-	col = cell->col;
-	gen = cell->gen;
+    row = cell->row;
+    col = cell->col;
+    gen = cell->gen;
 
-	paircell = findcell(row - 1, col - 1, gen);
-	cell->cul = paircell;
-	paircell->cdr = cell;
+    paircell = findcell(row - 1, col - 1, gen);
+    cell->cul = paircell;
+    paircell->cdr = cell;
 
-	paircell = findcell(row - 1, col, gen);
-	cell->cu = paircell;
-	paircell->cd = cell;
+    paircell = findcell(row - 1, col, gen);
+    cell->cu = paircell;
+    paircell->cd = cell;
 
-	paircell = findcell(row - 1, col + 1, gen);
-	cell->cur = paircell;
-	paircell->cdl = cell;
+    paircell = findcell(row - 1, col + 1, gen);
+    cell->cur = paircell;
+    paircell->cdl = cell;
 
-	paircell = findcell(row, col - 1, gen);
-	cell->cl = paircell;
-	paircell->cr = cell;
+    paircell = findcell(row, col - 1, gen);
+    cell->cl = paircell;
+    paircell->cr = cell;
 
-	paircell = findcell(row, col + 1, gen);
-	cell->cr = paircell;
-	paircell->cl = cell;
+    paircell = findcell(row, col + 1, gen);
+    cell->cr = paircell;
+    paircell->cl = cell;
 
-	paircell = findcell(row + 1, col - 1, gen);
-	cell->cdl = paircell;
-	paircell->cur = cell;
+    paircell = findcell(row + 1, col - 1, gen);
+    cell->cdl = paircell;
+    paircell->cur = cell;
 
-	paircell = findcell(row + 1, col, gen);
-	cell->cd = paircell;
-	paircell->cu = cell;
+    paircell = findcell(row + 1, col, gen);
+    cell->cd = paircell;
+    paircell->cu = cell;
 
-	paircell = findcell(row + 1, col + 1, gen);
-	cell->cdr = paircell;
-	paircell->cul = cell;
+    paircell = findcell(row + 1, col + 1, gen);
+    cell->cdr = paircell;
+    paircell->cul = cell;
 }
 
 
@@ -1672,50 +1680,50 @@ linkcell(cell)
  */
 CELL *
 findcell(row, col, gen)
-	int	row;
-	int	col;
-	int	gen;
+    int row;
+    int col;
+    int gen;
 {
-	CELL *	cell;
-	int		i;
+    CELL * cell;
+    int i;
 
-	/*
-	 * If the cell is a normal cell, then we know where it is.
-	 */
-	if ((row >= 0) && (row <= rowmax + 1) &&
-		(col >= 0) && (col <= colmax + 1) &&
-		(gen >= 0) && (gen < genmax))
-	{
-		return celltable[(col * (rowmax + 2) + row) * genmax + gen];
-	}
+    /*
+     * If the cell is a normal cell, then we know where it is.
+     */
+    if ((row >= 0) && (row <= rowmax + 1) &&
+        (col >= 0) && (col <= colmax + 1) &&
+        (gen >= 0) && (gen < genmax))
+    {
+        return celltable[(col * (rowmax + 2) + row) * genmax + gen];
+    }
 
-	/*
-	 * See if the cell is already allocated in the auxillary table.
-	 */
-	for (i = 0; i < auxcellcount; i++)
-	{
-		cell = auxtable[i];
+    /*
+     * See if the cell is already allocated in the auxillary table.
+     */
+    for (i = 0; i < auxcellcount; i++)
+    {
+        cell = auxtable[i];
 
-		if ((cell->row == row) && (cell->col == col) &&
-			(cell->gen == gen))
-		{
-			return cell;
-		}
-	}
+        if ((cell->row == row) && (cell->col == col) &&
+            (cell->gen == gen))
+        {
+            return cell;
+        }
+    }
 
-	/*
-	 * Need to allocate the cell and add it to the auxillary table.
-	 */
-	cell = allocatecell();
-	cell->row = row;
-	cell->col = col;
-	cell->gen = gen;
-	cell->rowinfo = &dummyrowinfo;
-	cell->colinfo = &dummycolinfo;
+    /*
+     * Need to allocate the cell and add it to the auxillary table.
+     */
+    cell = allocatecell();
+    cell->row = row;
+    cell->col = col;
+    cell->gen = gen;
+    cell->rowinfo = &dummyrowinfo;
+    cell->colinfo = &dummycolinfo;
 
-	auxtable[auxcellcount++] = cell;
+    auxtable[auxcellcount++] = cell;
 
-	return cell;
+    return cell;
 }
 
 
@@ -1726,54 +1734,54 @@ findcell(row, col, gen)
 static CELL *
 allocatecell()
 {
-	CELL *	cell;
+    CELL * cell;
 
-	/*
-	 * Allocate a new chunk of cells if there are none left.
-	 */
-	if (newcellcount <= 0)
-	{
-		newcells = (CELL *) malloc(sizeof(CELL) * ALLOCSIZE);
+    /*
+     * Allocate a new chunk of cells if there are none left.
+     */
+    if (newcellcount <= 0)
+    {
+        newcells = (CELL *) malloc(sizeof(CELL) * ALLOCSIZE);
 
-		if (newcells == NULL)
-		{
-			ttystatus("Cannot allocate cell structure\n");
-			exit(1);
-		}
+        if (newcells == NULL)
+        {
+            ttystatus("Cannot allocate cell structure\n");
+            exit(1);
+        }
 
-		//record_malloc(1,(void*)newcells);
+        //record_malloc(1,(void*)newcells);
 
-		newcellcount = ALLOCSIZE;
-	}
+        newcellcount = ALLOCSIZE;
+    }
 
-	newcellcount--;
-	cell = newcells++;
+    newcellcount--;
+    cell = newcells++;
 
-	/*
-	 * Fill in the cell as if it was a boundary cell.
-	 */
-	cell->state = OFF;
-	cell->free = FALSE;
-	cell->frozen = FALSE;
-	cell->active = TRUE;
-	cell->unchecked = FALSE;
-	cell->gen = -1;
-	cell->row = -1;
-	cell->col = -1;
-	cell->sumnear = 0;
-	cell->past = cell;
-	cell->future = cell;
-	cell->cul = cell;
-	cell->cu = cell;
-	cell->cur = cell;
-	cell->cl = cell;
-	cell->cr = cell;
-	cell->cdl = cell;
-	cell->cd = cell;
-	cell->cdr = cell;
-	cell->loop = cell;
+    /*
+     * Fill in the cell as if it was a boundary cell.
+     */
+    cell->state = OFF;
+    cell->free = FALSE;
+    cell->frozen = FALSE;
+    cell->active = TRUE;
+    cell->unchecked = FALSE;
+    cell->gen = -1;
+    cell->row = -1;
+    cell->col = -1;
+    cell->sumnear = 0;
+    cell->past = cell;
+    cell->future = cell;
+    cell->cul = cell;
+    cell->cu = cell;
+    cell->cur = cell;
+    cell->cl = cell;
+    cell->cr = cell;
+    cell->cdl = cell;
+    cell->cd = cell;
+    cell->cdr = cell;
+    cell->loop = cell;
 
-	return cell;
+    return cell;
 }
 
 /*
@@ -1782,106 +1790,106 @@ allocatecell()
 static void
 initimplic(void)
 {
-	int	nunk, non, noff, cunk, con, coff, funk, fon, foff, naon, caon, faon, desc;
-	BOOL valid, cison, cisoff, fison, fisoff, nison, nisoff;
+    int nunk, non, noff, cunk, con, coff, funk, fon, foff, naon, caon, faon, desc;
+    BOOL valid, cison, cisoff, fison, fisoff, nison, nisoff;
 
-	for (desc=0; desc<sizeof(implic)/sizeof(implic[0]); desc++) {
-		implic[desc] = IMPVOID;
-	}
+    for (desc=0; desc<sizeof(implic)/sizeof(implic[0]); desc++) {
+        implic[desc] = IMPVOID;
+    }
 
-	for (nunk=0; nunk<=8; nunk++) { // unknown neighbors
-		for (non=0; non+nunk<=8; non++) { // on neighbors from the known ones
-			noff=8-(non+nunk); // off known neighbors
-			for (cunk=0; cunk<=1; cunk++) { // unknown cell
-				for (con=0; con+cunk<=1; con++) { // on cell
-					coff=1-(con+cunk); // off cell
-					for (funk=0; funk<=1; funk++) { // unknown future cell
-						for (fon=0; fon+funk<=1; fon++) { // on future cell
-							foff=1-(fon+funk); // off future cell
-							desc = SUMTODESC((STATE)(funk*UNK+fon*ON+foff*OFF), (STATE)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
-							if (implic[desc] != IMPVOID) {
-								ttystatus("Duplicate descriptor!!!");
-								exit(1);
-							}
-							// here we get all possible descriptors
-							// now let's try all possible states for that descriptor
-							valid = FALSE; // will change to TRUE if we get at least one valid state
-							cison = TRUE; // will change to FALSE if we get a valid state with c cell OFF
-							cisoff = TRUE; // will change to FALSE if we get a valid state with c cell ON
-							fison = TRUE; // will change to FALSE if we get a valid state with f cell OFF
-							fisoff = TRUE; // will change to FALSE if we get a valid state with f cell ON
-							nison = TRUE; // will change to FALSE if we get a valid state with one unknown neighbor OFF
-							nisoff = TRUE; // will change to FALSE if we get a valid state with one unknown neighbor ON
-							for (naon = non; naon <= 8-noff; naon++) { // neighbors
-								for (caon = con; caon <= 1-coff; caon++) { // try center
-									for (faon = fon; faon <= 1-foff; faon++) { // try future
-										// here we have all possible states for the descriptor
-										// now for the rules
-										if (((caon == 0) && (faon == 0) && !bornrules[naon]) // both dead
-											|| ((caon != 0) && (faon == 0) && !liverules[naon]) // dying
-											|| ((caon == 0) && (faon != 0) && bornrules[naon]) // birth
-											|| ((caon != 0) && (faon != 0) && liverules[naon])) { // survival
-											// woohoo! we got a valid state
-											valid = TRUE;
-											if (caon == 0) {
-												cison = FALSE;
-											} else {
-												cisoff = FALSE;
-											}
-											if (faon == 0) {
-												fison =  FALSE;
-											} else {
-												fisoff = FALSE;
-											}
-											if (naon>non) nisoff = FALSE;
-											if (naon<non+nunk) nison = FALSE;
-										}
-									}
-								}
-							}
-							// descriptor examination has ended
-							// now for the results
-							if (!valid) {
-								implic[desc] = IMPBAD;
-							} else {
-								implic[desc] = IMPOK;
-								if (funk != 0) { // future cell is unknown
-									if (fison || fisoff) { // and just one state is possible
-										implic[desc] |= IMPN;
-										if (fison) {
-											implic[desc] |= IMPN1;
-										}
-									}
-								}
-								if (cunk != 0) {
-									if (cison || cisoff) {
-										implic[desc] |= IMPC;
-										if (cison) {
-											implic[desc] |= IMPC1;
-										}
-									}
-								}
-								if (nunk != 0) {
-									if (nison || nisoff) {
-										implic[desc] |= IMPUN;
-										if (nison) {
-											implic[desc] |= IMPUN1;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+    for (nunk=0; nunk<=8; nunk++) { // unknown neighbors
+        for (non=0; non+nunk<=8; non++) { // on neighbors from the known ones
+            noff=8-(non+nunk); // off known neighbors
+            for (cunk=0; cunk<=1; cunk++) { // unknown cell
+                for (con=0; con+cunk<=1; con++) { // on cell
+                    coff=1-(con+cunk); // off cell
+                    for (funk=0; funk<=1; funk++) { // unknown future cell
+                        for (fon=0; fon+funk<=1; fon++) { // on future cell
+                            foff=1-(fon+funk); // off future cell
+                            desc = SUMTODESC((STATE)(funk*UNK+fon*ON+foff*OFF), (STATE)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
+                            if (implic[desc] != IMPVOID) {
+                                ttystatus("Duplicate descriptor!!!");
+                                exit(1);
+                            }
+                            // here we get all possible descriptors
+                            // now let's try all possible states for that descriptor
+                            valid = FALSE; // will change to TRUE if we get at least one valid state
+                            cison = TRUE; // will change to FALSE if we get a valid state with c cell OFF
+                            cisoff = TRUE; // will change to FALSE if we get a valid state with c cell ON
+                            fison = TRUE; // will change to FALSE if we get a valid state with f cell OFF
+                            fisoff = TRUE; // will change to FALSE if we get a valid state with f cell ON
+                            nison = TRUE; // will change to FALSE if we get a valid state with one unknown neighbor OFF
+                            nisoff = TRUE; // will change to FALSE if we get a valid state with one unknown neighbor ON
+                            for (naon = non; naon <= 8-noff; naon++) { // neighbors
+                                for (caon = con; caon <= 1-coff; caon++) { // try center
+                                    for (faon = fon; faon <= 1-foff; faon++) { // try future
+                                        // here we have all possible states for the descriptor
+                                        // now for the rules
+                                        if (((caon == 0) && (faon == 0) && !bornrules[naon]) // both dead
+                                            || ((caon != 0) && (faon == 0) && !liverules[naon]) // dying
+                                            || ((caon == 0) && (faon != 0) && bornrules[naon]) // birth
+                                            || ((caon != 0) && (faon != 0) && liverules[naon])) { // survival
+                                            // woohoo! we got a valid state
+                                            valid = TRUE;
+                                            if (caon == 0) {
+                                                cison = FALSE;
+                                            } else {
+                                                cisoff = FALSE;
+                                            }
+                                            if (faon == 0) {
+                                                fison =  FALSE;
+                                            } else {
+                                                fisoff = FALSE;
+                                            }
+                                            if (naon>non) nisoff = FALSE;
+                                            if (naon<non+nunk) nison = FALSE;
+                                        }
+                                    }
+                                }
+                            }
+                            // descriptor examination has ended
+                            // now for the results
+                            if (!valid) {
+                                implic[desc] = IMPBAD;
+                            } else {
+                                implic[desc] = IMPOK;
+                                if (funk != 0) { // future cell is unknown
+                                    if (fison || fisoff) { // and just one state is possible
+                                        implic[desc] |= IMPN;
+                                        if (fison) {
+                                            implic[desc] |= IMPN1;
+                                        }
+                                    }
+                                }
+                                if (cunk != 0) {
+                                    if (cison || cisoff) {
+                                        implic[desc] |= IMPC;
+                                        if (cison) {
+                                            implic[desc] |= IMPC1;
+                                        }
+                                    }
+                                }
+                                if (nunk != 0) {
+                                    if (nison || nisoff) {
+                                        implic[desc] |= IMPUN;
+                                        if (nison) {
+                                            implic[desc] |= IMPUN1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	for (desc=0; desc<sizeof(implic)/sizeof(implic[0]); desc++) {
-		if (implic[desc] == IMPVOID) {
-			implic[desc] = IMPBAD;
-		}
-	}
+    for (desc=0; desc<sizeof(implic)/sizeof(implic[0]); desc++) {
+        if (implic[desc] == IMPVOID) {
+            implic[desc] = IMPBAD;
+        }
+    }
 
 }
 
