@@ -507,6 +507,31 @@ setcell(CELL * cell, STATE state, BOOL free)
     return TRUE;
 }
 
+
+void shortsetcell (CELL * cell, const STATE state)
+{
+    CELL * c1 = cell;
+
+    do {
+        setState(cell, state);
+        cell->free = FALSE;
+
+        if (cell->active) {
+            *newset++ = cell;
+            *searchset++ = searchlist;
+
+            while ((searchlist != NULL) && (searchlist->state != UNK)) {
+                searchlist = searchlist->search;
+            }
+        }
+        cell = cell->loop;
+    } while (c1 != cell);
+
+    ++cellcount; // take whole loop as a single cell
+
+    return;
+}
+
 /*static __inline int
 sumtodesc(STATE futurestate, STATE currentstate, int neighborsum)
 {
@@ -580,37 +605,22 @@ static BOOL consistify(CELL * cell)
         // let's change the parent neighborhood
         state = ((flags & IMPUN1) != 0) ? ON : OFF;
 
-        neighbor = prevcell->cul;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
-
-        neighbor = prevcell->cu;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
-
-        neighbor = prevcell->cur;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
-
-        neighbor = prevcell->cr;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
-
-        neighbor = prevcell->cdr;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
-
-        neighbor = prevcell->cd;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
-
-        neighbor = prevcell->cdl;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
-
-        neighbor = prevcell->cl;
-        if ((neighbor->state == UNK) &&
-            !setcell(neighbor, state, FALSE)) return FALSE;
+        if (prevcell->cul->state == UNK)
+            shortsetcell(prevcell->cul, state);
+        if (prevcell->cu->state == UNK)
+            shortsetcell(prevcell->cu, state);
+        if (prevcell->cur->state == UNK)
+            shortsetcell(prevcell->cur, state);
+        if (prevcell->cl->state == UNK)
+            shortsetcell(prevcell->cl, state);
+        if (prevcell->cr->state == UNK)
+            shortsetcell(prevcell->cr, state);
+        if (prevcell->cdl->state == UNK)
+            shortsetcell(prevcell->cdl, state);
+        if (prevcell->cd->state == UNK)
+            shortsetcell(prevcell->cd, state);
+        if (prevcell->cdr->state == UNK)
+            shortsetcell(prevcell->cdr, state);
     }
 
     DPRINTF0("Implications successful\n");
