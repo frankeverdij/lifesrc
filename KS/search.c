@@ -56,7 +56,8 @@ static FLAGS implic[2304];
 static int    newcellcount;    /* number of cells ready for allocation */
 static int    auxcellcount;    /* number of cells in auxillary table */
 static CELL *    newcells;    /* cells ready for allocation */
-static CELL *    searchlist;    /* current list of cells to search */
+static    CELL **    searchlist;    /* current list of cells to search */
+static    int    searchidx;      /* index of first unknown cell in searchlist[] */
 static CELL *    celltable[MAXCELLS];    /* table of usual cells */
 static CELL *    auxtable[AUXCELLS];    /* table of auxillary cells */
 static ROWINFO    dummyrowinfo;    /* dummy info for ignored cells */
@@ -419,14 +420,16 @@ initsearchorder()
      * Finally build the search list from the table elements in the
      * final order.
      */
-    searchlist = NULL;
+    searchlist = (CELL **) malloc(sizeof(CELL *) * (count + 1));
 
-    while (--count >= 0)
+    for (int i = 0; i < count; i++)
     {
-        cell = table[count];
-        cell->search = searchlist;
-        searchlist = cell;
+        searchlist[i] = table[i];
+        searchlist[i]->index = i;
     }
+    searchlist[count] = NULL;
+    searchidx = 0;
+
 }
 
 /*
@@ -463,7 +466,7 @@ rescell(CELL * cell)
 BOOL
 setcell(CELL * cell, STATE state, BOOL free)
 {
-    CELL * c1;
+    CELL * c1, * c2;
     if (cell->state == state)
     {
         DPRINTF4("setcell %d %d %d to state %s already set\n",
@@ -490,12 +493,14 @@ setcell(CELL * cell, STATE state, BOOL free)
 
         if (cell->active) {
             *newset++ = cell;
-            *searchset++ = searchlist;
-
-            while ((searchlist != NULL) && (searchlist->state != UNK)) {
-                searchlist = searchlist->search;
+            *searchset++ = searchlist[searchidx];
+            for (; c2 = searchlist[searchidx]; searchidx++)
+            {
+                if (c2->state == UNK)
+                {
+                    break;
+                }
             }
-
             free = FALSE; // all following cells in the loop are not free
 
         }
@@ -510,7 +515,7 @@ setcell(CELL * cell, STATE state, BOOL free)
 
 void shortsetcell (CELL * cell, const STATE state)
 {
-    CELL * c1 = cell;
+    CELL * c1 = cell, * c2;
 
     do {
         setState(cell, state);
@@ -518,10 +523,13 @@ void shortsetcell (CELL * cell, const STATE state)
 
         if (cell->active) {
             *newset++ = cell;
-            *searchset++ = searchlist;
-
-            while ((searchlist != NULL) && (searchlist->state != UNK)) {
-                searchlist = searchlist->search;
+            *searchset++ = searchlist[searchidx];
+            for (; c2 = searchlist[searchidx]; searchidx++)
+            {
+                if (c2->state == UNK)
+                {
+                    break;
+                }
             }
         }
         cell = cell->loop;
@@ -730,7 +738,7 @@ backup()
         // record old status
         prevstate = cell->state;
 
-        searchlist = *searchset;
+        searchidx = (*searchset)->index;
 
         // reset the stack and return the cell
         while (newset != nextset) {
@@ -793,13 +801,12 @@ getnormalunknown()
 {
     CELL * cell;
 
-    for (cell = searchlist; cell != NULL; cell = cell->search)
+    for (int i = searchidx; cell = searchlist[i]; i++)
     {
         if (cell->state == UNK)
         {
-            searchlist = cell;
-
-            return cell;
+                searchidx = i;
+                return cell;
         }
     }
 
@@ -825,11 +832,11 @@ getaverageunknown()
     bestcell = NULL;
     bestdist = -1;
 
-    cell = searchlist;
+    cell = searchlist[searchidx];
 
     while (cell)
     {
-        searchlist = cell;
+        searchidx = cell->index;
         curcol = cell->col;
 
         testcol = curcol - 1;
@@ -845,7 +852,7 @@ getaverageunknown()
         else
             wantrow = (rowmax + 1) / 2;
 
-        for (; (cell != NULL) && (cell->col == curcol); cell = cell->search)
+        for (; (cell != NULL) && (cell->col == curcol); cell = searchlist[cell->index])
         {
             if (cell->state == UNK)
             {
@@ -966,15 +973,20 @@ getsmartunknown()
     CELL * cell;
     CELL * best;
     STATE bestchoice;
+    int idx;
     int max, window, threshold, bestlen1, bestlen0, bestcomb, wnd, n1, n2, a, b, c, d;
 
     // Move the searchlist over all known cells
-    while ((searchlist != NULL) && (searchlist->state != UNK)) {
-        searchlist = searchlist->search;
+    for (; cell = searchlist[searchidx]; searchidx++)
+    {
+        if (cell->state == UNK)
+        {
+            break;
+        }
     }
 
     // Return NULL if no unknown cells
-    if (searchlist == NULL) return NULL;
+    if (cell == NULL) return NULL;
 
     // Prepare threshold
     threshold = smartthreshold;
@@ -991,9 +1003,9 @@ getsmartunknown()
     wnd = 0;
 
     window = smartwindow;
-    cell = searchlist;
+    idx = searchidx;
 
-    while ((cell != NULL) && (window > 0) && (max < threshold)) {
+    while ((cell = searchlist[idx]) && (window > 0) && (max < threshold)) {
         ++wnd;
         --window; // count known cells too
         if (cell->state == UNK)
@@ -1070,7 +1082,7 @@ getsmartunknown()
                 window = 0;
             }
         }
-        cell = cell->search;
+        idx++;
     }
 
     // Found something?
@@ -1113,7 +1125,7 @@ getsmartunknown()
     // Just return the first UNK cell
     // This shouldn't be often anyway
 
-    return searchlist;
+    return searchlist[searchidx];
 }
 
 /*
@@ -1779,6 +1791,7 @@ allocatecell()
     cell->row = -1;
     cell->col = -1;
     cell->sumnear = 0;
+    cell->index = -1;
     cell->past = cell;
     cell->future = cell;
     cell->cul = cell;

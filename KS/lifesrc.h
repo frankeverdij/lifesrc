@@ -144,7 +144,8 @@ struct cell
     short    row;        /* row of this cell */
     short    col;        /* column of this cell */
 
-    int     sumnear;
+    int     sumnear;    /* sum of states of adjacent cells */
+    int     index;      /* cell index in searchlist[] */
     // and now for the pointers
 
     CELL *    past;        /* cell in the past at this location */
