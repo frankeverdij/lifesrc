@@ -78,6 +78,22 @@ static int getDesc(const Cell * const);
 static Cell * (* getUnknown)(void);
 
 
+void dumparray()
+{
+    Cell * cell;
+    int nrofcells = (rowMax+2) * (colMax+2) * genMax;
+
+    printf("r c g s f o 0 u\n");
+    for (int i=0; i<nrofcells;i++)
+    {
+        cell = cellTable[i];
+        if (cell)
+            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->flags & FREECELL, cell->flags & FROZENCELL, 1, (cell->flags & CHOOSECELL) ? 0:1);
+    }
+    return;
+}
+
+
 /*
  * Initialize the table of cells.
  * Each cell in the active area is set to unknown state.

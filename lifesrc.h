@@ -161,6 +161,7 @@ extern	Cell *	backup(void);
 extern	Bool	subPeriods(void);
 extern	void	loopCells(Cell *, Cell *);
 extern	void	fatal(const char *);
+extern  void    dumparray(void);
 extern	Bool	ttyOpen(void);
 extern	Bool	ttyCheck(void);
 extern	Bool	ttyRead(const char *, char *, int);

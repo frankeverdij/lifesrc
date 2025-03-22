@@ -84,6 +84,22 @@ static BOOL checkwidth PROTO((CELL *));
 static CELL * (*getunknown) PROTO((void));
 
 
+void dumparray()
+{
+    CELL * cell;
+    int nrofcells = (rowmax+2) * (colmax+2) * genmax;
+
+    printf("r c g s f o a u\n");
+    for (int i=0; i<nrofcells;i++)
+    {
+        cell = celltable[i];
+        if (cell)
+            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->free, cell->frozen, cell->active, cell->unchecked);
+    }
+    return;
+}
+
+
 void setState(CELL * const cell, const STATE state)
 {
     /* backup previous state */

@@ -308,6 +308,7 @@ extern    CELL *    backup PROTO((void));
 extern    BOOL    subperiods PROTO((void));
 extern    void    loopcells PROTO((CELL *, CELL *));
 extern void setState(CELL * const cell, const STATE state);
+extern void dumparray(void);
 
 extern    BOOL    ttyopen PROTO((void));
 extern    BOOL    ttycheck PROTO((void));
