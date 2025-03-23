@@ -635,7 +635,7 @@ main(argc, argv)
             }
             //baseset = nextset;
         }
-        initsearchorder();
+
         set_initial_cells();
     }
 

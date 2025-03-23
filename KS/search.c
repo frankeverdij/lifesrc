@@ -285,6 +285,8 @@ initcells()
     newset = settable;
     nextset = settable;
 
+    initsearchorder();
+
     searchset = searchtable;
 
     curstatus = OK;
