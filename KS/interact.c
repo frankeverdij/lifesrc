@@ -861,6 +861,7 @@ getsetting(cp)
     int row;
     int col;
     STATE state;
+    CELL * cell;
 
     cp = getstr(cp, "Cell to set (row col [state]): ");
 
@@ -897,7 +898,8 @@ getsetting(cp)
         return;
     }
 
-    if (proceed(findcell(row, col, curgen), state, FALSE) != OK)
+    cell = findcell(row, col, curgen);
+    if (!proceed(cell, state, FALSE))
     {
         ttystatus("Inconsistent state for cell\n");
 
@@ -1052,7 +1054,7 @@ getclear(cp)
                 if (cell->state != UNK)
                     continue;
 
-                if (proceed(cell, OFF, FALSE) != OK)
+                if (!proceed(cell, OFF, FALSE))
                 {
                     ttystatus("Inconsistent state for cell\n");
 
@@ -1855,6 +1857,7 @@ readfile(file)
     int gen;
     STATE state;
     char buf[LINESIZE];
+    CELL * cell;
 
     file = getstr(file, "Read initial object from file: ");
 
@@ -1876,7 +1879,7 @@ readfile(file)
     while (fgets(buf, LINESIZE, fp))
     {
         row++;
-        cp = buf;\
+        cp = buf;
         col = 0;
 
         while (*cp && (*cp != '\n'))
@@ -1920,8 +1923,8 @@ readfile(file)
                     return ERROR1;
             }
 
-            if (proceed(findcell(row, col, gen), state, FALSE)
-                != OK)
+            cell = findcell(row, col, gen);
+            if (!proceed(cell, state, FALSE))
             {
                 ttystatus("Inconsistent state for cell %d %d\n",
                     row, col);
