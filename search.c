@@ -492,7 +492,7 @@ consistify(Cell * const cell)
         shortSetCell(prevCell->cdr, OFF);
     }
 
-    DPRINTF("Implications successful\n");
+    DPRINTF("Implications successful for prevCell %d %d %d %d\n", prevCell->row, prevCell->col, prevCell->gen, prevCell->state);
 
     return OK;
 }

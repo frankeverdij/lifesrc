@@ -503,6 +503,10 @@ setcell(CELL * cell, STATE state, BOOL free)
 
     c1 = cell;
 
+    DPRINTF5("setCell %d %d %d to %s, %s successful\n",
+        cell->row, cell->col, cell->gen,
+        (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
+
     do {
         setState(cell, state);
         cell->free = free;
@@ -629,6 +633,9 @@ static BOOL consistify(CELL * cell)
         // let's change the parent neighborhood
         state = ((flags & IMPUN1) != 0) ? ON : OFF;
 
+        DPRINTF4("Forcing unknown neighbors of cell %d %d %d %s\n",
+            prevcell->row, prevcell->col, prevcell->gen, (state == ON) ? "on" : "off");
+
         if (prevcell->cul->state == UNK)
             shortsetcell(prevcell->cul, state);
         if (prevcell->cu->state == UNK)
@@ -647,7 +654,7 @@ static BOOL consistify(CELL * cell)
             shortsetcell(prevcell->cdr, state);
     }
 
-    DPRINTF0("Implications successful\n");
+    DPRINTF4("Implications successful for prevCell %d %d %d %d\n", prevcell->row, prevcell->col, prevcell->gen, prevcell->state);
 
     return TRUE;
 }
@@ -747,6 +754,11 @@ backup()
     {
         cell = *--nextset;
         --searchset;
+
+        DPRINTF5("backing up cell %d %d %d, was %s, %s\n",
+            cell->row, cell->col, cell->gen,
+            ((cell->state == ON) ? "on" : "off"),
+            ((cell->free) ? "free": "forced"));
 
         if (!cell->free) continue;
 
