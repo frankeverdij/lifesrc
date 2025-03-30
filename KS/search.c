@@ -833,7 +833,7 @@ getnormalunknown()
 
     for (int i = searchidx; cell = searchlist[i]; i++)
     {
-        if (cell->state == UNK)
+        if ((cell->state == UNK) && (!cell->unchecked))
         {
                 searchidx = i;
                 return cell;
@@ -1009,7 +1009,7 @@ getsmartunknown()
     // Move the searchlist over all known cells
     for (; cell = searchlist[searchidx]; searchidx++)
     {
-        if (cell->state == UNK)
+        if ((cell->state == UNK) && (!cell->unchecked))
         {
             break;
         }
@@ -1038,7 +1038,7 @@ getsmartunknown()
     while ((cell = searchlist[idx]) && (window > 0) && (max < threshold)) {
         ++wnd;
         --window; // count known cells too
-        if (cell->state == UNK)
+        if ((cell->state == UNK) && (!cell->unchecked))
         {
             if (getsmartnumbers(cell))
             {
