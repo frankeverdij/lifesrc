@@ -218,6 +218,8 @@ EXTERN    BOOL    orderwide;    /* ordering tries to find wide objects */
 EXTERN    BOOL    ordergens;    /* ordering tries all gens first */
 EXTERN    BOOL    ordermiddle;    /* ordering tries middle columns first */
 EXTERN    BOOL    followgens;    /* try to follow setting of other gens */
+EXTERN	STATE   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
+
 EXTERN  BOOL    smart;      /* use smart method (KAS) */
 EXTERN  BOOL    smarton;
 EXTERN  BOOL    combine;

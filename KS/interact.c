@@ -56,7 +56,7 @@ static int * param_table[] =
     &userow, &usecol, &colcells, &colwidth, &follow,
     &orderwide, &ordergens, &ordermiddle, &followgens,
     &diagsort, &symmetry, &trans_rotate, &trans_flip, &trans_x, &trans_y,
-    &knightsort,
+    &knightsort, &chooseUnknown,
     &smart, &smartwindow, &smartthreshold, 
     &foundcount,
     NULL
@@ -250,6 +250,10 @@ main(argc, argv)
 
                     case 'g':
                         followgens = TRUE;
+                        break;
+
+                    case 'o':
+                        chooseUnknown = ON;
                         break;
 
                     case 's':

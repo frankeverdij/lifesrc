@@ -1196,7 +1196,7 @@ choose(cell)
      * try the OFF state first
      */
 
-    return OFF;
+    return chooseUnknown;
 }
 
 CELL * combinebackup(void);
