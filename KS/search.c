@@ -1249,7 +1249,6 @@ search(const BOOL batch)
 
         if (!go(cell, state, free)) 
         {
-            viewcount = 0;
             printgen(curgen);
 
             return NOTEXIST;
@@ -1285,7 +1284,6 @@ search(const BOOL batch)
 
         if (needwrite || (viewfreq && (++viewcount >= viewfreq)))
         {
-            viewcount = 0;
             printgen(curgen);
         }
 

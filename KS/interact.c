@@ -78,6 +78,19 @@ void smartinit(void)
     combining = FALSE;
 }
 
+long showcount()
+{
+    static long tot = 0;
+
+    if (viewcount<0) {
+        tot=0;
+    } else {
+        tot += viewcount;
+    }
+    viewcount = 0;
+
+    return tot;
+}
 
 // copy my format to dbells format...
 // ... and make a backup of the current state (KAS)
@@ -751,7 +764,6 @@ getcommands()
     char buf[LINESIZE];
 
     dumpcount = 0;
-    viewcount = 0;
     printgen(curgen);
 
     while (TRUE)
@@ -1281,12 +1293,12 @@ printgen(gen)
 
     if (islife)
     {
-        ttyprintf("%s (gen %d, cells %d)", msg, gen, count);
+        ttyprintf("%s (gen %d, cells %d totalcount %ld)", msg, gen, count, showcount());
     }
     else
     {
-        ttyprintf("%s (rule %s, gen %d, cells %d)",
-            msg, rulestring, gen, count);
+        ttyprintf("%s (rule %s, gen %d, cells %di totalcount %ld)",
+            msg, rulestring, gen, count, showcount());
     }
 
     ttyprintf(" -r%d -c%d -g%d", rowmax, colmax, genmax);
