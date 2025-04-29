@@ -435,6 +435,11 @@ initsearchorder()
     qsort((char *) table, count, sizeof(CELL *), ordersortfunc);
 
     /*
+     * If we've been here before, wipe the old searchlist
+     */
+    if (searchlist) free(searchlist);
+
+    /*
      * Finally build the search list from the table elements in the
      * final order.
      */

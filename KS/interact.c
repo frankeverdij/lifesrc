@@ -654,6 +654,13 @@ main(argc, argv)
         }
 
         set_initial_cells();
+
+        /*
+         * set_initial_cells() cannot be called if the searchlist is not
+         * initialised, but then set cells will not be excluded from the
+          * searchlist, so let's call initsearchorder() again.
+         */
+        initsearchorder();
     }
 
     /*
