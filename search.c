@@ -761,7 +761,7 @@ search(const Bool batch)
             return ERROR;
 
         free = FALSE;
-        state = 1 - cell->state;
+        state = ON - cell->state;
         setState(cell, UNK);
     }
     else
