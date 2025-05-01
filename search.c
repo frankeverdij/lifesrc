@@ -659,7 +659,7 @@ go(Cell * cell, State state, Bool free)
             return ERROR;
 
         free = FALSE;
-        state = 1 - cell->state;
+        state = ON - cell->state;
         setState(cell, UNK);
     }
 }
