@@ -22,11 +22,6 @@
 #include "sortorder.h"
 #include "setstate.h"
 
-/*
- * Table of state values.
- */
-static State states[nStates] = {OFF, ON, UNK};
-
 
 /*
  * Table of transitions.
@@ -231,8 +226,8 @@ initCells(void)
     curGen = 0;
     curStatus = OK;
     initNextState(bornRules, liveRules);
-    initTransit(states, transit);
-    initImplic(states, implic);
+    initTransit(transit);
+    initImplic(implic);
 }
 
 

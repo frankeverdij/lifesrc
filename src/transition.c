@@ -49,7 +49,7 @@ State transition(State state, int offCount, int onCount)
 /*
  * Initialize the transition table.
  */
-void initTransit(const State * states, State * transit)
+void initTransit(State * transit)
 {
 	int	state;
 	int	offCount;

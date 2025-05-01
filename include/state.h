@@ -12,4 +12,9 @@ typedef unsigned char State;
 
 #define	nStates	3			/* number of states */
 
+/*
+ * Table of state values.
+ */
+static const State states[nStates] = {OFF, ON, UNK};
+
 #endif /* STATE_H */

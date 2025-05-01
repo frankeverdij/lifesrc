@@ -126,7 +126,7 @@ Flags implication(State state, int offCount, int onCount)
 /*
  * Initialize the implication table.
  */
-void initImplic(const State * states, Flags *implic)
+void initImplic(Flags *implic)
 {
 	State	state;
 	int	offCount;
