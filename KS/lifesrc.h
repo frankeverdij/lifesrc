@@ -9,6 +9,10 @@
 
 #include <ctype.h>        //JES, for isdigit()
 
+#include "bool.h"
+#include "state.h"
+#include "tty.h"
+
 /*
  * Use prototypes if available.
  */
@@ -75,12 +79,7 @@
 //#define    isblank(ch)    (((ch) == ' ') || ((ch) == '\t'))
 
 typedef    char        PACKED_BOOL;
-typedef    unsigned char    STATE;
 typedef    unsigned int    STATUS;
-typedef    int        BOOL;
-
-#define    FALSE        ((BOOL) 0)
-#define    TRUE        ((BOOL) 1)
 
 /*
  * Status returned by routines
@@ -92,14 +91,6 @@ typedef    int        BOOL;
 #define    CONSISTENT    ((STATUS) 2)
 #define    NOTEXIST    ((STATUS) 3)
 #define    FOUND        ((STATUS) 4)
-
-/*
- * States of a cell
- */
-#define    UNK    ((STATE) 0x40)        /* cell is unknown */
-#define    ON    ((STATE) 0x01)        /* cell is known on */
-#define    OFF    ((STATE) 0x00)        /* cell is known off */
-#define    NSTATES    3            /* number of states */
 
 
 /*
@@ -311,17 +302,6 @@ extern    BOOL    subperiods PROTO((void));
 extern    void    loopcells PROTO((CELL *, CELL *));
 extern void setState(CELL * const cell, const STATE state);
 extern void dumparray(void);
-
-extern    BOOL    ttyopen PROTO((void));
-extern    BOOL    ttycheck PROTO((void));
-extern    BOOL    ttyread PROTO((const char *, char *, int));
-extern    void    ttyprintf PROTO((const char *, ...));
-extern    void    ttystatus PROTO((const char *, ...));
-extern    void    ttywrite PROTO((const char *, int));
-extern    void    ttyhome PROTO((void));
-extern    void    ttyeeop PROTO((void));
-extern    void    ttyflush PROTO((void));
-extern    void    ttyclose PROTO((void));
 
 //JES
 //void    freezecell PROTO((int, int));
