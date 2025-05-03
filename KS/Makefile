@@ -1,21 +1,30 @@
 # Makefile for life search program
 
-CFLAGS = -O3 -fomit-frame-pointer -Wno-unused-result -Iinclude -I/usr/include/ncurses
+CFLAGS = -Ofast -MP -MMD -Wall -Wno-unused-result -fomit-frame-pointer -Iinclude -I. -I.. -I/usr/include/ncurses
+
+#CFLAGS = -O -g -pg -MP -MMD -fno-inline -Wall -Wno-unused-result -Iinclude -I. -I.. -I/usr/include/ncurses
+#LDFLAGS = -pg
+
+#CFLAGS = -O -g --coverage -MP -MMD -Wall -Wno-unused-result -Iinclude -I. -I.. -I/usr/include/ncurses
+#LDFLAGS = -lgcov
+
+SOURCES = $(wildcard src/*.c)
+SOURCES += search.c interact.c
+OBJECTS = $(SOURCES:.c=.o)
+DEPS = $(SOURCES:.c=.d) 
+COVERAGE = $(SOURCES:.c=.gcda)
+COVERAGE += $(SOURCES:.c=.gcno)
 
 all:	lifesrcdumb lifesrc
 
-lifesrcdumb:	search.o implication.o interact.o dumbtty.o
-	$(CC) -o lifesrcdumb search.o implication.o interact.o dumbtty.o
+lifesrcdumb:	$(OBJECTS) dumbtty.o
+	$(CC) -o lifesrcdumb $(OBJECTS) dumbtty.o $(LDFLAGS)
 
-lifesrc:	search.o implication.o interact.o cursestty.o
-	$(CC) -o lifesrc search.o implication.o interact.o cursestty.o -lncurses
-
+lifesrc:	$(OBJECTS) cursestty.o
+	$(CC) -o lifesrc $(OBJECTS) cursestty.o $(LDFLAGS) -lncursesw
 clean:
-	rm -f search.o implication.o interact.o cursestty.o dumbtty.o
+	rm -f cursestty.o dumbtty.o $(OBJECTS) $(DEPS)
 	rm -f lifesrc lifesrcdumb
-
-search.o:	lifesrc.h
-implication.o: include/state.h include/bool.h include/tty.h include/implication.h
-interact.o:	lifesrc.h
-cursestty.o:	lifesrc.h
-dumbtty.o:	lifesrc.h
+cleancov:
+	rm -f $(COVERAGE) cursestty.gcda cursestty.gcno dumbtty.gcda dumbtty.gcno
+-include $(DEPS)
