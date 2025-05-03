@@ -55,7 +55,6 @@ static COLINFO    dummycolinfo;    /* dummy info for ignored cells */
  * Local procedures
  */
 static void linkcell PROTO((CELL *));
-static __inline STATE transition PROTO((STATE, int, int));
 static STATE choose PROTO((CELL *));
 static CELL * symcell PROTO((CELL *));
 static CELL * mapcell PROTO((CELL *));
@@ -65,7 +64,6 @@ static CELL * getaverageunknown PROTO((void));
 static CELL * getsmartunknown PROTO((void)); // KAS
 static BOOL consistify PROTO((CELL *));
 static BOOL consistify10 PROTO((CELL *));
-static BOOL checkwidth PROTO((CELL *));
 static CELL * (*getunknown) PROTO((void));
 
 
@@ -506,7 +504,7 @@ setcell(CELL * cell, STATE state, BOOL free)
         if (cell->active) {
             *newset++ = cell;
             *searchset++ = searchlist[searchidx];
-            for (; c2 = searchlist[searchidx]; searchidx++)
+            for (; (c2 = searchlist[searchidx]); searchidx++)
             {
                 if (c2->state == UNK)
                 {
@@ -536,7 +534,7 @@ void shortsetcell (CELL * cell, const STATE state)
         if (cell->active) {
             *newset++ = cell;
             *searchset++ = searchlist[searchidx];
-            for (; c2 = searchlist[searchidx]; searchidx++)
+            for (; (c2 = searchlist[searchidx]); searchidx++)
             {
                 if (c2->state == UNK)
                 {
@@ -584,7 +582,6 @@ getdesc(CELL * cell)
 static BOOL consistify(CELL * cell)
 {
     CELL * prevcell;
-    CELL * neighbor;
     int desc;
     STATE state;
     FLAGS flags;
@@ -821,7 +818,7 @@ getnormalunknown()
 {
     CELL * cell;
 
-    for (int i = searchidx; cell = searchlist[i]; i++)
+    for (int i = searchidx; (cell = searchlist[i]); i++)
     {
         if ((cell->state == UNK) && (!cell->unchecked))
         {
@@ -992,12 +989,19 @@ getsmartunknown()
 {
     CELL * cell;
     CELL * best;
-    STATE bestchoice;
+
+    // The assignment in the following codeline is debatable,
+    // but since the original code also did not initialise
+    // this variable, chances are good that this defaulted to `0`
+    // which in the original code was being interpreted as a 'UNK',
+    // hence the initialisation as 'UNK'
+    STATE bestchoice = UNK;
+
     int idx;
     int max, window, threshold, bestlen1, bestlen0, bestcomb, wnd, n1, n2, a, b, c, d;
 
     // Move the searchlist over all known cells
-    for (; cell = searchlist[searchidx]; searchidx++)
+    for (; (cell = searchlist[searchidx]); searchidx++)
     {
         if ((cell->state == UNK) && (!cell->unchecked))
         {
@@ -1327,89 +1331,6 @@ adjustnear(CELL * cell, int inc)
         for (count = nearcols; count-- > 0; curcell = curcell->cd)
             curcell->near1 += inc;
     }
-}
-
-
-/*
- * Check to see if setting the specified cell ON would make the width of
- * the column exceed the allowed value.  For symmetric objects, the width
- * is only measured from the center to an edge.  Returns TRUE if the cell
- * would exceed the value.
- */
-
-static BOOL
-checkwidth(cell)
-    CELL * cell;
-{
-    int left;
-    int width;
-    int minrow;
-    int maxrow;
-    int srcminrow;
-    int srcmaxrow;
-    CELL * ucp;
-    CELL * dcp;
-    BOOL full;
-
-    if (!colwidth || !inited || cell->gen)
-        return FALSE;
-
-    left = cell->colinfo->oncount;
-
-    if (left <= 0)
-        return FALSE;
-
-    ucp = cell;
-    dcp = cell;
-    width = colwidth;
-    minrow = cell->row;
-    maxrow = cell->row;
-    srcminrow = 1;
-    srcmaxrow = rowmax;
-    full = TRUE;
-
-    if ((rowsym && (cell->col >= rowsym)) ||
-        (fliprows && (cell->col >= fliprows)))
-    {
-        full = FALSE;
-        srcmaxrow = (rowmax + 1) / 2;
-
-        if (cell->row > srcmaxrow)
-        {
-            srcminrow = (rowmax / 2) + 1;
-            srcmaxrow = rowmax;
-        }
-    }
-
-    while (left > 0)
-    {
-        if (full && (--width <= 0))
-            return TRUE;
-
-        ucp = ucp->cu;
-        dcp = dcp->cd;
-
-        if (ucp->state == ON)
-        {
-            if (ucp->row >= srcminrow)
-                minrow = ucp->row;
-
-            left--;
-        }
-
-        if (dcp->state == ON)
-        {
-            if (dcp->row <= srcmaxrow)
-                maxrow = dcp->row;
-
-            left--;
-        }
-    }
-
-    if (maxrow - minrow >= colwidth)
-        return TRUE;
-
-    return FALSE;
 }
 
 
