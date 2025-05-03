@@ -103,7 +103,7 @@ initimplic(const BOOL * bornrules, const BOOL * liverules, FLAGS * implic)
         }
     }
 
-    for (desc=0; desc<sizeof(implic)/sizeof(implic[0]); desc++) {
+    for (desc=0; desc<IMPLICSIZE; desc++) {
         if (implic[desc] == IMPVOID) {
             implic[desc] = IMPBAD;
         }
