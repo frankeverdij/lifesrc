@@ -99,7 +99,6 @@ BOOL set_initial_cells(void)
     CELL * cell;
     CELL ** setpos;
     BOOL change;
-    char buf[80];
     int i,j,g;
 
     newset = settable;
@@ -1597,9 +1596,6 @@ void dumpstate(const char * file)
     FILE * fp;
     CELL ** set;
     CELL * cell;
-    int row;
-    int col;
-    int gen;
     int ** param;
 
     file = getstr(file, "Dump state to file: ");
