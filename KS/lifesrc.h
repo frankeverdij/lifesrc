@@ -13,15 +13,6 @@
 #include "state.h"
 #include "tty.h"
 
-/*
- * Use prototypes if available.
- */
-#ifdef    __STDC__
-#define    PROTO(a)    a
-#else
-#define    PROTO(a)    ()
-#endif
-
 
 /*
  * Maximum dimensions of the search
@@ -284,28 +275,28 @@ EXTERN  int differentcombinedcells;
  */
 
 
-extern    void    getcommands PROTO((void));
-extern    void    initcells PROTO((void));
-extern  void    initsearchorder PROTO((void));
-extern    void    printgen PROTO((int));
-extern    void    writegen PROTO((char *, BOOL));
-extern    void    dumpstate PROTO((const char *));
-extern    void    adjustnear PROTO((CELL *, int));
-extern    STATUS    search PROTO((const BOOL));
-extern    BOOL    proceed PROTO((CELL *, STATE, BOOL));
-extern    BOOL    go PROTO((CELL *, STATE, BOOL));
-extern    BOOL    setcell PROTO((CELL *, STATE, BOOL));
-extern  STATUS  examinenext PROTO((void));
-extern    CELL *    findcell PROTO((int, int, int));
-extern    CELL *    backup PROTO((void));
-extern    BOOL    subperiods PROTO((void));
-extern    void    loopcells PROTO((CELL *, CELL *));
+extern    void    getcommands(void);
+extern    void    initcells(void);
+extern  void    initsearchorder(void);
+extern    void    printgen(int);
+extern    void    writegen(char *, BOOL);
+extern    void    dumpstate(const char *);
+extern    void    adjustnear(CELL *, int);
+extern    STATUS    search(const BOOL);
+extern    BOOL    proceed(CELL *, STATE, BOOL);
+extern    BOOL    go(CELL *, STATE, BOOL);
+extern    BOOL    setcell(CELL *, STATE, BOOL);
+extern  STATUS  examinenext(void);
+extern    CELL *    findcell(int, int, int);
+extern    CELL *    backup(void);
+extern    BOOL    subperiods(void);
+extern    void    loopcells(CELL *, CELL *);
 extern void setState(CELL * const cell, const STATE state);
 extern void dumparray(void);
 
 //JES
-//void    freezecell PROTO((int, int));
-//BOOL    setrules PROTO((char *));
+//void    freezecell(int, int);
+//BOOL    setrules(char *);
 //BOOL    loadstate(void);
 //void    getbackup(char *cp);
 
