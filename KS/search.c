@@ -77,7 +77,7 @@ void dumparray()
     {
         cell = celltable[i];
         if (cell)
-            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->free, cell->frozen, cell->active, cell->unchecked);
+            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->free, cell->frozen, cell->active, ((cell->flags & CHOOSECELL) ? 0 : 1));
     }
     return;
 }
@@ -158,7 +158,7 @@ initcells()
                 cell->colinfo = &dummycolinfo;
 
                 cell->active = TRUE;
-                cell->unchecked = FALSE;
+                cell->flags |= CHOOSECELL;
 
                 /*
                  * If this is not an edge cell, then its state
@@ -404,7 +404,7 @@ initsearchorder()
             {
                 cell = findcell(row, col, gen);
                 // cells must be already loaded!!!
-                if ((cell->active) && (cell->state == UNK) && (!cell->unchecked))
+                if ((cell->active) && (cell->state == UNK) && (cell->flags & CHOOSECELL))
                 {
                     table[count++] = findcell(row, col, gen);
                 }
@@ -820,7 +820,7 @@ getnormalunknown()
 
     for (int i = searchidx; (cell = searchlist[i]); i++)
     {
-        if ((cell->state == UNK) && (!cell->unchecked))
+        if ((cell->state == UNK) && (cell->flags & CHOOSECELL))
         {
                 searchidx = i;
                 return cell;
@@ -1003,7 +1003,7 @@ getsmartunknown()
     // Move the searchlist over all known cells
     for (; (cell = searchlist[searchidx]); searchidx++)
     {
-        if ((cell->state == UNK) && (!cell->unchecked))
+        if ((cell->state == UNK) && (cell->flags & CHOOSECELL))
         {
             break;
         }
@@ -1032,7 +1032,7 @@ getsmartunknown()
     while ((cell = searchlist[idx]) && (window > 0) && (max < threshold)) {
         ++wnd;
         --window; // count known cells too
-        if ((cell->state == UNK) && (!cell->unchecked))
+        if ((cell->state == UNK) && (cell->flags & CHOOSECELL))
         {
             if (getsmartnumbers(cell))
             {
@@ -1725,7 +1725,7 @@ allocatecell()
     cell->free = FALSE;
     cell->frozen = FALSE;
     cell->active = TRUE;
-    cell->unchecked = FALSE;
+    cell->flags = CHOOSECELL;
     cell->gen = -1;
     cell->row = -1;
     cell->col = -1;

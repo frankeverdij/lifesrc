@@ -1168,7 +1168,7 @@ excludecone(int row, int col, int gen)
         {
             for (tcol = col - dist; tcol <= col + dist; tcol++)
             {
-                findcell(trow, tcol, tgen)->unchecked = TRUE;
+                findcell(trow, tcol, tgen)->flags &= ~CHOOSECELL;
             }
         }
     }
@@ -1436,7 +1436,7 @@ printgen(gen)
                     if (cell->frozen)
                         msg = "+ ";
 
-                    if (cell->unchecked)
+                    if (!(cell->flags & CHOOSECELL))
                         msg = "X ";
 
                     break;
@@ -1554,7 +1554,7 @@ writegen(file, append)
                     break;
 
                 case UNK:    
-                    ch = cell->unchecked ? 'X' : '?'; 
+                    ch = ((cell->flags & CHOOSECELL) ? '?' : 'X');
                     break;
 
                 default:
