@@ -77,7 +77,7 @@ void dumparray()
     {
         cell = celltable[i];
         if (cell)
-            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->free, cell->frozen, cell->active, ((cell->flags & CHOOSECELL) ? 0 : 1));
+            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, ((cell->flags & FREECELL) ? 1 : 0), cell->frozen, cell->active, ((cell->flags & CHOOSECELL) ? 0 : 1));
     }
     return;
 }
@@ -170,7 +170,7 @@ initcells()
                     linkcell(cell);
                     setState(cell, UNK);
                     cell->combined = UNK;
-                    cell->free = TRUE;
+                    cell->flags |= FREECELL;
                 }
 
                 /*
@@ -456,7 +456,7 @@ rescell(CELL * cell)
 
     do {
         setState(cell, UNK);
-        cell->free = TRUE;
+        cell->flags |= FREECELL;
 
         cell = cell->loop;
     } while (cell != c1);
@@ -499,7 +499,10 @@ setcell(CELL * cell, STATE state, BOOL free)
 
     do {
         setState(cell, state);
-        cell->free = free;
+        if (free)
+            cell->flags |= FREECELL;
+        else
+            cell->flags &= ~FREECELL;
 
         if (cell->active) {
             *newset++ = cell;
@@ -529,7 +532,7 @@ void shortsetcell (CELL * cell, const STATE state)
 
     do {
         setState(cell, state);
-        cell->free = FALSE;
+        cell->flags &= ~FREECELL;
 
         if (cell->active) {
             *newset++ = cell;
@@ -696,7 +699,7 @@ examinenext()
 
     DPRINTF4("Examining saved cell %d %d %d (%s) for consistency\n",
         cell->row, cell->col, cell->gen,
-        (cell->free ? "free" : "forced"));
+        (cell->flags & FREECELL ? "free" : "forced"));
 
     return consistify10(cell) ? OK : ERROR1;
 }
@@ -747,9 +750,9 @@ backup()
         DPRINTF5("backing up cell %d %d %d, was %s, %s\n",
             cell->row, cell->col, cell->gen,
             ((cell->state == ON) ? "on" : "off"),
-            ((cell->free) ? "free": "forced"));
+            ((cell->flags & FREECELL) ? "free": "forced"));
 
-        if (!cell->free) continue;
+        if (!(cell->flags & FREECELL)) continue;
 
         // free cell found
         // record old status
@@ -1722,7 +1725,7 @@ allocatecell()
      * Fill in the cell as if it was a boundary cell.
      */
     cell->state = OFF;
-    cell->free = FALSE;
+    //cell->free = FALSE;
     cell->frozen = FALSE;
     cell->active = TRUE;
     cell->flags = CHOOSECELL;

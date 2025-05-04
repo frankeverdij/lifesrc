@@ -1643,7 +1643,7 @@ void dumpstate(const char * file)
         cell = *set++;
 
         fprintf(fp, "S %d %d %d %d %d\n", cell->row, cell->col,
-            cell->gen, (cell->state == ON) ? 1 : 0, cell->free);
+            cell->gen, (cell->state == ON) ? 1 : 0, (cell->flags & FREECELL) ? 1: 0);
     }
 
     fprintf(fp, "E\n");
