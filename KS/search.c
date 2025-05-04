@@ -77,7 +77,7 @@ void dumparray()
     {
         cell = celltable[i];
         if (cell)
-            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, ((cell->flags & FREECELL) ? 1 : 0), cell->frozen, cell->active, ((cell->flags & CHOOSECELL) ? 0 : 1));
+            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, ((cell->flags & FREECELL) ? 1 : 0), ((cell->flags & FROZENCELL) ? 1 : 0), cell->active, ((cell->flags & CHOOSECELL) ? 0 : 1));
     }
     return;
 }
@@ -1467,20 +1467,20 @@ void loopcells(CELL * cell1, CELL * cell2)
      * since they effectively are anyway.  This lets the
      * user see that fact.
      */
-    frozen = cell1->frozen;
+    frozen = (cell1->flags & FROZENCELL) ? TRUE : FALSE;
 
     for (cell = cell1->loop; cell != cell1; cell = cell->loop)
     {
-        if (cell->frozen)
+        if (cell->flags & FROZENCELL)
             frozen = TRUE;
     }
 
     if (frozen)
     {
-        cell1->frozen = TRUE;
+        cell1->flags |= FROZENCELL;
 
         for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-            cell->frozen = TRUE;
+            cell->flags |= FROZENCELL;
     }
 }
 
@@ -1726,7 +1726,7 @@ allocatecell()
      */
     cell->state = OFF;
     //cell->free = FALSE;
-    cell->frozen = FALSE;
+    //cell->frozen = FALSE;
     cell->active = TRUE;
     cell->flags = CHOOSECELL;
     cell->gen = -1;

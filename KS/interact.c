@@ -1254,7 +1254,7 @@ freezecell(row, col)
     {
         cell = findcell(row, col, gen);
 
-        cell->frozen = TRUE;
+        cell->flags |= FROZENCELL;
 
         loopcells(cell0, cell);
     }
@@ -1433,7 +1433,7 @@ printgen(gen)
                 case UNK:
                     msg = "? ";
 
-                    if (cell->frozen)
+                    if (cell->flags & FROZENCELL)
                         msg = "+ ";
 
                     if (!(cell->flags & CHOOSECELL))
