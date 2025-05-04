@@ -117,7 +117,7 @@ BOOL set_initial_cells(void)
                 for(j=0;j<rowmax;j++)
                 {
                     cell = findcell(j+1,i+1,g);
-                    if (cell->active && (cell->state == UNK))
+                    if ((cell->flags & ACTIVECELL) && (cell->state == UNK))
                     {
                         if (proceed(cell, OFF, TRUE))
                         {

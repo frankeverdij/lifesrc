@@ -77,7 +77,7 @@ void dumparray()
     {
         cell = celltable[i];
         if (cell)
-            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, ((cell->flags & FREECELL) ? 1 : 0), ((cell->flags & FROZENCELL) ? 1 : 0), cell->active, ((cell->flags & CHOOSECELL) ? 0 : 1));
+            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, ((cell->flags & FREECELL) ? 1 : 0), ((cell->flags & FROZENCELL) ? 1 : 0), ((cell->flags & ACTIVECELL) ? 1 : 0), ((cell->flags & CHOOSECELL) ? 0 : 1));
     }
     return;
 }
@@ -157,7 +157,7 @@ initcells()
                 cell->rowinfo = &dummyrowinfo;
                 cell->colinfo = &dummycolinfo;
 
-                cell->active = TRUE;
+                cell->flags |= ACTIVECELL;
                 cell->flags |= CHOOSECELL;
 
                 /*
@@ -211,12 +211,12 @@ initcells()
             {
                 cell = findcell(row, col, gen);
 
-                if (cell->active)
+                if (cell->flags & ACTIVECELL)
                 {
                     cell2 = cell->loop;
                     while (cell2 != cell)
                     {
-                        cell2->active = FALSE;
+                        cell2->flags &= ~ACTIVECELL;
                         cell2 = cell2->loop;
                     }
                 }
@@ -404,7 +404,7 @@ initsearchorder()
             {
                 cell = findcell(row, col, gen);
                 // cells must be already loaded!!!
-                if ((cell->active) && (cell->state == UNK) && (cell->flags & CHOOSECELL))
+                if ((cell->flags & ACTIVECELL) && (cell->state == UNK) && (cell->flags & CHOOSECELL))
                 {
                     table[count++] = findcell(row, col, gen);
                 }
@@ -504,7 +504,7 @@ setcell(CELL * cell, STATE state, BOOL free)
         else
             cell->flags &= ~FREECELL;
 
-        if (cell->active) {
+        if (cell->flags & ACTIVECELL) {
             *newset++ = cell;
             *searchset++ = searchlist[searchidx];
             for (; (c2 = searchlist[searchidx]); searchidx++)
@@ -534,7 +534,7 @@ void shortsetcell (CELL * cell, const STATE state)
         setState(cell, state);
         cell->flags &= ~FREECELL;
 
-        if (cell->active) {
+        if (cell->flags & ACTIVECELL) {
             *newset++ = cell;
             *searchset++ = searchlist[searchidx];
             for (; (c2 = searchlist[searchidx]); searchidx++)
@@ -1727,8 +1727,8 @@ allocatecell()
     cell->state = OFF;
     //cell->free = FALSE;
     //cell->frozen = FALSE;
-    cell->active = TRUE;
-    cell->flags = CHOOSECELL;
+    //cell->active = TRUE;
+    cell->flags = ACTIVECELL | CHOOSECELL;
     cell->gen = -1;
     cell->row = -1;
     cell->col = -1;

@@ -108,6 +108,7 @@ typedef unsigned short cellFlags;
 #define FREECELL	((cellFlags) 0x01) /* this cell still has free choice */
 #define FROZENCELL	((cellFlags) 0x02) /* this cell is frozen in all gens */
 #define CHOOSECELL	((cellFlags) 0x04) /* can choose this cell if unknown */
+#define ACTIVECELL	((cellFlags) 0x08) /* this cell leads other cells mirrored by symmetry */
 
 /*
  * Information about one cell of the search.
@@ -119,8 +120,8 @@ struct cell
     // state is the most used field so let's put it first
 
     STATE    state;        /* current state */
-    cellFlags   flags;      /* the (C)hoose, fro(Z)en, and (F)ree flags */
-                            /*  in a bitfield : 0x00000CZF */
+    cellFlags   flags;      /* the (A)ctive, (C)hoose, fro(Z)en, and (F)ree flags */
+                            /*  in a bitfield : 0x0000ACZF */
 
     // it makes one byte
     // let's align the address before the pointers start
