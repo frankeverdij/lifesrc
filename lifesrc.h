@@ -107,6 +107,19 @@ EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OF
 EXTERN  long stepConfl; /* step counter for one Proceed-Backup action */
 EXTERN  int sortOrder; /* sort direction */
 
+EXTERN  Bool    smart;      /* use smart method (KAS) */
+EXTERN  Bool    smarton;
+EXTERN  Bool    combine;
+EXTERN  Bool    combining;
+EXTERN  int smartwindow; /* no. of cells to check */
+EXTERN  int smartthreshold; /* check threshold */
+EXTERN  int smartstatlen;
+EXTERN  int smartstatwnd;
+EXTERN  int smartstatsumlen;
+EXTERN  int smartstatsumwnd;
+EXTERN  int smartstatsumlenc;
+EXTERN  int smartstatsumwndc;
+
 /*
  * These values are not affected when dumping and loading since they
  * do not affect the status of a search in progress.
@@ -129,6 +142,10 @@ EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
 EXTERN	char *	outputFile;	/* file to output results to */
 
+EXTERN  int smartlen0;
+EXTERN  int smartlen1;
+EXTERN  int smartcomb;
+EXTERN  State smartchoice; /* preferred state for the selected cell */
 
 /*
  * Data about all of the cells.
@@ -141,6 +158,9 @@ EXTERN	Cell *	fullSearchList;	/* complete list of cells to search */
 EXTERN	RowInfo	rowInfo[ROW_MAX];	/* information about rows of gen 0 */
 EXTERN	ColInfo	colInfo[COL_MAX];	/* information about columns of gen 0 */
 EXTERN	int	fullColumns;	/* columns in gen 0 which are fully set */
+EXTERN  int combinedcells;
+EXTERN  int setcombinedcells;
+EXTERN  int differentcombinedcells;
 
 
 /*

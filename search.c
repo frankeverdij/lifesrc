@@ -66,6 +66,7 @@ static Cell * mapCell(const Cell *, Bool);
 static Cell * allocateCell(void);
 static Cell * getNormalUnknown(void);
 static Cell * getAverageUnknown(void);
+static Cell * getSmartUnknown(void); // KAS
 static Status consistify(Cell * const);
 static Status consistify10(Cell * const);
 static Status examineNext(void);
@@ -213,8 +214,8 @@ initCells(void)
 
     initSearchOrder();
 
-    if (0)
-        getUnknown = getAverageUnknown;
+    if (smart)
+        getUnknown = getSmartUnknown;
     else
         getUnknown = getNormalUnknown;
 
@@ -699,6 +700,266 @@ getAverageUnknown(void)
 }
 
 
+// calculate how many cells will change
+// if we change the current cell to ON or OFF
+// set smartlen1 and smartlen0 to appropriate numbers
+
+static Bool getsmartnumbers(Cell * cell)
+{
+    int cellno;
+    int comb0, comb1;
+    Cell ** setpos;
+
+    // known and inactive cells are unimportant
+    if (cell->state != UNK) return 2;
+
+    // remember set position for proper backup
+    setpos = newSet;
+
+    // remember cell count to calculate the change
+    cellno = cellCount;
+
+    comb0 = comb1 = differentcombinedcells + setcombinedcells;
+    // test the cell
+    if (proceed(cell, ON, TRUE) != OK)
+    {
+        smartlen1 = cellCount - cellno;
+        comb1 = differentcombinedcells  + setcombinedcells - comb1;
+
+        // back up
+        backup(); 
+
+        // and now let's try the OFF choice
+
+        if (proceed(cell, OFF, TRUE) != OK)
+        {
+            smartlen0 = cellCount - cellno;
+            comb0 = differentcombinedcells + setcombinedcells - comb0;
+
+            if (smarton)
+            {
+                if (comb0 == comb1)
+                {
+                    smartcomb = comb0;
+                    smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
+                }
+                else if (comb0 > comb1)
+                {
+                    smartcomb = comb0;
+                    smartchoice = OFF;
+                }
+                else
+                {
+                    smartcomb = comb1;
+                    smartchoice = ON;
+                }
+            }
+            else
+            {
+                smartcomb = 0;
+                smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
+            }
+
+            // back up
+            backup();
+
+            return TRUE;
+
+        } else {
+            // OFF state inconsistent
+            // makes a good candidate
+            smartchoice = OFF;
+
+            // back up if something changed
+            if (setpos != newSet) backup();
+
+            return FALSE;
+        }
+
+    } else {
+        // ON state inconsistent
+        // it's actually a good candidate
+        smartchoice = ON;
+
+        // back up if something changed
+        if (setpos != newSet) backup();
+
+        return FALSE;
+
+    }
+}
+
+// Smart cell ordering
+
+static Cell *
+getSmartUnknown()
+{
+    Cell * cell;
+    Cell * best;
+
+    // The assignment in the following codeline is debatable,
+    // but since the original code also did not initialise
+    // this variable, chances are good that this defaulted to `0`
+    // which in the original code was being interpreted as a 'UNK',
+    // hence the initialisation as 'UNK'
+    State bestchoice = UNK;
+
+    int idx;
+    int max, window, threshold, bestlen1, bestlen0, bestcomb, wnd, n1, n2, a, b, c, d;
+
+    // Move the searchlist over all known cells
+    for (; (cell = searchList[searchIdx]); searchIdx++)
+    {
+        if ((cell->state == UNK) && (cell->choose))
+        {
+            break;
+        }
+    }
+
+    // Return NULL if no unknown cells
+    if (cell == NULL_CELL) return NULL;
+
+    // Prepare threshold
+    threshold = smartthreshold;
+    if (threshold <= 0) threshold = MAX_CELLS;
+
+    // Prepare the dummy maximum
+    max = 2; // at least 3 cells must change
+    bestlen0 = 1;
+    bestlen1 = 1;
+    bestcomb = 0;
+
+    best = NULL;
+
+    wnd = 0;
+
+    window = smartwindow;
+    idx = searchIdx;
+
+    while ((cell = searchList[idx]) && (window > 0) && (max < threshold)) {
+        ++wnd;
+        --window; // count known cells too
+        if ((cell->state == UNK) && (cell->choose))
+        {
+            if (getsmartnumbers(cell))
+            {
+                if (bestcomb == smartcomb)
+                {
+                    // (smartlen0, smartlen1) is better than (bestlen0, bestlen1) if
+                    // 1/2**smartlen0 + 1/2**smartlen1 < 1/2**bestlen0 + 1/2**bestlen1
+                    // i.e.
+                    // 2**(b0+b1+s0) + 2**(b0+b1+s1) < 2**(s0+s1+b0) + 2**(s0+s1+b1)
+                    //
+                    // both sides are binary numbers with one or two 1's
+                    // so let's compare the exponents
+
+                    n1 = smartlen0 + smartlen1;
+                    n2 = n1 + bestlen1;
+                    n1 += bestlen0;
+
+                    if (n1 > n2) 
+                    {
+                        a = n1;
+                        b = n2;
+                    } else if (n1 == n2) {
+                        a = n1 + 1;
+                        b = -1;
+                    } else {
+                        a = n2;
+                        b = n1;
+                    }
+
+                    // max = bestlen0 + bestlen1
+
+                    n1 = max + smartlen0;
+                    n2 = max + smartlen1;
+
+                    if (n1 > n2)
+                    {
+                        c = n1;
+                        d = n2;
+                    } else if (n1 == n2) {
+                        c = n1 + 1;
+                        d = -1;
+                    } else {
+                        c = n2;
+                        d = n1;
+                    }
+
+                    if ((a > c) || ((a = c) && (b > d)))
+                    {
+                        best = cell;
+                        bestchoice = smartchoice;
+                        // bestcomb = smartcomb; -- it's equal anyway
+                        bestlen1 = smartlen1;
+                        bestlen0 = smartlen0;
+                        max = bestlen0 + bestlen1;
+                    }
+                }
+                else if (bestcomb < smartcomb)
+                {
+                    best = cell;
+                    bestchoice = smartchoice;
+                    bestcomb = smartcomb;
+                    bestlen1 = smartlen1;
+                    bestlen0 = smartlen0;
+                    max = bestlen0 + bestlen1;
+                }
+            } else {
+                // the cell can be set only one way
+                best = cell;
+                bestchoice = smartchoice;
+                max = MAX_CELLS + 1;
+                window = 0;
+            }
+        }
+        idx++;
+    }
+
+    // Found something?
+    if (best != NULL)
+    {
+        if (MAX_CELLS >= max)
+        {
+            smartstatsumwnd += wnd;
+            ++smartstatsumwndc;
+            smartstatsumlen += max;
+            ++smartstatsumlenc;
+        
+            if (smartstatsumwndc >= 100000)
+            {
+                smartstatwnd = smartstatsumwnd / smartstatsumwndc;
+                smartstatsumwnd = 0;
+                smartstatsumwndc = 0;
+                if (smartstatsumlenc >= 10000)
+                {
+                    smartstatlen = smartstatsumlen / smartstatsumlenc;
+                    smartstatsumlen = 0;
+                    smartstatsumlenc = 0;
+                }
+            }
+        }
+
+        if (smarton)
+        {
+            // propose the shorter tree
+            smartchoice = bestchoice;
+        } else {
+            smartchoice = UNK;
+        }
+        return best;
+    }
+
+    // fall back to standard
+    smartchoice = UNK;
+
+    // Just return the first UNK cell
+    // This shouldn't be often anyway
+
+    return searchList[searchIdx];
+}
+
+
 /*
  * Choose a state for an unknown cell, either OFF or ON.
  * Normally, we try to choose OFF cells first to terminate an object.
@@ -708,6 +969,13 @@ getAverageUnknown(void)
 static State
 choose(const Cell * cell)
 {
+    /* 
+     * if something pre-set by the select algorithm,
+     * use the selection
+     */
+
+    if (smartchoice != UNK) return smartchoice;
+
     /*
      * If we are following cells in other generations,
      * then try to do that.

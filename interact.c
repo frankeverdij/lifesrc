@@ -82,6 +82,23 @@ static int * paramTable[] =
 };
 
 
+void smartinit(void)
+{
+    smart = TRUE;
+    smartwindow = 50;
+    smartthreshold = 4;
+    smartstatlen = 0;
+    smartstatwnd = 0;
+    smartstatsumlen = 0;
+    smartstatsumwnd = 0;
+    smartstatsumlenc = 0;
+    smartstatsumwndc = 0;
+    smarton = TRUE;
+    combine = FALSE;
+    combining = FALSE;
+}
+
+
 int
 main(int argc, char ** argv)
 {
@@ -137,6 +154,9 @@ main(int argc, char ** argv)
     viewFreq = 10;
     dumpFreq = 0;
     colMax = 75;
+    
+    // Set this or otherwise choose() in search.c will always choose OFF
+    smartchoice = UNK;
 
     /*
      * Collect the command line options.
@@ -248,6 +268,10 @@ main(int argc, char ** argv)
 
                     case 'o':
                         chooseUnknown = ON;
+                        break;
+
+                    case 's':
+                        smartinit();
                         break;
 
                     case '\0':
