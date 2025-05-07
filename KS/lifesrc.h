@@ -119,6 +119,9 @@ struct cell
     // let's align the address before the pointers start
 
     PACKED_BOOL free;    /* TRUE if this cell still has free choice */
+    PACKED_BOOL frozen;    /* TRUE if this cell is frozen in all gens */
+    PACKED_BOOL active; /* FALSE if mirror by a symmetry */
+    PACKED_BOOL unchecked; /* TRUE for unchecked cells */
 
     // aligned to two bytes - let's round it up to four
 
@@ -148,9 +151,6 @@ struct cell
 
     short    near1;        /* count of cells this cell is near */
 
-    PACKED_BOOL frozen;    /* TRUE if this cell is frozen in all gens */
-    PACKED_BOOL active; /* FALSE if mirror by a symmetry */
-    PACKED_BOOL unchecked; /* TRUE for unchecked cells */
 
     STATE combined;
 
