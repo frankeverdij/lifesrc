@@ -721,7 +721,7 @@ static Bool getsmartnumbers(Cell * cell)
 
     comb0 = comb1 = differentcombinedcells + setcombinedcells;
     // test the cell
-    if (proceed(cell, ON, TRUE) != OK)
+    if (proceed(cell, ON, TRUE) == OK)
     {
         smartlen1 = cellCount - cellno;
         comb1 = differentcombinedcells  + setcombinedcells - comb1;
@@ -731,7 +731,7 @@ static Bool getsmartnumbers(Cell * cell)
 
         // and now let's try the OFF choice
 
-        if (proceed(cell, OFF, TRUE) != OK)
+        if (proceed(cell, OFF, TRUE) == OK)
         {
             smartlen0 = cellCount - cellno;
             comb0 = differentcombinedcells + setcombinedcells - comb0;
