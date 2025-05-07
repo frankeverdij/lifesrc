@@ -83,7 +83,7 @@ void dumparray()
     {
         cell = cellTable[i];
         if (cell)
-            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->flags & FREECELL, cell->flags & FROZENCELL, 1, (cell->flags & CHOOSECELL) ? 0:1);
+            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->free, cell->frozen, 1, cell->choose ? 0:1);
     }
     return;
 }
@@ -148,7 +148,7 @@ initCells(void)
                 cell->gen = gen;
                 cell->row = row;
                 cell->col = col;
-                cell->flags |= CHOOSECELL;
+                cell->choose = TRUE;
 
                 /*
                  * If this is not an edge cell, then its state
@@ -159,7 +159,7 @@ initCells(void)
                 {
                     linkCell(cell);
                     setState(cell, UNK);
-                    cell->flags |= FREECELL;
+                    cell->free = TRUE;
                 }
 
                 /*
@@ -329,10 +329,7 @@ setCell(Cell * const cell, const State state, const Bool free)
         *newSet++ = cell;
         setState(cell, state);
 
-        if (!(free))
-            cell->flags &= ~FREECELL;
-        else
-            cell->flags |= FREECELL;
+        cell->free = free;
 
         return OK;
     }
@@ -350,7 +347,7 @@ void shortSetCell(Cell * const cell, const State state)
     {
         *newSet++ = cell;
         setState(cell, state);
-        cell->flags &= ~FREECELL;
+        cell->free = FALSE;
     }
 
     return;
@@ -415,7 +412,7 @@ consistify(Cell * const cell)
         {
             *newSet++ = cell;
             setState(cell, state);
-            cell->flags &= ~FREECELL;
+            cell->free = FALSE;
         }
         else
         {
@@ -557,7 +554,7 @@ examineNext(void)
 
     DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
         cell->row, cell->col, cell->gen,
-        ((cell->flags & FREECELL) ? "free" : "forced"));
+        (cell->free ? "free" : "forced"));
 
     if (cell->loop && (setCell(cell->loop, cell->state, FALSE) != OK))
     {
@@ -611,12 +608,12 @@ backup(void)
         DPRINTF("backing up cell %d %d %d, was %s, %s\n",
             cell->row, cell->col, cell->gen,
             ((cell->state == ON) ? "on" : "off"),
-            ((cell->flags & FREECELL) ? "free": "forced"));
+            (cell->free ? "free": "forced"));
 
-        if (!(cell->flags & FREECELL))
+        if (!cell->free)
         {
             setState(cell, UNK);
-            cell->flags |= FREECELL;
+            cell->free = TRUE;
 
             continue;
         }
@@ -678,7 +675,7 @@ getNormalUnknown(void)
     {
         if (cell->state == UNK)
         {
-            if (cell->flags & CHOOSECELL)
+            if (cell->choose)
             {
                 searchIdx = i;
 
@@ -985,20 +982,20 @@ loopCells(Cell * cell1, Cell * cell2)
      * since they effectively are anyway.  This lets the
      * user see that fact.
      */
-    frozen = cell1->flags & FROZENCELL;
+    frozen = cell1->frozen;
 
     for (cell = cell1->loop; cell != cell1; cell = cell->loop)
     {
-        if (cell->flags & FROZENCELL)
+        if (cell->frozen)
             frozen = TRUE;
     }
 
     if (frozen)
     {
-        cell1->flags |= FROZENCELL;
+        cell1->frozen = TRUE;
 
         for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-            cell->flags |= FROZENCELL;
+            cell->frozen = TRUE;
     }
 }
 
@@ -1222,7 +1219,9 @@ allocateCell(void)
      * Fill in the cell as if it was a boundary cell.
      */
     cell->state = OFF;
-    cell->flags = CHOOSECELL;
+    cell->free = FALSE;
+    cell->frozen = FALSE;
+    cell->choose = TRUE;
     cell->gen = -1;
     cell->row = -1;
     cell->col = -1;

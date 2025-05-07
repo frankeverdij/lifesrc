@@ -4,7 +4,7 @@
 /*
  * flag bits of a cell
  */
-typedef unsigned short cellFlags;
+typedef unsigned char cellFlags;
 
 #define FREECELL	((cellFlags) 0x01) /* this cell still has free choice */
 #define FROZENCELL	((cellFlags) 0x02) /* this cell is frozen in all gens */

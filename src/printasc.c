@@ -41,8 +41,8 @@ void printAsc(const int gen, const Bool augment)
                 if (findCell(row, col, i)->state != idx) changeFlag = TRUE;
             }
 
-            if (cell->flags & FROZENCELL) idx = (UNK >> 1);
-            if (!(cell->flags & CHOOSECELL)) idx = UNK + (UNK >> 1);
+            if (cell->frozen) idx = (UNK >> 1);
+            if (!cell->choose) idx = UNK + (UNK >> 1);
             if (augment)
             {
                 /* cells with changed states between generations are marked bold */

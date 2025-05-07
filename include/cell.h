@@ -30,8 +30,9 @@ typedef	struct Cell Cell;
 
 struct Cell {
 	State		state;		/* current state */
-    cellFlags	flags;		/* the (C)hoose, fro(Z)en, and (F)ree flags */
-							/*  in a bitfield : 0x00000CZF */
+    cellFlags   free;       /* TRUE if this cell still has free choice */
+    cellFlags   frozen;     /* TRUE if this cell is frozen in all gens */
+    cellFlags   choose;     /* TRUE if can choose this cell if unknown */
 	short		gen;		/* generation number of this cell */
 	short		row;		/* row of this cell */
 	short		col;		/* column of this cell */
