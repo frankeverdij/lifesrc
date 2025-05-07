@@ -1185,7 +1185,7 @@ excludeCone(int row, int col, int gen)
             for (tCol = col - dist; tCol <= col + dist; tCol++)
             {
                 cell = findCell(tRow, tCol, tGen);
-                cell->flags &= ~CHOOSECELL;
+                cell->choose = FALSE;
             }
         }
     }
@@ -1268,7 +1268,7 @@ freezeCell(int row, int col)
     {
         cell = findCell(row, col, gen);
 
-        cell->flags |= FROZENCELL;
+        cell->frozen = TRUE;
 
         loopCells(cell0, cell);
     }
@@ -1465,7 +1465,7 @@ writeGen(const char * file, Bool append)
                 case OFF:    ch = '.'; break;
                 case ON:    ch = '*'; break;
                 case UNK:    ch =
-                        ((cell->flags & CHOOSECELL) ? '?' : 'X');
+                        (cell->choose ? '?' : 'X');
                         break;
                 default:
                     ttyStatus("Bad cell state");
@@ -1557,7 +1557,7 @@ dumpState(const char * file)
         cell = *set++;
 
         fprintf(fp, "S %d %d %d %d %d\n", cell->row, cell->col,
-            cell->gen, cell->state, (cell->flags & FREECELL) ? 1 : 0);
+            cell->gen, cell->state, cell->free ? 1 : 0);
     }
 
     /*
@@ -1569,7 +1569,7 @@ dumpState(const char * file)
     {
         cell = findCell(row, col, gen);
 
-        if (cell->flags & CHOOSECELL)
+        if (cell->choose)
             continue;
 
         fprintf(fp, "X %d %d %d\n", row, col, gen);
@@ -1585,7 +1585,7 @@ dumpState(const char * file)
     {
         cell = findCell(row, col, 0);
 
-        if (cell->flags & FROZENCELL)
+        if (cell->frozen)
             fprintf(fp, "F %d %d\n", row, col);
     }
 
@@ -1758,7 +1758,7 @@ loadState(const char * file)
         gen = getNum(&cp, 0);
 
         cell = findCell(row, col, gen);
-        cell->flags &= ~CHOOSECELL;
+        cell->choose = FALSE;
 
         buf[0] = '\0';
         fgets(buf, LINE_SIZE, fp);
