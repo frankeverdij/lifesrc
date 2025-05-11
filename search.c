@@ -314,8 +314,8 @@ setCell(Cell * const cell, const State state, const Bool free)
 {
     if (cell->state == state)
     {
-        DPRINTF("setCell %d %d %d to state %s already set\n",
-            cell->row, cell->col, cell->gen,
+        DPRINTF("setCell %d %d %d with index %d to state %s already set\n",
+            cell->row, cell->col, cell->gen, cell->index,
             (state == ON) ? "on" : "off");
 
         return OK;
@@ -323,8 +323,8 @@ setCell(Cell * const cell, const State state, const Bool free)
 
     if (cell->state == UNK)
     {
-        DPRINTF("setCell %d %d %d to %s, %s successful\n",
-            cell->row, cell->col, cell->gen,
+        DPRINTF("setCell %d %d %d with index %d to %s, %s successful\n",
+            cell->row, cell->col, cell->gen, cell->index,
             (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
         *newSet++ = cell;
@@ -335,8 +335,8 @@ setCell(Cell * const cell, const State state, const Bool free)
         return OK;
     }
 
-    DPRINTF("setCell %d %d %d to state %s inconsistent\n",
-        cell->row, cell->col, cell->gen,
+    DPRINTF("setCell %d %d %d with index %d to state %s inconsistent\n",
+        cell->row, cell->col, cell->gen, cell->index,
         (state == ON) ? "on" : "off");
 
     return ERROR;
@@ -417,6 +417,7 @@ consistify(Cell * const cell)
         }
         else
         {
+            DPRINTF("Consistify cell with index %d returns OK\n", cell->index);
             return OK;
         }
     }
@@ -453,8 +454,8 @@ consistify(Cell * const cell)
          * For each unknown neighbor, set its state as indicated.
          * Return an error if any neighbor is inconsistent.
          */
-        DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
-            prevCell->row, prevCell->col, prevCell->gen, "on");
+        DPRINTF("Forcing unknown neighbors of cell %d %d %d with index %d %s\n",
+            prevCell->row, prevCell->col, prevCell->gen, prevCell->index, "on");
 
         shortSetCell(prevCell->cul, ON);
         shortSetCell(prevCell->cu, ON);
@@ -472,8 +473,8 @@ consistify(Cell * const cell)
     
     if (flags & N0ICUN0)
     {
-        DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
-            prevCell->row, prevCell->col, prevCell->gen, "off");
+        DPRINTF("Forcing unknown neighbors of cell %d %d %d with index %d %s\n",
+            prevCell->row, prevCell->col, prevCell->gen, prevCell->index, "off");
 
         shortSetCell(prevCell->cul, OFF);
         shortSetCell(prevCell->cu, OFF);
@@ -485,7 +486,7 @@ consistify(Cell * const cell)
         shortSetCell(prevCell->cdr, OFF);
     }
 
-    DPRINTF("Implications successful for prevCell %d %d %d %d\n", prevCell->row, prevCell->col, prevCell->gen, prevCell->state);
+    DPRINTF("Implications successful for prevCell %d %d %d with index %d state: %d\n", prevCell->row, prevCell->col, prevCell->gen, prevCell->index, prevCell->state);
 
     return OK;
 }
@@ -527,7 +528,7 @@ consistify10(Cell * const cell)
 
     if (consistify(cell->cdr->future) != OK)
         return ERROR;
-
+    DPRINTF("Consistify10 returned OK\n");
     return OK;
 }
 
@@ -544,17 +545,18 @@ examineNext(void)
      * If there are no more cells to examine, then what we have
      * is consistent.
      */
-    if (nextSet == newSet)
+    if (nextSet == newSet) {
+        DPRINTF(" examineNext: consistent\n");
         return CONSISTENT;
-
+    }
     /*
      * Get the next cell to examine, and check it out for symmetry
      * and for consistency with its previous and next generations.
      */
     cell = *nextSet++;
 
-    DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
-        cell->row, cell->col, cell->gen,
+    DPRINTF("Examining saved cell %d %d %d with index %d (%s) for consistency\n",
+        cell->row, cell->col, cell->gen, cell->index,
         (cell->free ? "free" : "forced"));
 
     if (cell->loop && (setCell(cell->loop, cell->state, FALSE) != OK))
@@ -574,7 +576,7 @@ Status
 proceed(Cell * cell, State state, Bool free)
 {
     int status;
-
+    DPRINTF("proceed(): setcell index %d\n", cell->index);
     if (setCell(cell, state, free) != OK)
         return ERROR;
 
@@ -606,8 +608,8 @@ backup(void)
     {
         cell = *--newSet;
 
-        DPRINTF("backing up cell %d %d %d, was %s, %s\n",
-            cell->row, cell->col, cell->gen,
+        DPRINTF("backing up cell %d %d %d with index %d, was %s, %s\n",
+            cell->row, cell->col, cell->gen, cell>index,
             ((cell->state == ON) ? "on" : "off"),
             (cell->free ? "free": "forced"));
 
@@ -671,7 +673,7 @@ static Cell *
 getNormalUnknown(void)
 {
     Cell * cell;
-
+    DPRINTF(" Entering getNormalUnknown() searchIdx: %d\n", searchIdx);
     for (int i = searchIdx; cell = searchList[i]; i++)
     {
         if (cell->state == UNK)
@@ -796,7 +798,7 @@ getSmartUnknown()
 {
     Cell * cell;
     Cell * best;
-
+    DPRINTF(" Entering getSmartUnknown() searchIdx: %d\n", searchIdx);
     // The assignment in the following codeline is debatable,
     // but since the original code also did not initialise
     // this variable, chances are good that this defaulted to `0`
@@ -829,7 +831,7 @@ getSmartUnknown()
     bestlen1 = 1;
     bestcomb = 0;
 
-    best = NULL;
+    best = NULL_CELL;
 
     wnd = 0;
 
@@ -917,7 +919,7 @@ getSmartUnknown()
     }
 
     // Found something?
-    if (best != NULL)
+    if (best != NULL_CELL)
     {
         if (MAX_CELLS >= max)
         {
