@@ -988,7 +988,7 @@ getBackup(const char * cp)
     {
         cell = backup();
 
-        if (cell == NULL_CELL)
+        if (cell == NULL)
         {
             printGen(curGen);
             ttyStatus("Backed up over all possibilities\n");

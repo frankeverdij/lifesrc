@@ -593,7 +593,7 @@ proceed(Cell * cell, State state, Bool free)
 /*
  * Back up the list of set cells to undo choices.
  * Returns the cell which is to be tried for the other possibility.
- * Returns NULL_CELL on an "object cannot exist" error.
+ * Returns NULL on an "object cannot exist" error.
  */
 Cell *
 backup(void)
@@ -627,7 +627,7 @@ backup(void)
     nextSet = baseSet;
     searchIdx = 0;
 
-    return NULL_CELL;
+    return NULL;
 }
 
 
@@ -652,7 +652,7 @@ go(Cell * cell, State state, Bool free)
         ++stepConfl;
         cell = backup();
 
-        if (cell == NULL_CELL)
+        if (cell == NULL)
             return ERROR;
 
         free = FALSE;
@@ -664,7 +664,7 @@ go(Cell * cell, State state, Bool free)
 
 /*
  * Find another unknown cell in a normal search.
- * Returns NULL_CELL if there are no more unknown cells.
+ * Returns NULL if there are no more unknown cells.
  */
 static Cell *
 getNormalUnknown(void)
@@ -684,18 +684,18 @@ getNormalUnknown(void)
         }
     }
 
-    return NULL_CELL;
+    return NULL;
 }
 
 
 /*
  * Find another unknown cell when averaging is done.
- * Returns NULL_CELL if there are no more unknown cells.
+ * Returns NULL if there are no more unknown cells.
  */
 static Cell *
 getAverageUnknown(void)
 {
-    return NULL_CELL;
+    return NULL;
 }
 
 
@@ -745,11 +745,11 @@ search(const Bool batch)
 
     cell = (*getUnknown)();
 
-    if (cell == NULL_CELL)
+    if (cell == NULL)
     {
         cell = backup();
 
-        if (cell == NULL_CELL)
+        if (cell == NULL)
             return ERROR;
 
         free = FALSE;
@@ -802,7 +802,7 @@ search(const Bool batch)
          */
         cell = (*getUnknown)();
 
-        if (cell == NULL_CELL)
+        if (cell == NULL)
             return FOUND;
 
         state = choose(cell);
@@ -1005,7 +1005,7 @@ loopCells(Cell * cell1, Cell * cell2)
  * It is not necessary to know all symmetric cells to a single cell,
  * as long as all symmetric cells are chained in a loop.  Thus a single
  * pointer is good enough even for the case of both row and column symmetry.
- * Returns NULL_CELL if there is no symmetry.
+ * Returns NULL if there is no symmetry.
  */
 static Cell *
 symCell(const Cell * cell)
@@ -1016,7 +1016,7 @@ symCell(const Cell * cell)
     int nCol;
 
     if (!rowSym && !colSym && !pointSym && !fwdSym && !bwdSym)
-        return NULL_CELL;
+        return NULL;
 
     row = cell->row;
     col = cell->col;
@@ -1047,7 +1047,7 @@ symCell(const Cell * cell)
     if (!colSym)
     {
         if (col < rowSym)
-            return NULL_CELL;
+            return NULL;
 
         return findCell(nRow, col, cell->gen);
     }
@@ -1055,7 +1055,7 @@ symCell(const Cell * cell)
     if (!rowSym)
     {
         if (row < colSym)
-            return NULL_CELL;
+            return NULL;
 
         return findCell(row, nCol, cell->gen);
     }
