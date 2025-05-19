@@ -51,6 +51,4 @@ struct Cell {
 	Cell *		loop;		/* next cell in this same loop */
 };
 
-#define	NULL_CELL	((Cell *) 0)
-
 #endif /* CELL_H */
