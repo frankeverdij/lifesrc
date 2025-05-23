@@ -128,6 +128,7 @@ EXTERN	int	viewFreq;	/* how often to view results */
 EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
 EXTERN	char *	outputFile;	/* file to output results to */
+EXTERN	Cell *  deadCell; /* boundary cell value */
 
 
 /*
@@ -159,7 +160,6 @@ extern	Status	setCell(Cell * const , const State, const Bool);
 extern	Cell *	findCell(int, int, int);
 extern	Cell *	backup(void);
 extern	Bool	subPeriods(void);
-extern	void	loopCells(Cell *, Cell *);
 extern	void	fatal(const char *);
 extern  void    dumparray(void);
 extern	Bool	ttyOpen(void);

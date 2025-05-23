@@ -17,6 +17,7 @@
 #include "sortorder.h"
 #include "sectohms.h"
 #include "outputtimers.h"
+#include "loopcells.h"
 
 #define VERSION "3.8"
 
@@ -1270,7 +1271,7 @@ freezeCell(int row, int col)
 
         cell->frozen = TRUE;
 
-        loopCells(cell0, cell);
+        loopCells(cell0, cell, deadCell);
     }
 }
 

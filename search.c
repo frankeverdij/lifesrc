@@ -21,6 +21,7 @@
 #include "description.h"
 #include "sortorder.h"
 #include "setstate.h"
+#include "loopcells.h"
 
 
 /*
@@ -49,7 +50,6 @@ static int newCellCount; /* cells ready for allocation */
 static int auxCellCount; /* cells in auxillary table */
 static int searchIdx;
 static Cell *  newCells; /* cells ready for allocation */
-static Cell *  deadCell; /* boundary cell value */
 static Cell ** searchList; /* current list of cells to search */
 static Cell *  cellTable[MAX_CELLS]; /* table of usual cells */
 static Cell *  auxTable[AUX_CELLS]; /* table of auxillary cells */
@@ -181,7 +181,7 @@ initCells(void)
                 if ((rowSym || colSym || pointSym ||
                     fwdSym || bwdSym) && !edge)
                 {
-                    loopCells(cell, symCell(cell));
+                    loopCells(cell, symCell(cell), deadCell);
                 }
             }
         }
@@ -246,7 +246,6 @@ initSearchOrder(void)
     int count;
     Cell * table[MAX_CELLS];
     globals_struct g;
-    
     g.colMax = colMax;
     g.rowMax = rowMax;
     g.parent = parent;
@@ -924,80 +923,6 @@ mapCell(const Cell * cell, Bool forward)
 }
 
 
-/*
- * Make the two specified cells belong to the same loop.
- * If the two cells already belong to loops, the loops are joined.
- * This will force the state of these two cells to follow each other.
- * Symmetry uses this feature, and so does setting stable cells.
- * If any cells in the loop are frozen, then they all are.
- */
-void
-loopCells(Cell * cell1, Cell * cell2)
-{
-    Cell * cell;
-    Bool frozen;
-
-    /*
-     * Check simple cases of equality, or of either cell
-     * being the deadCell.
-     */
-    if ((cell1 == deadCell) || (cell2 == deadCell))
-        fatal("Attemping to use deadCell in a loop");
-
-    if (cell1 == cell2)
-        return;
-
-    /*
-     * Make the cells belong to their own loop if required.
-     * This will simplify the code.
-     */
-    if (cell1->loop == NULL)
-        cell1->loop = cell1;
-
-    if (cell2->loop == NULL)
-        cell2->loop = cell2;
-
-    /*
-     * See if the second cell is already part of the first cell's loop.
-     * If so, they they are already joined.  We don't need to
-     * check the other direction.
-     */
-    for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-    {
-        if (cell == cell2)
-            return;
-    }
-
-    /*
-     * The two cells belong to separate loops.
-     * Break each of those loops and make one big loop from them.
-     */
-    cell = cell1->loop;
-    cell1->loop = cell2->loop;
-    cell2->loop = cell;
-
-    /*
-     * See if any of the cells in the loop are frozen.
-     * If so, then mark all of the cells in the loop frozen
-     * since they effectively are anyway.  This lets the
-     * user see that fact.
-     */
-    frozen = cell1->frozen;
-
-    for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-    {
-        if (cell->frozen)
-            frozen = TRUE;
-    }
-
-    if (frozen)
-    {
-        cell1->frozen = TRUE;
-
-        for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-            cell->frozen = TRUE;
-    }
-}
 
 
 /*
