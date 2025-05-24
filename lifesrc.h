@@ -37,7 +37,6 @@
  */
 #define	DUMP_VERSION	7		/* version of dump file */
 
-#define	ALLOC_SIZE	50000		/* chunk size for cell allocation */
 #define	VIEW_MULT	1000000		/* viewing frequency multiplier */
 #define	DUMP_MULT	1000000		/* dumping frequency multiplier */
 #define	DUMP_FILE	"lifesrc.dmp"	/* default dump file name */
@@ -128,7 +127,6 @@ EXTERN	int	viewFreq;	/* how often to view results */
 EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
 EXTERN	char *	outputFile;	/* file to output results to */
-EXTERN	Cell *  deadCell; /* boundary cell value */
 
 
 /*

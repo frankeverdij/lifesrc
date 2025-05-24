@@ -22,6 +22,7 @@
 #include "sortorder.h"
 #include "setstate.h"
 #include "loopcells.h"
+#include "allocatecell.h"
 
 
 /*
@@ -63,7 +64,6 @@ static void linkCell(Cell *);
 static State choose(const Cell *);
 static Cell * symCell(const Cell *);
 static Cell * mapCell(const Cell *, Bool);
-static Cell * allocateCell(void);
 static Cell * getNormalUnknown(void);
 static Cell * getAverageUnknown(void);
 static Status consistify(Cell * const);
@@ -127,7 +127,7 @@ initCells(void)
      * The first allocation of a cell MUST be deadCell.
      * Then allocate the cells in the cell table.
      */
-    deadCell = allocateCell();
+    allocateCell();
 
     for (i = 0; i < MAX_CELLS; i++)
         cellTable[i] = allocateCell();
@@ -181,7 +181,7 @@ initCells(void)
                 if ((rowSym || colSym || pointSym ||
                     fwdSym || bwdSym) && !edge)
                 {
-                    loopCells(cell, symCell(cell), deadCell);
+                    loopCells(cell, symCell(cell));
                 }
             }
         }
@@ -300,7 +300,6 @@ initSearchOrder(void)
 }
 
 
-
 /*
  * Set the state of a cell to the specified state.
  * The state is either ON or OFF.
@@ -339,6 +338,7 @@ setCell(Cell * const cell, const State state, const Bool free)
 
     return ERROR;
 }
+
 
 void shortSetCell(Cell * const cell, const State state)
 {
@@ -923,8 +923,6 @@ mapCell(const Cell * cell, Bool forward)
 }
 
 
-
-
 /*
  * Return a cell which is symmetric to the given cell.
  * It is not necessary to know all symmetric cells to a single cell,
@@ -1103,66 +1101,6 @@ findCell(int row, int col, int gen)
     cell->col = col;
     cell->gen = gen;
     auxTable[auxCellCount++] = cell;
-
-    return cell;
-}
-
-
-/*
- * Allocate a new cell.
- * The cell is initialized as if it was a boundary cell.
- * Warning: The first allocation MUST be of the deadCell.
- */
-static Cell *
-allocateCell(void)
-{
-    Cell * cell;
-
-    /*
-     * Allocate a new chunk of cells if there are none left.
-     */
-    if (newCellCount <= 0)
-    {
-        newCells = (Cell *) malloc(sizeof(Cell) * ALLOC_SIZE);
-
-        if (newCells == NULL)
-            fatal("Cannot allocate cell structure");
-
-        newCellCount = ALLOC_SIZE;
-    }
-
-    newCellCount--;
-    cell = newCells++;
-
-    /*
-     * If this is the first allocation, then make deadCell be this cell.
-     */
-    if (deadCell == NULL)
-        deadCell = cell;
-
-    /*
-     * Fill in the cell as if it was a boundary cell.
-     */
-    cell->state = OFF;
-    cell->free = FALSE;
-    cell->frozen = FALSE;
-    cell->choose = TRUE;
-    cell->gen = -1;
-    cell->row = -1;
-    cell->col = -1;
-    cell->sumNear = 0;
-    cell->index = -1;
-    cell->past = deadCell;
-    cell->future = deadCell;
-    cell->cul = deadCell;
-    cell->cu = deadCell;
-    cell->cur = deadCell;
-    cell->cl = deadCell;
-    cell->cr = deadCell;
-    cell->cdl = deadCell;
-    cell->cd = deadCell;
-    cell->cdr = deadCell;
-    cell->loop = NULL;
 
     return cell;
 }

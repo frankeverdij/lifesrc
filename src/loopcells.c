@@ -1,5 +1,6 @@
 #include "stdlib.h"
 #include "loopcells.h"
+#include "deadcell.h"
 #include "enums.h"
 
 /*
@@ -10,7 +11,7 @@
  * If any cells in the loop are frozen, then they all are.
  */
 void
-loopCells(Cell * cell1, Cell * cell2, const Cell * const dead)
+loopCells(Cell * cell1, Cell * cell2)
 {
     Cell * cell;
     Bool frozen;
@@ -19,7 +20,7 @@ loopCells(Cell * cell1, Cell * cell2, const Cell * const dead)
      * Check simple cases of equality, or of either cell
      * being the deadCell.
      */
-    if ((cell1 == dead) || (cell2 == dead))
+    if ((cell1 == deadCell) || (cell2 == deadCell))
         fatal("Attemping to use deadCell in a loop");
 
     if (cell1 == cell2)

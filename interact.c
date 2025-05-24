@@ -1271,7 +1271,7 @@ freezeCell(int row, int col)
 
         cell->frozen = TRUE;
 
-        loopCells(cell0, cell, deadCell);
+        loopCells(cell0, cell);
     }
 }
 

@@ -3,6 +3,6 @@
 
 #include "cell.h"
 
-void loopCells(Cell * cell1, Cell * cell2, const Cell * const deadcell);
+void loopCells(Cell * cell1, Cell * cell2);
 
 #endif /* LOOPCELLS_H */
