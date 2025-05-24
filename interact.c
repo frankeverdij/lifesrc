@@ -811,7 +811,7 @@ getCommands(void)
                 /*
                  * Set viewing frequency.
                  */
-                viewFreq = atol(cp) * VIEW_MULT;
+                viewFreq = atoi(cp);
                 printGen(curGen);
                 break;
 

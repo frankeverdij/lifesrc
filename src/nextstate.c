@@ -21,7 +21,7 @@ State nextState(const State state, const int onCount)
     return unkRules[onCount + 9 * (int) state];
 }
 
-
+#if 0
 static State
 nextState2(const State state, const int onCount, State * bornRules, State * liveRules)
 {
@@ -44,7 +44,7 @@ nextState2(const State state, const int onCount, State * bornRules, State * live
 	}
 }
 
-/*
+
 int main (void) {
     const State bornRules[9] = { OFF, OFF, OFF, ON, OFF, OFF, OFF, OFF, OFF };
     const State liveRules[9] = { OFF, OFF, ON,  ON, OFF, OFF, OFF, OFF, OFF };
@@ -76,4 +76,4 @@ int main (void) {
     
     return 0;
 }
-*/
+#endif

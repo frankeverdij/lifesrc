@@ -140,6 +140,7 @@ int orderSortFunc(const void * addr1, const void * addr2, void * gvars)
 	return gen_diff;
 }
 
+#if 0
 /*
  * Old sort routine for searching.
  */
@@ -257,4 +258,4 @@ orderSortFuncOld(const void * addr1, const void * addr2, const void *gvars)
 
 	return 0;
 }
-
+#endif

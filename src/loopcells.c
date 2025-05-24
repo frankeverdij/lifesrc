@@ -2,6 +2,7 @@
 #include "loopcells.h"
 #include "deadcell.h"
 #include "enums.h"
+#include "macros.h"
 
 /*
  * Make the two specified cells belong to the same loop.
@@ -21,7 +22,7 @@ loopCells(Cell * cell1, Cell * cell2)
      * being the deadCell.
      */
     if ((cell1 == deadCell) || (cell2 == deadCell))
-        fatal("Attemping to use deadCell in a loop");
+        FATAL("Attemping to use deadCell in a loop\n");
 
     if (cell1 == cell2)
         return;

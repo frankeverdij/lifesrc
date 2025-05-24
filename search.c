@@ -47,10 +47,8 @@ static Flags implic[TRIMSIZE];
 /*
  * Other local data.
  */
-static int newCellCount; /* cells ready for allocation */
 static int auxCellCount; /* cells in auxillary table */
 static int searchIdx;
-static Cell *  newCells; /* cells ready for allocation */
 static Cell ** searchList; /* current list of cells to search */
 static Cell *  cellTable[MAX_CELLS]; /* table of usual cells */
 static Cell *  auxTable[AUX_CELLS]; /* table of auxillary cells */
@@ -69,7 +67,6 @@ static Cell * getAverageUnknown(void);
 static Status consistify(Cell * const);
 static Status consistify10(Cell * const);
 static Status examineNext(void);
-static int getDesc(const Cell * const);
 static Cell * (* getUnknown)(void);
 
 
@@ -352,7 +349,7 @@ void shortSetCell(Cell * const cell, const State state)
     return;
 }
 
-
+#if 0
 /*
  * Calculate the current descriptor for a cell.
  */
@@ -361,7 +358,7 @@ getDesc(const Cell * const cell)
 {
     return SUMTODESC(cell->state, cell->sumNear);
 }
-
+#endif
 
 /*
  * Consistify a cell.
@@ -670,7 +667,7 @@ getNormalUnknown(void)
 {
     Cell * cell;
 
-    for (int i = searchIdx; cell = searchList[i]; i++)
+    for (int i = searchIdx; (cell = searchList[i]) ; i++)
     {
         if (cell->state == UNK)
         {
@@ -739,7 +736,6 @@ search(const Bool batch)
 {
     Cell * cell;
     Bool free;
-    Bool needWrite;
     State state;
 
     cell = (*getUnknown)();

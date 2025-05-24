@@ -1,11 +1,12 @@
-#include <memory.h>
+#include <stdlib.h>
 #include "allocatecell.h"
 #include "deadcell.h"
 #include "state.h"
 #include "enums.h"
+#include "macros.h"
 
-static Cell * newCells = NULL;
-static int newCellCount = 0;
+static Cell * newCells = NULL;   /* storage for allocating cells */
+static int    newCellCount = 0;  /* amount of allocated cells in block */
 
 /*
  * Allocate a new cell.
@@ -24,7 +25,7 @@ Cell * allocateCell(void)
         newCells = (Cell *) malloc(sizeof(Cell) * ALLOC_SIZE);
 
         if (newCells == NULL)
-            fatal("Cannot allocate cell structure");
+            FATAL("Cannot allocate cell structure\n");
 
         newCellCount = ALLOC_SIZE;
     }
