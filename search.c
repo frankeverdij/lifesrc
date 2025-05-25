@@ -807,46 +807,6 @@ search(const Bool batch)
 
 
 /*
- * Check to see if any other generation is identical to generation 0.
- * This is used to detect and weed out all objects with subPeriods.
- * (For example, stable objects or period 2 objects when using -g4.)
- * Returns TRUE if there is an identical generation.
- */
-Bool
-subPeriods(void)
-{
-    int row;
-    int col;
-    int gen;
-    const Cell * cellG0;
-    const Cell * cellGn;
-
-    for (gen = 1; gen < genMax; gen++)
-    {
-        if (genMax % gen)
-            continue;
-
-        for (row = 1; row <= rowMax; row++)
-        {
-            for (col = 1; col <= colMax; col++)
-            {
-                cellG0 = findCell(row, col, 0);
-                cellGn = findCell(row, col, gen);
-
-                if (cellG0->state != cellGn->state)
-                    goto nextGen;
-            }
-        }
-
-        return TRUE;
-nextGen:;
-    }
-
-    return FALSE;
-}
-
-
-/*
  * Return the mapping of a cell from the last generation back to the first
  * generation, or vice versa.  This implements all flipping and translating
  * of cells between these two generations.  This routine should only be

@@ -155,7 +155,6 @@ extern	Status	go(Cell *, State, Bool);
 extern	Status	setCell(Cell * const , const State, const Bool);
 extern	Cell *	findCell(int, int, int);
 extern	Cell *	backup(void);
-extern	Bool	subPeriods(void);
 extern	void	fatal(const char *);
 extern  void    dumparray(void);
 extern	Bool	ttyOpen(void);

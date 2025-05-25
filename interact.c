@@ -18,6 +18,7 @@
 #include "sectohms.h"
 #include "outputtimers.h"
 #include "loopcells.h"
+#include "subperiods.h"
 
 #define VERSION "3.8"
 
