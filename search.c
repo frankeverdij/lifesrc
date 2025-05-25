@@ -23,6 +23,7 @@
 #include "setstate.h"
 #include "loopcells.h"
 #include "allocatecell.h"
+#include "linkcell.h"
 
 
 /*
@@ -58,7 +59,6 @@ static Cell *  auxTable[AUX_CELLS]; /* table of auxillary cells */
  * Local procedures
  */
 static void initSearchOrder(void);
-static void linkCell(Cell *);
 static State choose(const Cell *);
 static Cell * symCell(const Cell *);
 static Cell * mapCell(const Cell *, Bool);
@@ -996,56 +996,6 @@ symCell(const Cell * cell)
         return findCell(row, nCol, cell->gen);
     else
         return findCell(nRow, col, cell->gen);
-}
-
-
-/*
- * Link a cell to its eight neighbors in the same generation, and also
- * link those neighbors back to this cell.
- */
-static void
-linkCell(Cell * cell)
-{
-    int row;
-    int col;
-    int gen;
-    Cell * pairCell;
-
-    row = cell->row;
-    col = cell->col;
-    gen = cell->gen;
-
-    pairCell = findCell(row - 1, col - 1, gen);
-    cell->cul = pairCell;
-    pairCell->cdr = cell;
-
-    pairCell = findCell(row - 1, col, gen);
-    cell->cu = pairCell;
-    pairCell->cd = cell;
-
-    pairCell = findCell(row - 1, col + 1, gen);
-    cell->cur = pairCell;
-    pairCell->cdl = cell;
-
-    pairCell = findCell(row, col - 1, gen);
-    cell->cl = pairCell;
-    pairCell->cr = cell;
-
-    pairCell = findCell(row, col + 1, gen);
-    cell->cr = pairCell;
-    pairCell->cl = cell;
-
-    pairCell = findCell(row + 1, col - 1, gen);
-    cell->cdl = pairCell;
-    pairCell->cur = cell;
-
-    pairCell = findCell(row + 1, col, gen);
-    cell->cd = pairCell;
-    pairCell->cu = cell;
-
-    pairCell = findCell(row + 1, col + 1, gen);
-    cell->cdr = pairCell;
-    pairCell->cul = cell;
 }
 
 
