@@ -132,9 +132,7 @@ EXTERN  Cell * cellTable[MAX_CELLS]; /* table of usual cells */
 extern	void	getCommands(void);
 extern	void	initCells(void);
 extern	void	printGen(int);
-extern	void	writeGen(const char *, Bool);
 extern	void	dumpState(const char *);
-extern	void	adjustNear(Cell *, int);
 extern	Status	search(const Bool);
 extern	Status	proceed(Cell *, State, Bool);
 extern	Status	go(Cell *, State, Bool);

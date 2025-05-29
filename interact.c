@@ -62,6 +62,8 @@ static Bool confirm(const char *);
 static Bool setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
+static void	writeGen(const char *, Bool);
+
 
 /*
  * Signal handler for output
