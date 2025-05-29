@@ -138,6 +138,7 @@ EXTERN	Cell *	fullSearchList;	/* complete list of cells to search */
 EXTERN	RowInfo	rowInfo[ROW_MAX];	/* information about rows of gen 0 */
 EXTERN	ColInfo	colInfo[COL_MAX];	/* information about columns of gen 0 */
 EXTERN	int	fullColumns;	/* columns in gen 0 which are fully set */
+EXTERN  Cell * cellTable[MAX_CELLS]; /* table of usual cells */
 
 
 /*

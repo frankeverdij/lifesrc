@@ -26,6 +26,7 @@
 #include "linkcell.h"
 #include "symcell.h"
 #include "mapcell.h"
+#include "findcell.h"
 
 
 /*
@@ -50,11 +51,8 @@ static Flags implic[TRIMSIZE];
 /*
  * Other local data.
  */
-static int auxCellCount; /* cells in auxillary table */
 static int searchIdx;
 static Cell ** searchList; /* current list of cells to search */
-static Cell *  cellTable[MAX_CELLS]; /* table of usual cells */
-static Cell *  auxTable[AUX_CELLS]; /* table of auxillary cells */
 
 
 /*
@@ -803,59 +801,6 @@ search(const Bool batch)
         state = choose(cell);
         free = TRUE;
     }
-}
-
-
-/*
- * Find a cell given its coordinates.
- * Most coordinates range from 0 to colMax+1, 0 to rowMax+1, and 0 to genMax-1.
- * Cells within this range are quickly found by indexing into cellTable.
- * Cells outside of this range are handled by searching an auxillary table,
- * and are dynamically created as necessary.
- */
-Cell *
-findCell(int row, int col, int gen)
-{
-    Cell * cell;
-    int i;
-
-    /*
-     * If the cell is a normal cell, then we know where it is.
-     */
-    if ((row >= 0) && (row <= rowMax + 1) &&
-        (col >= 0) && (col <= colMax + 1) &&
-        (gen >= 0) && (gen < genMax))
-    {
-        return cellTable[(col * (rowMax + 2) + row) * genMax + gen];
-    }
-
-    /*
-     * See if the cell is already allocated in the auxillary table.
-     */
-    for (i = 0; i < auxCellCount; i++)
-    {
-        cell = auxTable[i];
-
-        if ((cell->row == row) && (cell->col == col) &&
-            (cell->gen == gen))
-        {
-            return cell;
-        }
-    }
-
-    /*
-     * Need to allocate the cell and add it to the auxillary table.
-     */
-    if (auxCellCount >= AUX_CELLS)
-        fatal("Too many auxillary cells");
-
-    cell = allocateCell();
-    cell->row = row;
-    cell->col = col;
-    cell->gen = gen;
-    auxTable[auxCellCount++] = cell;
-
-    return cell;
 }
 
 /* END CODE */
