@@ -37,9 +37,12 @@ static char * loadFile;      /* file to load state from */
 static Bool blockOutput;     /* print Unicode blocks instead of character */
 static Bool RLEOutput;       /* print additional RLE code */
 static Bool augmentOutput;   /* print additional UTF8 code for stateList info */
+static Bool	setDeep;	/* set cleared cells deeply from init file */
 static time_t startTime;
 static char timeBuf[256] = {0};
 static char * argstr;
+static	int	dumpFreq;	/* how often to perform dumps in seconds */
+static	int	viewFreq;	/* how often to view results in seconds */
 
 /*
  * Local procedures
@@ -58,6 +61,10 @@ static Bool confirm(const char *);
 static Bool setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
+
+/*
+ * Signal handler for output
+ */
 void alarm_handler(const int signo)
 {
     if (signo == SIGUSR1) dumpFlag = TRUE;
@@ -78,8 +85,7 @@ static int * paramTable[] =
     &rowMax, &colMax, &genMax, &rowTrans, &colTrans,
     &rowSym, &colSym, &pointSym, &fwdSym, &bwdSym,
     &flipRows, &flipCols, &flipFwd, &flipBwd, &flipQuads,
-    &parent, &allObjects, &nearCols, &maxCount,
-    &useRow, &useCol, &colCells, &colWidth, &follow,
+    &parent, &allObjects,
     &orderWide, &orderGens, &orderInvert, &orderMiddle, &followGens,
     &chooseUnknown, &sortOrder, NULL
 };
@@ -253,10 +259,6 @@ main(int argc, char ** argv)
                         chooseUnknown = ON;
                         break;
 
-                    case '\0':
-                        follow = TRUE;
-                        break;
-
                     default:
                         fatal("Bad flip");
                 }
@@ -299,58 +301,6 @@ main(int argc, char ** argv)
 
                     default:
                         fatal("Bad symmetry");
-                }
-
-                break;
-
-            case 'n':
-                /*
-                 * Set near cells.
-                 */
-                switch (*str++)
-                {
-                    case 'c':
-                        nearCols = atoi(str);
-                        break;
-
-                    default:
-                        fatal("Bad near");
-                }
-
-                break;
-
-            case 'w':
-                /*
-                 * Set max width of ON cells.
-                 */
-                switch (*str++)
-                {
-                    case 'c':
-                        colWidth = atoi(str);
-                        break;
-
-                    default:
-                        fatal("Bad width");
-                }
-
-                break;
-
-            case 'u':
-                /*
-                 * Force use of row or column.
-                 */
-                switch (*str++)
-                {
-                    case 'r':
-                        useRow = atoi(str);
-                        break;
-
-                    case 'c':
-                        useCol = atoi(str);
-                        break;
-
-                    default:
-                        fatal("Bad use");
                 }
 
                 break;
@@ -435,8 +385,6 @@ main(int argc, char ** argv)
                     /*
                      * Output file name
                      */
-                    outputCols = atol(str);
-
                     if ((argc <= 0) || (**argv == '-'))
                         fatal("Missing output file name");
 
@@ -491,26 +439,6 @@ main(int argc, char ** argv)
                         default:
                             fatal("Bad ordering or sorting option");
                     }
-                }
-
-                break;
-
-            case 'm':
-                /*
-                 * Set maximum cell count.
-                 */
-                switch (*str++)
-                {
-                    case 'c':
-                        colCells = atoi(str);
-                        break;
-
-                    case 't':
-                        maxCount = atoi(str);
-                        break;
-
-                    default:
-                        fatal("Bad maximum");
                 }
 
                 break;
@@ -572,12 +500,6 @@ main(int argc, char ** argv)
 
     if ((rowTrans && flipRows) || (colTrans && flipCols))
         fatal("Conflicting translation or flipping specified");
-
-    if ((useRow < 0) || (useRow > rowMax))
-        fatal("Bad row for -ur");
-
-    if ((useCol < 0) || (useCol > colMax))
-        fatal("Bad column for -uc");
 
     if (!noWait)
     {
@@ -665,13 +587,6 @@ main(int argc, char ** argv)
             dif = end - startTime;
             secToHMS(dif, timeBuf);
         }
-
-//        if ((curStatus == FOUND) && useRow &&
-//            (rowInfo[useRow].onCount == 0))
-//        {
-//            curStatus = OK;
-//            continue;
-//        }
 
         if ((curStatus == FOUND) && !allObjects && subPeriods())
         {
@@ -2220,13 +2135,6 @@ usage(void)
     "   -sp  Enforce symmetry around central point",
     "   -sf  Enforce symmetry on forward diagonal",
     "   -sb  Enforce symmetry on backward diagonal",
-    "   -nc  Near N cells of live cells in previous columns for generation 0",
-    "   -wc  Maximum width of live cells in each column for generation 0",
-    "   -mt  Maximum total live cells for generation 0",
-    "   -mc  Maximum live cells in any column for generation 0",
-    "   -ur  Force using at least one ON cell in the given row for generation 0",
-    "   -uc  Force using at least one ON cell in the given column for generation 0",
-    "   -f   First follow the average location of the previous column's cells",
     "   -fg  First follow settings of previous or next generation",
     "   -fo  First choice for unknown cell should be ON instead of OFF",
     "   -ow  Set search order to find wide objects first",

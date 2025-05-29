@@ -86,14 +86,7 @@ EXTERN	Bool	flipBwd;	/* flip backward diagonal (\) from last to first gen */
 EXTERN	Bool	flipQuads;	/* flip quadrants from last to first gen */
 EXTERN	Bool	parent;		/* only look for parents */
 EXTERN	Bool	allObjects;	/* look for all objects including subPeriods */
-EXTERN	Bool	setDeep;	/* set cleared cells deeply from init file */
-EXTERN	int	nearCols;	/* maximum distance to be near columns */
-EXTERN	int	maxCount;	/* maximum number of cells in generation 0 */
-EXTERN	int	useRow;		/* row that must have at least one ON cell */
-EXTERN	int	useCol;		/* column that must have at least one ON cell */
-EXTERN	int	colCells;	/* maximum cells in a column */
-EXTERN	int	colWidth;	/* maximum width of each column */
-EXTERN	Bool	follow;		/* follow average position of previous column */
+
 EXTERN	Bool	orderWide;	/* ordering tries to find wide objects */
 EXTERN	Bool	orderGens;	/* ordering tries all gens first */
 EXTERN	Bool	orderInvert;	/* Inverts direction of non-wide orderings */
@@ -115,12 +108,9 @@ EXTERN	Bool	inited;		/* initialization has been done */
 EXTERN	State	bornRules[9];	/* rules for whether a cell is to be born */
 EXTERN	State	liveRules[9];	/* rules for whether a live cell stays alive */
 EXTERN	int	curGen;		/* current generation for display */
-EXTERN	int	outputCols;	/* number of columns to save for output */
-EXTERN	int	outputLastCols;	/* last number of columns output */
 EXTERN	int	cellCount;	/* number of live cells in generation 0 */
-EXTERN	int	dumpFreq;	/* how often to perform dumps */
+
 EXTERN	sig_atomic_t	dumpFlag;	/* sigaction flag for dumps */
-EXTERN	int	viewFreq;	/* how often to view results */
 EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
 EXTERN	char *	outputFile;	/* file to output results to */
@@ -133,8 +123,6 @@ EXTERN	Cell *	setTable[MAX_CELLS];	/* table of cells whose value is set */
 EXTERN	Cell **	newSet;		/* where to add new cells into setting table */
 EXTERN	Cell **	nextSet;	/* next cell in setting table to examine */
 EXTERN	Cell **	baseSet;	/* base of changeable part of setting table */
-EXTERN	Cell *	fullSearchList;	/* complete list of cells to search */
-EXTERN	int	fullColumns;	/* columns in gen 0 which are fully set */
 EXTERN  Cell * cellTable[MAX_CELLS]; /* table of usual cells */
 
 
