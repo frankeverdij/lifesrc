@@ -1,5 +1,6 @@
 #include "lifesrc.h"
 #include "state.h"
+#include "tty.h"
 
 static const char *ascii[128] =
     {".", "O", "\033[1m.\033[0m", "\033[1mO\033[0m", "\033[7m.\033[0m", "\033[7mO\033[0m", "\033[1m\033[7m.\033[0m", "\033[1m\033[7mO\033[0m",

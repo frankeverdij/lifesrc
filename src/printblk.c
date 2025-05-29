@@ -1,5 +1,6 @@
 #include "lifesrc.h"
 #include "state.h"
+#include "tty.h"
 
 static const char *colorBlockGfx[256] =
     {" ", "\u2580", "\u2584", "\u2588", "\033[32m\u2580\033[0m", " ", "\033[32;47m\u2580\033[0m", " ",

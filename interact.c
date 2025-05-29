@@ -20,6 +20,7 @@
 #include "loopcells.h"
 #include "subperiods.h"
 #include "findcell.h"
+#include "tty.h"
 
 #define VERSION "3.8"
 

@@ -27,6 +27,7 @@
 #include "symcell.h"
 #include "mapcell.h"
 #include "findcell.h"
+#include "tty.h"
 
 
 /*

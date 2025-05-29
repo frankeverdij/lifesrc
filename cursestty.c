@@ -13,7 +13,7 @@
 #undef	TRUE
 #undef	OK
 
-#include "lifesrc.h"
+#include "enums.h"
 
 
 static	Bool	inputready;

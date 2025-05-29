@@ -3,10 +3,12 @@
  * Does no cursor addressing stuff.
  */
 
+#include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include <stdarg.h>
 
-#include "lifesrc.h"
+#include "enums.h"
 
 
 static	Bool	inputready;		/* TRUE if input now ready */
@@ -61,6 +63,22 @@ ttyCheck(void)
 
 
 /*
+ * Write the specified number of characters to the terminal.
+ */
+void
+ttyWrite(const char * buf, int count)
+{
+	int	ch;
+
+	while (count-- > 0)
+	{
+		ch = *buf++;
+		putchar(ch);
+	}
+}
+
+
+/*
  * Print a formatted string to the terminal.
  * The string length is limited to 256 characters.
  */
@@ -91,22 +109,6 @@ ttyStatus(const char * fmt, ...)
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 	ttyWrite(buf, strlen(buf));
-}
-
-
-/*
- * Write the specified number of characters to the terminal.
- */
-void
-ttyWrite(const char * buf, int count)
-{
-	int	ch;
-
-	while (count-- > 0)
-	{
-		ch = *buf++;
-		putchar(ch);
-	}
 }
 
 

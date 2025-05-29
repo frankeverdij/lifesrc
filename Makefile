@@ -12,6 +12,7 @@ SOURCES = $(wildcard src/*.c)
 SOURCES += search.c interact.c
 OBJECTS = $(SOURCES:.c=.o)
 DEPS = $(SOURCES:.c=.d) 
+DEPS += cursestty.d dumbtty.d
 COVERAGE = $(SOURCES:.c=.gcda)
 COVERAGE += $(SOURCES:.c=.gcno)
 
