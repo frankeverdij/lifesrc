@@ -6,10 +6,10 @@
  * Initialize the implication table.
  */
 void
-initimplic(const BOOL * bornrules, const BOOL * liverules, FLAGS * implic)
+initimplic(const Bool * bornrules, const Bool * liverules, FLAGS * implic)
 {
     int nunk, non, noff, cunk, con, coff, funk, fon, foff, naon, caon, faon, desc;
-    BOOL valid, cison, cisoff, fison, fisoff, nison, nisoff;
+    Bool valid, cison, cisoff, fison, fisoff, nison, nisoff;
 
     for (desc=0; desc<IMPLICSIZE; desc++) {
         implic[desc] = IMPVOID;
@@ -24,7 +24,7 @@ initimplic(const BOOL * bornrules, const BOOL * liverules, FLAGS * implic)
                     for (funk=0; funk<=1; funk++) { // unknown future cell
                         for (fon=0; fon+funk<=1; fon++) { // on future cell
                             foff=1-(fon+funk); // off future cell
-                            desc = SUMTODESC((STATE)(funk*UNK+fon*ON+foff*OFF), (STATE)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
+                            desc = SUMTODESC((State)(funk*UNK+fon*ON+foff*OFF), (State)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
                             if (implic[desc] != IMPVOID) {
                                 ttystatus("Duplicate descriptor!!!");
                                 exit(1);

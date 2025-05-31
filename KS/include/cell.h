@@ -28,13 +28,13 @@ typedef struct
  * Information about one cell of the search.
  */
 typedef    char        PACKED_BOOL;
-typedef    struct cell CELL;
+typedef    struct Cell Cell;
 
-struct cell
+struct Cell
 {
     // state is the most used field so let's put it first
 
-    STATE    state;        /* current state */
+    State    state;        /* current state */
 
     // it makes one byte
     // let's align the address before the pointers start
@@ -54,18 +54,18 @@ struct cell
     int     index;      /* cell index in searchlist[] */
     // and now for the pointers
 
-    CELL *    past;        /* cell in the past at this location */
-    CELL *    future;        /* cell in the future at this location */
-    CELL *    cul;        /* cell to up and left */
-    CELL *    cu;            /* cell to up */
-    CELL *    cur;        /* cell to up and right */
-    CELL *    cl;            /* cell to left */
-    CELL *    cr;            /* cell to right */
-    CELL *    cdl;        /* cell to down and left */
-    CELL *    cd;            /* cell to down */
-    CELL *    cdr;        /* cell to down and right */
-    CELL *    loop;        /* next cell in same loop as this one */
-    CELL *    search;        /* cell next to be searched for setting */
+    Cell *    past;        /* cell in the past at this location */
+    Cell *    future;        /* cell in the future at this location */
+    Cell *    cul;        /* cell to up and left */
+    Cell *    cu;            /* cell to up */
+    Cell *    cur;        /* cell to up and right */
+    Cell *    cl;            /* cell to left */
+    Cell *    cr;            /* cell to right */
+    Cell *    cdl;        /* cell to down and left */
+    Cell *    cd;            /* cell to down */
+    Cell *    cdr;        /* cell to down and right */
+    Cell *    loop;        /* next cell in same loop as this one */
+    Cell *    search;        /* cell next to be searched for setting */
 
     ROWINFO * rowinfo;    /* information about this cell's row */
     COLINFO * colinfo;    /* information about this cell's column */
@@ -73,7 +73,7 @@ struct cell
     short    near1;        /* count of cells this cell is near */
 
 
-    STATE combined;
+    State combined;
 
     long potential;
 };

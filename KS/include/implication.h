@@ -28,6 +28,6 @@ typedef unsigned char FLAGS;
 #define IMPVOID ((FLAGS) 0x40)  // invalid/unset implication
 #define IMPOK   ((FLAGS) 0x80)  // valid state
 
-void initimplic(const BOOL * born, const BOOL * live, FLAGS * implic);
+void initimplic(const Bool * born, const Bool * live, FLAGS * implic);
 
 #endif /* IMPLICATION_H */

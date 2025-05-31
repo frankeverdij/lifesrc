@@ -42,11 +42,11 @@ static FLAGS implic[2304];
  */
 static int    newcellcount;    /* number of cells ready for allocation */
 static int    auxcellcount;    /* number of cells in auxillary table */
-static CELL *    newcells;    /* cells ready for allocation */
-static    CELL **    searchlist;    /* current list of cells to search */
+static Cell *    newcells;    /* cells ready for allocation */
+static    Cell **    searchlist;    /* current list of cells to search */
 static    int    searchidx;      /* index of first unknown cell in searchlist[] */
-static CELL *    celltable[MAXCELLS];    /* table of usual cells */
-static CELL *    auxtable[AUXCELLS];    /* table of auxillary cells */
+static Cell *    celltable[MAXCELLS];    /* table of usual cells */
+static Cell *    auxtable[AUXCELLS];    /* table of auxillary cells */
 static ROWINFO    dummyrowinfo;    /* dummy info for ignored cells */
 static COLINFO    dummycolinfo;    /* dummy info for ignored cells */
 
@@ -54,22 +54,22 @@ static COLINFO    dummycolinfo;    /* dummy info for ignored cells */
 /*
  * Local procedures
  */
-static void linkcell(CELL *);
-static STATE choose(CELL *);
-static CELL * symcell(CELL *);
-static CELL * mapcell(CELL *);
-static CELL * allocatecell(void);
-static CELL * getnormalunknown(void);
-static CELL * getaverageunknown(void);
-static CELL * getsmartunknown(void); // KAS
-static BOOL consistify(CELL *);
-static BOOL consistify10(CELL *);
-static CELL * (*getunknown)(void);
+static void linkcell(Cell *);
+static State choose(Cell *);
+static Cell * symcell(Cell *);
+static Cell * mapcell(Cell *);
+static Cell * allocatecell(void);
+static Cell * getnormalunknown(void);
+static Cell * getaverageunknown(void);
+static Cell * getsmartunknown(void); // KAS
+static Bool consistify(Cell *);
+static Bool consistify10(Cell *);
+static Cell * (*getunknown)(void);
 
 
 void dumparray()
 {
-    CELL * cell;
+    Cell * cell;
     int nrofcells = (rowmax+2) * (colmax+2) * genmax;
 
     printf("r c g s f o a u\n");
@@ -83,7 +83,7 @@ void dumparray()
 }
 
 
-void setState(CELL * const cell, const STATE state)
+void setState(Cell * const cell, const State state)
 {
     /* backup previous state */
     int diffState = state - cell->state;
@@ -111,9 +111,9 @@ initcells()
 {
     int row, col, gen;
     int i;
-    BOOL edge;
-    CELL * cell;
-    CELL * cell2;
+    Bool edge;
+    Cell * cell;
+    Cell * cell2;
 
     inited = FALSE;
 
@@ -285,17 +285,17 @@ initcells()
 static int
 ordersortfunc(const void * xxx1, const void * xxx2)
 {
-    CELL ** arg1;
-    CELL ** arg2;
-    CELL * c1;
-    CELL * c2;
+    Cell ** arg1;
+    Cell ** arg2;
+    Cell * c1;
+    Cell * c2;
     int midcol;
     int midrow;
     int dif1;
     int dif2;
 
-    arg1 = (CELL**)xxx1;
-    arg2 = (CELL**)xxx2;
+    arg1 = (Cell**)xxx1;
+    arg2 = (Cell**)xxx2;
 
     c1 = *arg1;
     c2 = *arg2;
@@ -388,8 +388,8 @@ initsearchorder()
 {
     int row, col, gen;
     int count;
-    CELL * cell;
-    CELL * table[MAXCELLS];
+    Cell * cell;
+    Cell * table[MAXCELLS];
     /*
      * Make a table of cells that will be searched.
      * Ignore cells that are not relevant to the search due to symmetry.
@@ -415,7 +415,7 @@ initsearchorder()
     /*
      * Now sort the table based on our desired search order.
      */
-    qsort((char *) table, count, sizeof(CELL *), ordersortfunc);
+    qsort((char *) table, count, sizeof(Cell *), ordersortfunc);
 
     /*
      * If we've been here before, wipe the old searchlist
@@ -426,7 +426,7 @@ initsearchorder()
      * Finally build the search list from the table elements in the
      * final order.
      */
-    searchlist = (CELL **) malloc(sizeof(CELL *) * (count + 1));
+    searchlist = (Cell **) malloc(sizeof(Cell *) * (count + 1));
 
     for (int i = 0; i < count; i++)
     {
@@ -444,9 +444,9 @@ initsearchorder()
  */
 
 void
-rescell(CELL * cell)
+rescell(Cell * cell)
 {
-    CELL * c1;
+    Cell * c1;
 
     if (cell->state == UNK) return;
 
@@ -469,10 +469,10 @@ rescell(CELL * cell)
  * If the cell is newly set, then it is added to the set table.
  */
 
-BOOL
-setcell(CELL * cell, STATE state, BOOL free)
+Bool
+setcell(Cell * cell, State state, Bool free)
 {
-    CELL * c1, * c2;
+    Cell * c1, * c2;
     if (cell->state == state)
     {
         DPRINTF4("setcell %d %d %d to state %s already set\n",
@@ -523,9 +523,9 @@ setcell(CELL * cell, STATE state, BOOL free)
 }
 
 
-void shortsetcell (CELL * cell, const STATE state)
+void shortsetcell (Cell * cell, const State state)
 {
-    CELL * c1 = cell, * c2;
+    Cell * c1 = cell, * c2;
 
     do {
         setState(cell, state);
@@ -551,7 +551,7 @@ void shortsetcell (CELL * cell, const STATE state)
 }
 
 /*static __inline int
-sumtodesc(STATE futurestate, STATE currentstate, int neighborsum)
+sumtodesc(State futurestate, State currentstate, int neighborsum)
 {
     // UNK = 0
     // ON = 1
@@ -568,7 +568,7 @@ sumtodesc(STATE futurestate, STATE currentstate, int neighborsum)
  * Calculate the current descriptor for a cell.
  */
 static __inline short
-getdesc(CELL * cell)
+getdesc(Cell * cell)
 {
     return SUMTODESC(cell->future->state, cell->state, cell->sumnear);
 }
@@ -579,11 +579,11 @@ getdesc(CELL * cell)
  * make sure that the previous generation can validly produce the
  * current cell.  Returns FALSE if the cell is inconsistent.
  */
-static BOOL consistify(CELL * cell)
+static Bool consistify(Cell * cell)
 {
-    CELL * prevcell;
+    Cell * prevcell;
     int desc;
-    STATE state;
+    State state;
     FLAGS flags;
 
     /*
@@ -653,8 +653,8 @@ static BOOL consistify(CELL * cell)
  * See if a cell and its neighbors are consistent with the cell and its
  * neighbors in the next generation.
  */
-static BOOL
-consistify10(CELL * cell)
+static Bool
+consistify10(Cell * cell)
 {
     if (!consistify(cell))
         return FALSE;
@@ -676,10 +676,10 @@ consistify10(CELL * cell)
 /*
  * Examine the next choice of cell settings.
  */
-STATUS
+Status
 examinenext()
 {
-    CELL * cell;
+    Cell * cell;
 
     /*
      * If there are no more cells to examine, then what we have
@@ -706,11 +706,11 @@ examinenext()
  * Set a cell to the specified value and determine all consequences we
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
-BOOL
+Bool
 proceed(cell, state, free)
-    CELL * cell;
-    STATE state;
-    BOOL free;
+    Cell * cell;
+    State state;
+    Bool free;
 {
     int status;
 
@@ -730,10 +730,10 @@ proceed(cell, state, free)
  * Returns the cell which is to be tried for the other possibility.
  * Returns NULL on an "object cannot exist" error.
  */
-CELL *
+Cell *
 backup()
 {
-    CELL * cell;
+    Cell * cell;
 
     // first let's find how far to backup
 
@@ -780,10 +780,10 @@ backup()
  * Do checking based on setting the specified cell.
  * Returns ERROR if an inconsistency was found.
  */
-BOOL
-go(CELL * cell, STATE state, BOOL free)
+Bool
+go(Cell * cell, State state, Bool free)
 {
-    CELL ** setpos;
+    Cell ** setpos;
 
     for (;;)
     {
@@ -813,10 +813,10 @@ go(CELL * cell, STATE state, BOOL free)
  * Find another unknown cell in a normal search.
  * Returns NULL if there are no more unknown cells.
  */
-static CELL *
+static Cell *
 getnormalunknown()
 {
-    CELL * cell;
+    Cell * cell;
 
     for (int i = searchidx; (cell = searchlist[i]); i++)
     {
@@ -835,11 +835,11 @@ getnormalunknown()
  * Returns NULL if there are no more unknown cells.
  */
 
-static CELL *
+static Cell *
 getaverageunknown()
 {
-    CELL * cell;
-    CELL * bestcell;
+    Cell * cell;
+    Cell * bestcell;
     int bestdist;
     int curdist;
     int wantrow;
@@ -897,11 +897,11 @@ getaverageunknown()
 // if we change the current cell to ON or OFF
 // set smartlen1 and smartlen0 to appropriate numbers
 
-static BOOL getsmartnumbers(CELL * cell)
+static Bool getsmartnumbers(Cell * cell)
 {
     int cellno;
     int comb0, comb1;
-    CELL ** setpos;
+    Cell ** setpos;
 
     // known and inactive cells are unimportant
     if (cell->state != UNK) return 2;
@@ -984,18 +984,18 @@ static BOOL getsmartnumbers(CELL * cell)
 
 // Smart cell ordering
 
-static CELL *
+static Cell *
 getsmartunknown()
 {
-    CELL * cell;
-    CELL * best;
+    Cell * cell;
+    Cell * best;
 
     // The assignment in the following codeline is debatable,
     // but since the original code also did not initialise
     // this variable, chances are good that this defaulted to `0`
     // which in the original code was being interpreted as a 'UNK',
     // hence the initialisation as 'UNK'
-    STATE bestchoice = UNK;
+    State bestchoice = UNK;
 
     int idx;
     int max, window, threshold, bestlen1, bestlen0, bestcomb, wnd, n1, n2, a, b, c, d;
@@ -1159,9 +1159,9 @@ getsmartunknown()
  * as a nearby generation.
  */
 
-static STATE
+static State
 choose(cell)
-    CELL * cell;
+    Cell * cell;
 {
     /* 
      * if something pre-set by the select algorithm,
@@ -1193,19 +1193,19 @@ choose(cell)
     return chooseUnknown;
 }
 
-CELL * combinebackup(void);
+Cell * combinebackup(void);
 
 /*
  * The top level search routine.
  * Returns if an object is found, or is impossible.
  */
-STATUS
-search(const BOOL batch)
+Status
+search(const Bool batch)
 {
-    CELL * cell;
-    BOOL free;
-    BOOL needwrite;
-    STATE state;
+    Cell * cell;
+    Bool free;
+    Bool needwrite;
+    State state;
 
     cell = (*getunknown)();
 
@@ -1312,9 +1312,9 @@ search(const BOOL batch)
  */
 
 void
-adjustnear(CELL * cell, int inc)
+adjustnear(Cell * cell, int inc)
 {
-    CELL * curcell;
+    Cell * curcell;
     int count;
     int colcount;
 
@@ -1340,14 +1340,14 @@ adjustnear(CELL * cell, int inc)
  * (For example, stable objects or period 2 objects when using -g4.)
  * Returns TRUE if there is an identical generation.
  */
-BOOL
+Bool
 subperiods()
 {
     int row;
     int col;
     int gen;
-    CELL * cellg0;
-    CELL * cellgn;
+    Cell * cellg0;
+    Cell * cellgn;
 
     for (gen = 1; gen < genmax; gen++)
     {
@@ -1380,14 +1380,14 @@ nextgen:;
  * of cells between these two generations.  This routine should only be
  * called for cells belonging to those two generations.
  */
-static CELL *
+static Cell *
 mapcell(cell)
-    CELL * cell;
+    Cell * cell;
 {
     int row;
     int col;
     int tmp;
-    BOOL forward;
+    Bool forward;
 
     row = cell->row;
     col = cell->col;
@@ -1431,10 +1431,10 @@ mapcell(cell)
  * Symmetry uses this feature, and so does setting stable cells.
  * If any cells in the loop are frozen, then they all are.
  */
-void loopcells(CELL * cell1, CELL * cell2)
+void loopcells(Cell * cell1, Cell * cell2)
 {
-    CELL * cell;
-    BOOL frozen;
+    Cell * cell;
+    Bool frozen;
 
     if (cell2 == NULL) return;
 
@@ -1491,7 +1491,7 @@ void loopcells(CELL * cell1, CELL * cell2)
  */
 
 
-static CELL * symcell(CELL * cell)
+static Cell * symcell(Cell * cell)
 {
     int row;
     int col;
@@ -1587,12 +1587,12 @@ static CELL * symcell(CELL * cell)
  */
 static void
 linkcell(cell)
-    CELL * cell;
+    Cell * cell;
 {
     int row;
     int col;
     int gen;
-    CELL * paircell;
+    Cell * paircell;
 
     row = cell->row;
     col = cell->col;
@@ -1639,13 +1639,13 @@ linkcell(cell)
  * Cells outside of this range are handled by searching an auxillary table,
  * and are dynamically created as necessary.
  */
-CELL *
+Cell *
 findcell(row, col, gen)
     int row;
     int col;
     int gen;
 {
-    CELL * cell;
+    Cell * cell;
     int i;
 
     /*
@@ -1692,17 +1692,17 @@ findcell(row, col, gen)
  * Allocate a new cell.
  * The cell is initialized as if it was a boundary cell.
  */
-static CELL *
+static Cell *
 allocatecell()
 {
-    CELL * cell;
+    Cell * cell;
 
     /*
      * Allocate a new chunk of cells if there are none left.
      */
     if (newcellcount <= 0)
     {
-        newcells = (CELL *) malloc(sizeof(CELL) * ALLOCSIZE);
+        newcells = (Cell *) malloc(sizeof(Cell) * ALLOCSIZE);
 
         if (newcells == NULL)
         {

@@ -11,9 +11,9 @@
 /*
  * Local data.
  */
-static BOOL nowait;         /* don't wait for commands after loading */
-static BOOL setall;         /* set all cells from initial file */
-static BOOL islife;         /* whether the rules are for standard Life */
+static Bool nowait;         /* don't wait for commands after loading */
+static Bool setall;         /* set all cells from initial file */
+static Bool islife;         /* whether the rules are for standard Life */
 static char rulestring[20]; /* rule string for printouts */
 static int foundcount;      /* number of objects found */
 static char * initfile;     /* file containing initial cells */
@@ -31,10 +31,10 @@ static void getexclude(char *);
 static void getfreeze(char *);
 static void excludecone(int, int, int);
 static void freezecell(int, int);
-static BOOL loadstate(const char *);
-static STATUS readfile(char *);
-static BOOL confirm(char *);
-static BOOL setrules(char *);
+static Bool loadstate(const char *);
+static Status readfile(char *);
+static Bool confirm(char *);
+static Bool setrules(char *);
 static long getnum(char **, int);
 static char * getstr(const char *, const char *);
 
@@ -94,11 +94,11 @@ long showcount()
 
 // copy my format to dbells format...
 // ... and make a backup of the current state (KAS)
-BOOL set_initial_cells(void)
+Bool set_initial_cells(void)
 {
-    CELL * cell;
-    CELL ** setpos;
-    BOOL change;
+    Cell * cell;
+    Cell ** setpos;
+    Bool change;
     int i,j,g;
 
     newset = settable;
@@ -882,8 +882,8 @@ getsetting(cp)
 {
     int row;
     int col;
-    STATE state;
-    CELL * cell;
+    State state;
+    Cell * cell;
 
     cp = getstr(cp, "Cell to set (row col [state]): ");
 
@@ -943,8 +943,8 @@ static void
 getbackup(cp)
     char * cp;
 {
-    CELL * cell;
-    STATE state;
+    Cell * cell;
+    State state;
     int count;
     int blankstoo;
 
@@ -1017,7 +1017,7 @@ getclear(cp)
     int gen;
     int row;
     int col;
-    CELL * cell;
+    Cell * cell;
 
     /*
      * Assume we are doing just this generation, but if the 'cg'
@@ -1245,8 +1245,8 @@ freezecell(row, col)
     int col;
 {
     int gen;
-    CELL * cell0;
-    CELL * cell;
+    Cell * cell0;
+    Cell * cell;
 
     cell0 = findcell(row, col, 0);
 
@@ -1272,7 +1272,7 @@ printgen(gen)
     int row;
     int col;
     int count;
-    CELL * cell;
+    Cell * cell;
     char * msg;
 
     curgen = gen;
@@ -1466,10 +1466,10 @@ printgen(gen)
 void
 writegen(file, append)
     char * file;        /* file name (or NULL) */
-    BOOL append;        /* TRUE to append instead of create */
+    Bool append;        /* TRUE to append instead of create */
 {
     FILE * fp;
-    CELL * cell;
+    Cell * cell;
     int row;
     int col;
     int ch;
@@ -1594,8 +1594,8 @@ writegen(file, append)
 void dumpstate(const char * file)
 {
     FILE * fp;
-    CELL ** set;
-    CELL * cell;
+    Cell ** set;
+    Cell * cell;
     int ** param;
 
     file = getstr(file, "Dump state to file: ");
@@ -1664,21 +1664,21 @@ void dumpstate(const char * file)
  * Warning: Almost no checks are made for validity of the state.
  * Returns OK on success, ERROR1 on failure.
  */
-BOOL loadstate(const char * file)
+Bool loadstate(const char * file)
 {
     FILE * fp;
     char * cp;
     int row;
     int col;
     int gen;
-    STATE state;
-    BOOL free;
-    CELL * cell;
+    State state;
+    Bool free;
+    Cell * cell;
     int ** param;
     char buf[LINESIZE];
     int ver;
 
-    STATUS status;
+    Status status;
 
     file = getstr(file, "Load state from file: ");
 
@@ -1864,7 +1864,7 @@ BOOL loadstate(const char * file)
  * If setall is TRUE, both the ON and the OFF cells will be set.
  * Returns OK on success, ERROR on error.
  */
-static STATUS
+static Status
 readfile(file)
     char * file;
 {
@@ -1874,9 +1874,9 @@ readfile(file)
     int row;
     int col;
     int gen;
-    STATE state;
+    State state;
     char buf[LINESIZE];
-    CELL * cell;
+    Cell * cell;
 
     file = getstr(file, "Read initial object from file: ");
 
@@ -2000,7 +2000,7 @@ getstr(str, prompt)
  * Confirm an action by prompting with the specified string and reading
  * an answer.  Entering 'y' or 'Y' indicates TRUE, everything else FALSE.
  */
-static BOOL
+static Bool
 confirm(prompt)
     char * prompt;
 {
@@ -2027,7 +2027,7 @@ getnum(cpp, defnum)
 {
     char * cp;
     long num;
-    BOOL isneg;
+    Bool isneg;
 
     isneg = FALSE;
     cp = *cpp;
@@ -2071,7 +2071,7 @@ getnum(cpp, defnum)
  * The rules can be "mmm,nnn",  "mmm/nnn", "Bmmm,Snnn", "Bmmm/Snnn",
  * or a hex number in the Wolfram encoding.
  */
-static BOOL
+static Bool
 setrules(cp)
     char * cp;
 {
