@@ -604,16 +604,6 @@ main(argc, argv)
         symmetry = 9;
     }
 
-    // init some things that the orig code doesn't bother to init
-    for (int i = 0; i < COLMAX; i++)
-    {
-        colinfo[i].oncount = 0;
-        colinfo[i].setcount = 0;
-        colinfo[i].sumpos = 0;
-    }
-
-    for (int i = 0; i < ROWMAX; i++) rowinfo[i].oncount = 0;
-
     newset = NULL;
     nextset = NULL;
     outputlastcols = 0;
@@ -684,13 +674,6 @@ main(argc, argv)
     {
         if (curstatus == OK)
             curstatus = search(nowait);
-
-        if ((curstatus == FOUND) && userow &&
-            (rowinfo[userow].oncount == 0))
-        {
-            curstatus = OK;
-            continue;
-        }
 
         if ((curstatus == FOUND) && !allobjects && subperiods())
         {

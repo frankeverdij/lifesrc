@@ -47,8 +47,6 @@ static    Cell **    searchlist;    /* current list of cells to search */
 static    int    searchidx;      /* index of first unknown cell in searchlist[] */
 static Cell *    celltable[MAXCELLS];    /* table of usual cells */
 static Cell *    auxtable[AUXCELLS];    /* table of auxillary cells */
-static ROWINFO    dummyrowinfo;    /* dummy info for ignored cells */
-static COLINFO    dummycolinfo;    /* dummy info for ignored cells */
 
 
 /*
@@ -60,7 +58,6 @@ static Cell * symcell(Cell *);
 static Cell * mapcell(Cell *);
 static Cell * allocatecell(void);
 static Cell * getnormalunknown(void);
-static Cell * getaverageunknown(void);
 static Cell * getsmartunknown(void); // KAS
 static Bool consistify(Cell *);
 static Bool consistify10(Cell *);
@@ -121,8 +118,6 @@ initcells()
     auxcellcount = 0;
     newcells = NULL;
     searchlist = NULL;
-    dummyrowinfo.oncount = 0;
-    dummycolinfo.oncount = 0;
 
 
     if ((rowmax <= 0) || (rowmax > ROWMAX) ||
@@ -154,8 +149,6 @@ initcells()
                 cell->gen = gen;
                 cell->row = row;
                 cell->col = col;
-                cell->rowinfo = &dummyrowinfo;
-                cell->colinfo = &dummycolinfo;
 
                 cell->active = TRUE;
                 cell->unchecked = FALSE;
@@ -169,7 +162,6 @@ initcells()
                 {
                     linkcell(cell);
                     setState(cell, UNK);
-                    cell->combined = UNK;
                     cell->free = TRUE;
                 }
 
@@ -244,23 +236,8 @@ initcells()
         }
     }
 
-    /*
-     * Initialize the row and column info addresses for generation 0.
-     */
-    for (row = 1; row <= rowmax; row++)
-    {
-        for (col = 1; col <= colmax; col++)
-        {
-            cell = findcell(row, col, 0);
-            cell->rowinfo = &rowinfo[row];
-            cell->colinfo = &colinfo[col];
-        }
-    }
-
     if (smart) {
         getunknown = getsmartunknown; // KAS
-    } else if (follow) {
-        getunknown = getaverageunknown;
     } else {
         getunknown = getnormalunknown;
     }
@@ -830,68 +807,6 @@ getnormalunknown()
     return NULL;
 }
 
-/*
- * Find another unknown cell when averaging is done.
- * Returns NULL if there are no more unknown cells.
- */
-
-static Cell *
-getaverageunknown()
-{
-    Cell * cell;
-    Cell * bestcell;
-    int bestdist;
-    int curdist;
-    int wantrow;
-    int curcol;
-    int testcol;
-
-    bestcell = NULL;
-    bestdist = -1;
-
-    cell = searchlist[searchidx];
-
-    while (cell)
-    {
-        searchidx = cell->index;
-        curcol = cell->col;
-
-        testcol = curcol - 1;
-
-        while ((testcol > 0) && (colinfo[testcol].oncount <= 0))
-            testcol--;
-
-        if (testcol > 0)
-        {
-            wantrow = colinfo[testcol].sumpos /
-                colinfo[testcol].oncount;
-        }
-        else
-            wantrow = (rowmax + 1) / 2;
-
-        for (; (cell != NULL) && (cell->col == curcol); cell = searchlist[cell->index])
-        {
-            if (cell->state == UNK)
-            {
-                curdist = cell->row - wantrow;
-
-                if (curdist < 0)
-                    curdist = -curdist;
-
-                if (curdist > bestdist)
-                {
-                    bestcell = cell;
-                    bestdist = curdist;
-                }
-            }
-        }
-
-        if (bestcell)
-            return bestcell;
-    }
-
-    return NULL;
-}
 
 // calculate how many cells will change
 // if we change the current cell to ON or OFF
@@ -1305,36 +1220,6 @@ search(const Bool batch)
 
 
 /*
- * Increment or decrement the near count in all the cells affected by
- * this cell.  This is done for all cells in the next columns which are
- * within the distance specified the nearcols value.  In this way, a
- * quick test can be made to see if a cell is within range of another one.
- */
-
-void
-adjustnear(Cell * cell, int inc)
-{
-    Cell * curcell;
-    int count;
-    int colcount;
-
-    for (colcount = nearcols; colcount > 0; colcount--)
-    {
-        cell = cell->cr;
-        curcell = cell;
-
-        for (count = nearcols; count-- >= 0; curcell = curcell->cu)
-            curcell->near1 += inc;
-
-        curcell = cell->cd;
-
-        for (count = nearcols; count-- > 0; curcell = curcell->cd)
-            curcell->near1 += inc;
-    }
-}
-
-
-/*
  * Check to see if any other generation is identical to generation 0.
  * This is used to detect and weed out all objects with subperiods.
  * (For example, stable objects or period 2 objects when using -g4.)
@@ -1679,8 +1564,6 @@ findcell(row, col, gen)
     cell->row = row;
     cell->col = col;
     cell->gen = gen;
-    cell->rowinfo = &dummyrowinfo;
-    cell->colinfo = &dummycolinfo;
 
     auxtable[auxcellcount++] = cell;
 

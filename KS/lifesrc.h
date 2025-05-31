@@ -190,8 +190,6 @@ EXTERN    Cell **    newset;        /* where to add new cells into setting table
 EXTERN    Cell **    nextset;    /* next cell in setting table to examine */
 EXTERN  Cell *  searchtable[MAXCELLS]; /* a stack of searchlist positions */
 EXTERN  Cell ** searchset;
-EXTERN    ROWINFO    rowinfo[ROWMAX];    /* information about rows of gen 0 */
-EXTERN    COLINFO    colinfo[COLMAX];    /* information about columns of gen 0 */
 EXTERN    int    fullcolumns;    /* columns in gen 0 which are fully set */
 EXTERN  int combinedcells;
 EXTERN  int setcombinedcells;

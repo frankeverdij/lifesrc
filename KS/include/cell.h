@@ -5,26 +5,6 @@
 #include "bool.h"
 
 /*
- * Information about a row.
- */
-typedef    struct
-{
-    int    oncount;    /* number of cells which are set on */
-} ROWINFO;
-
-
-/*
- * Information about a column.
- */
-typedef struct
-{
-    int    setcount;    /* number of cells which are set */
-    int    oncount;    /* number of cells which are set on */
-    int    sumpos;        /* sum of row positions for on cells */
-} COLINFO;
-
-
-/*
  * Information about one cell of the search.
  */
 typedef    char        PACKED_BOOL;
@@ -66,16 +46,6 @@ struct Cell
     Cell *    cdr;        /* cell to down and right */
     Cell *    loop;        /* next cell in same loop as this one */
     Cell *    search;        /* cell next to be searched for setting */
-
-    ROWINFO * rowinfo;    /* information about this cell's row */
-    COLINFO * colinfo;    /* information about this cell's column */
-
-    short    near1;        /* count of cells this cell is near */
-
-
-    State combined;
-
-    long potential;
 };
 
 #endif /* CELL_H */
