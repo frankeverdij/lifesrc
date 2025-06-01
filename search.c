@@ -85,6 +85,26 @@ void dumparray()
 }
 
 
+void setState(Cell * const cell, const State state)
+{
+    /* backup previous state */
+    int diffState = state - cell->state;
+    /* set cell state */
+    cell->state = state;
+    /* correct the neighbor sum for cells touching this cell */
+    cell->cul->sumNear += diffState;
+    cell->cu->sumNear += diffState;
+    cell->cur->sumNear += diffState;
+    cell->cl->sumNear += diffState;
+    cell->cr->sumNear += diffState;
+    cell->cdl->sumNear += diffState;
+    cell->cd->sumNear += diffState;
+    cell->cdr->sumNear += diffState;
+
+    return;
+}
+
+
 /*
  * Initialize the table of cells.
  * Each cell in the active area is set to unknown state.
