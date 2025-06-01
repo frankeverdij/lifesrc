@@ -20,6 +20,10 @@
 #include "lifesrc.h"
 //#include <search.h>
 #include "implication.h"
+#include "allocatecell.h"
+#include "linkcell.h"
+#include "setstate.h"
+#include "mapcell.h"
 
 
 #define SUMCOUNT 8
@@ -40,9 +44,7 @@ static FLAGS implic[2304];
 /*
  * Other local data.
  */
-static int    newcellcount;    /* number of cells ready for allocation */
 static int    auxcellcount;    /* number of cells in auxillary table */
-static Cell *    newcells;    /* cells ready for allocation */
 static    Cell **    searchlist;    /* current list of cells to search */
 static    int    searchidx;      /* index of first unknown cell in searchlist[] */
 static Cell *    celltable[MAXCELLS];    /* table of usual cells */
@@ -52,11 +54,8 @@ static Cell *    auxtable[AUXCELLS];    /* table of auxillary cells */
 /*
  * Local procedures
  */
-static void linkcell(Cell *);
 static State choose(Cell *);
 static Cell * symcell(Cell *);
-static Cell * mapcell(Cell *);
-static Cell * allocatecell(void);
 static Cell * getnormalunknown(void);
 static Cell * getsmartunknown(void); // KAS
 static Bool consistify(Cell *);
@@ -115,9 +114,7 @@ initcells()
 
     inited = FALSE;
 
-    newcellcount = 0;
     auxcellcount = 0;
-    newcells = NULL;
     searchlist = NULL;
 
 
@@ -132,7 +129,7 @@ initcells()
     }
 
     for (i = 0; i < MAXCELLS; i++)
-        celltable[i] = allocatecell();
+        celltable[i] = allocateCell();
 
     /*
      * Link the cells together.
@@ -161,7 +158,7 @@ initcells()
                  */
                 if (!edge)
                 {
-                    linkcell(cell);
+                    linkCell(cell);
                     setState(cell, UNK);
                     cell->free = TRUE;
                 }
@@ -230,7 +227,7 @@ initcells()
             for (col = 0; col <= colmax+1; col++)
             {
                 cell = findcell(row, col, 0);
-                cell2 = mapcell(cell);
+                cell2 = mapCell(cell);
                 cell->past = cell2;
                 cell2->future = cell;
             }
@@ -1221,154 +1218,6 @@ search(const Bool batch)
 
 
 /*
- * Check to see if any other generation is identical to generation 0.
- * This is used to detect and weed out all objects with subperiods.
- * (For example, stable objects or period 2 objects when using -g4.)
- * Returns TRUE if there is an identical generation.
- */
-Bool
-subperiods()
-{
-    int row;
-    int col;
-    int gen;
-    Cell * cellg0;
-    Cell * cellgn;
-
-    for (gen = 1; gen < genmax; gen++)
-    {
-        if (genmax % gen)
-            continue;
-
-        for (row = 1; row <= rowmax; row++)
-        {
-            for (col = 1; col <= colmax; col++)
-            {
-                cellg0 = findcell(row, col, 0);
-                cellgn = findcell(row, col, gen);
-
-                if (cellg0->state != cellgn->state)
-                    goto nextgen;
-            }
-        }
-
-        return TRUE;
-nextgen:;
-    }
-
-    return FALSE;
-}
-
-
-/*
- * Return the mapping of a cell from the last generation back to the first
- * generation, or vice versa.  This implements all flipping and translating
- * of cells between these two generations.  This routine should only be
- * called for cells belonging to those two generations.
- */
-static Cell *
-mapcell(cell)
-    Cell * cell;
-{
-    int row;
-    int col;
-    int tmp;
-    Bool forward;
-
-    row = cell->row;
-    col = cell->col;
-    forward = (cell->gen != 0);
-
-    if (fliprows && (col >= fliprows))
-        row = rowmax + 1 - row;
-
-    if (flipcols && (row >= flipcols))
-        col = colmax + 1 - col;
-
-    if (flipquads)
-    {                /* NEED TO GO BACKWARDS */
-        tmp = col;
-        col = row;
-        row = colmax + 1 - tmp;
-    }
-
-    if (forward)
-    {
-        row += rowtrans;
-        col += coltrans;
-    }
-    else
-    {
-        row -= rowtrans;
-        col -= coltrans;
-    }
-
-    if (forward)
-        return findcell(row, col, 0);
-    else
-        return findcell(row, col, genmax - 1);
-}
-
-
-/*
- * Make the two specified cells belong to the same loop.
- * If the two cells already belong to loops, the loops are joined.
- * This will force the state of these two cells to follow each other.
- * Symmetry uses this feature, and so does setting stable cells.
- * If any cells in the loop are frozen, then they all are.
- */
-void loopcells(Cell * cell1, Cell * cell2)
-{
-    Cell * cell;
-    Bool frozen;
-
-    if (cell2 == NULL) return;
-
-    if (cell1 == cell2) return;
-
-    /*
-     * See if the second cell is already part of the first cell's loop.
-     * If so, they they are already joined.  We don't need to
-     * check the other direction.
-     */
-    for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-    {
-        if (cell == cell2) return;
-    }
-
-    /*
-     * The two cells belong to separate loops.
-     * Break each of those loops and make one big loop from them.
-     */
-    cell = cell1->loop;
-    cell1->loop = cell2->loop;
-    cell2->loop = cell;
-
-    /*
-     * See if any of the cells in the loop are frozen.
-     * If so, then mark all of the cells in the loop frozen
-     * since they effectively are anyway.  This lets the
-     * user see that fact.
-     */
-    frozen = cell1->frozen;
-
-    for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-    {
-        if (cell->frozen)
-            frozen = TRUE;
-    }
-
-    if (frozen)
-    {
-        cell1->frozen = TRUE;
-
-        for (cell = cell1->loop; cell != cell1; cell = cell->loop)
-            cell->frozen = TRUE;
-    }
-}
-
-
-/*
  * Return a cell which is symmetric to the given cell.
  * It is not necessary to know all symmetric cells to a single cell,
  * as long as all symmetric cells are chained in a loop.  Thus a single
@@ -1468,57 +1317,6 @@ static Cell * symcell(Cell * cell)
 }
 
 /*
- * Link a cell to its eight neighbors in the same generation, and also
- * link those neighbors back to this cell.
- */
-static void
-linkcell(cell)
-    Cell * cell;
-{
-    int row;
-    int col;
-    int gen;
-    Cell * paircell;
-
-    row = cell->row;
-    col = cell->col;
-    gen = cell->gen;
-
-    paircell = findcell(row - 1, col - 1, gen);
-    cell->cul = paircell;
-    paircell->cdr = cell;
-
-    paircell = findcell(row - 1, col, gen);
-    cell->cu = paircell;
-    paircell->cd = cell;
-
-    paircell = findcell(row - 1, col + 1, gen);
-    cell->cur = paircell;
-    paircell->cdl = cell;
-
-    paircell = findcell(row, col - 1, gen);
-    cell->cl = paircell;
-    paircell->cr = cell;
-
-    paircell = findcell(row, col + 1, gen);
-    cell->cr = paircell;
-    paircell->cl = cell;
-
-    paircell = findcell(row + 1, col - 1, gen);
-    cell->cdl = paircell;
-    paircell->cur = cell;
-
-    paircell = findcell(row + 1, col, gen);
-    cell->cd = paircell;
-    paircell->cu = cell;
-
-    paircell = findcell(row + 1, col + 1, gen);
-    cell->cdr = paircell;
-    paircell->cul = cell;
-}
-
-
-/*
  * Find a cell given its coordinates.
  * Most coordinates range from 0 to colmax+1, 0 to rowmax+1, and 0 to genmax-1.
  * Cells within this range are quickly found by indexing into celltable.
@@ -1561,71 +1359,12 @@ findcell(row, col, gen)
     /*
      * Need to allocate the cell and add it to the auxillary table.
      */
-    cell = allocatecell();
+    cell = allocateCell();
     cell->row = row;
     cell->col = col;
     cell->gen = gen;
 
     auxtable[auxcellcount++] = cell;
-
-    return cell;
-}
-
-
-/*
- * Allocate a new cell.
- * The cell is initialized as if it was a boundary cell.
- */
-static Cell *
-allocatecell()
-{
-    Cell * cell;
-
-    /*
-     * Allocate a new chunk of cells if there are none left.
-     */
-    if (newcellcount <= 0)
-    {
-        newcells = (Cell *) malloc(sizeof(Cell) * ALLOCSIZE);
-
-        if (newcells == NULL)
-        {
-            ttystatus("Cannot allocate cell structure\n");
-            exit(1);
-        }
-
-        //record_malloc(1,(void*)newcells);
-
-        newcellcount = ALLOCSIZE;
-    }
-
-    newcellcount--;
-    cell = newcells++;
-
-    /*
-     * Fill in the cell as if it was a boundary cell.
-     */
-    cell->state = OFF;
-    cell->free = FALSE;
-    cell->frozen = FALSE;
-    cell->active = TRUE;
-    cell->unchecked = FALSE;
-    cell->gen = -1;
-    cell->row = -1;
-    cell->col = -1;
-    cell->sumNear = 0;
-    cell->index = -1;
-    cell->past = cell;
-    cell->future = cell;
-    cell->cul = cell;
-    cell->cu = cell;
-    cell->cur = cell;
-    cell->cl = cell;
-    cell->cr = cell;
-    cell->cdl = cell;
-    cell->cd = cell;
-    cell->cdr = cell;
-    cell->loop = cell;
 
     return cell;
 }

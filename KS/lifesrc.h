@@ -38,7 +38,6 @@
  */
 #define    DUMPVERSION    100        /* version of dump file   JES-was 6 */
 
-#define    ALLOCSIZE    100        /* chunk size for cell allocation */
 #define    LINESIZE    132        /* size of input lines */
 #define    VIEWMULT    1000        /* viewing frequency multiplier */
 #define    DUMPMULT    1000        /* dumping frequency multiplier */

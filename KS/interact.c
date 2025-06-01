@@ -4,6 +4,7 @@
  */
 
 #include "lifesrc.h"
+#include "subperiods.h"
 
 #define VERSION "3.5"
 
@@ -675,7 +676,7 @@ main(argc, argv)
         if (curstatus == OK)
             curstatus = search(nowait);
 
-        if ((curstatus == FOUND) && !allobjects && subperiods())
+        if ((curstatus == FOUND) && !allobjects && subPeriods())
         {
             curstatus = OK;
             continue;
