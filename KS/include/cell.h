@@ -30,7 +30,7 @@ struct Cell
     short    row;        /* row of this cell */
     short    col;        /* column of this cell */
 
-    int     sumnear;    /* sum of states of adjacent cells */
+    int     sumNear;    /* sum of states of adjacent cells */
     int     index;      /* cell index in searchlist[] */
     // and now for the pointers
 

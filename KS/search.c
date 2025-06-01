@@ -87,17 +87,18 @@ void setState(Cell * const cell, const State state)
     /* set cell state */
     cell->state = state;
     /* correct the neighbor sum for cells touching this cell */
-    cell->cul->sumnear += diffState;
-    cell->cu->sumnear += diffState;
-    cell->cur->sumnear += diffState;
-    cell->cl->sumnear += diffState;
-    cell->cr->sumnear += diffState;
-    cell->cdl->sumnear += diffState;
-    cell->cd->sumnear += diffState;
-    cell->cdr->sumnear += diffState;
+    cell->cul->sumNear += diffState;
+    cell->cu->sumNear += diffState;
+    cell->cur->sumNear += diffState;
+    cell->cl->sumNear += diffState;
+    cell->cr->sumNear += diffState;
+    cell->cdl->sumNear += diffState;
+    cell->cd->sumNear += diffState;
+    cell->cdr->sumNear += diffState;
 
     return;
 }
+
 /*
  * Initialize the table of cells.
  * Each cell in the active area is set to unknown state.
@@ -547,7 +548,7 @@ sumtodesc(State futurestate, State currentstate, int neighborsum)
 static __inline short
 getdesc(Cell * cell)
 {
-    return SUMTODESC(cell->future->state, cell->state, cell->sumnear);
+    return SUMTODESC(cell->future->state, cell->state, cell->sumNear);
 }
 
 /*
@@ -573,7 +574,7 @@ static Bool consistify(Cell * cell)
     // Now get the descriptor for the cell, its parent and its parent neighborhood
 
     prevcell = cell->past;
-    desc = SUMTODESC(cell->state, prevcell->state, prevcell->sumnear);
+    desc = SUMTODESC(cell->state, prevcell->state, prevcell->sumNear);
 
     // the implic table will tell us everything we need to know
 
@@ -1612,7 +1613,7 @@ allocatecell()
     cell->gen = -1;
     cell->row = -1;
     cell->col = -1;
-    cell->sumnear = 0;
+    cell->sumNear = 0;
     cell->index = -1;
     cell->past = cell;
     cell->future = cell;
