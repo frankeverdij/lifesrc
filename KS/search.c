@@ -25,6 +25,8 @@
 #include "setstate.h"
 #include "mapcell.h"
 #include "symcell.h"
+#include "sortorder.h"
+#include "enums.h"
 
 
 #define SUMCOUNT 8
@@ -249,7 +251,7 @@ initcells()
     inited = TRUE;
 }
 
-
+#if 0
 /*
  * The sort routine for searching.
  */
@@ -346,7 +348,7 @@ ordersortfunc(const void * xxx1, const void * xxx2)
 
     return 0;
 }
-
+#endif
 
 /*
  * Order the cells to be searched by building the search table list.
@@ -361,6 +363,20 @@ initsearchorder()
     int count;
     Cell * cell;
     Cell * table[MAXCELLS];
+    globals_struct g;
+    g.colMax = colmax;
+    g.rowMax = rowmax;
+    g.parent = parent;
+    g.orderGens = ordergens;
+    g.orderMiddle = ordermiddle;
+    g.orderWide = orderwide;
+    g.orderInvert = 0;
+    if (diagsort)
+        g.sortOrder = DIAG;
+    else if (knightsort)
+        g.sortOrder = KNIGHT;
+    else
+        g.sortOrder = DEFAULT;
     /*
      * Make a table of cells that will be searched.
      * Ignore cells that are not relevant to the search due to symmetry.
@@ -386,7 +402,7 @@ initsearchorder()
     /*
      * Now sort the table based on our desired search order.
      */
-    qsort((char *) table, count, sizeof(Cell *), ordersortfunc);
+    qsort_r((char *) table, count, sizeof(Cell *), orderSortFunc, &g);
 
     /*
      * If we've been here before, wipe the old searchlist
