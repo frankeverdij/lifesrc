@@ -685,7 +685,7 @@ examinenext()
         cell->row, cell->col, cell->gen,
         (cell->free ? "free" : "forced"));
 
-    return consistify10(cell) ? OK : ERROR1;
+    return consistify10(cell) ? OK : ERROR;
 }
 
 
@@ -1143,7 +1143,7 @@ search(const Bool batch)
         cell = backup();
 
         if (cell == NULL)
-            return ERROR1;
+            return ERROR;
 
         free = FALSE;
         state = (ON + OFF) - prevstate;

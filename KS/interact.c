@@ -1646,7 +1646,7 @@ void dumpstate(const char * file)
 /*
  * Load a previously dumped state from a file.
  * Warning: Almost no checks are made for validity of the state.
- * Returns OK on success, ERROR1 on failure.
+ * Returns OK on success, ERROR on failure.
  */
 Bool loadstate(const char * file)
 {
@@ -1873,7 +1873,7 @@ readfile(file)
     {
         ttystatus("Cannot open \"%s\"\n", file);
 
-        return ERROR1;
+        return ERROR;
     }
 
     gen = (parent ? (genmax - 1) : 0);
@@ -1923,7 +1923,7 @@ readfile(file)
                         row);
                     fclose(fp);
 
-                    return ERROR1;
+                    return ERROR;
             }
 
             cell = findcell(row, col, gen);
@@ -1933,7 +1933,7 @@ readfile(file)
                     row, col);
                 fclose(fp);
 
-                return ERROR1;
+                return ERROR;
             }
         }
     }
@@ -1942,7 +1942,7 @@ readfile(file)
     {
         ttystatus("Error reading \"%s\"\n", file);
 
-        return ERROR1;
+        return ERROR;
     }
 
     return OK;
