@@ -22,7 +22,7 @@ struct Cell
     PACKED_BOOL free;    /* TRUE if this cell still has free choice */
     PACKED_BOOL frozen;    /* TRUE if this cell is frozen in all gens */
     PACKED_BOOL active; /* FALSE if mirror by a symmetry */
-    PACKED_BOOL unchecked; /* TRUE for unchecked cells */
+    PACKED_BOOL choose; /* TRUE for unchecked cells */
 
     // aligned to two bytes - let's round it up to four
 

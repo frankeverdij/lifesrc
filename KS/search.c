@@ -131,7 +131,7 @@ initcells()
                 cell->col = col;
 
                 cell->active = TRUE;
-                cell->unchecked = FALSE;
+                cell->choose = TRUE;
 
                 /*
                  * If this is not an edge cell, then its state
@@ -375,7 +375,7 @@ initsearchorder()
             {
                 cell = findcell(row, col, gen);
                 // cells must be already loaded!!!
-                if ((cell->active) && (cell->state == UNK) && (!cell->unchecked))
+                if ((cell->active) && (cell->state == UNK) && (cell->choose))
                 {
                     table[count++] = findcell(row, col, gen);
                 }
@@ -791,7 +791,7 @@ getnormalunknown()
 
     for (int i = searchidx; (cell = searchlist[i]); i++)
     {
-        if ((cell->state == UNK) && (!cell->unchecked))
+        if ((cell->state == UNK) && (cell->choose))
         {
                 searchidx = i;
                 return cell;
@@ -912,7 +912,7 @@ getsmartunknown()
     // Move the searchlist over all known cells
     for (; (cell = searchlist[searchidx]); searchidx++)
     {
-        if ((cell->state == UNK) && (!cell->unchecked))
+        if ((cell->state == UNK) && (cell->choose))
         {
             break;
         }
@@ -941,7 +941,7 @@ getsmartunknown()
     while ((cell = searchlist[idx]) && (window > 0) && (max < threshold)) {
         ++wnd;
         --window; // count known cells too
-        if ((cell->state == UNK) && (!cell->unchecked))
+        if ((cell->state == UNK) && (cell->choose))
         {
             if (getsmartnumbers(cell))
             {

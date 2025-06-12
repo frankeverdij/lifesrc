@@ -44,7 +44,7 @@ Cell * allocateCell()
     cell->free = FALSE;
     cell->frozen = FALSE;
     cell->active = TRUE;
-    cell->unchecked = FALSE;
+    cell->choose = TRUE;
     cell->gen = -1;
     cell->row = -1;
     cell->col = -1;
