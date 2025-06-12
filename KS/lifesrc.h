@@ -219,7 +219,6 @@ extern    Cell *    backup(void);
 extern    Bool    subperiods(void);
 extern    void    loopcells(Cell *, Cell *);
 extern void setState(Cell * const cell, const State state);
-extern void dumparray(void);
 
 //JES
 //void    freezecell(int, int);

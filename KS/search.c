@@ -63,22 +63,6 @@ static Bool consistify10(Cell *);
 static Cell * (*getunknown)(void);
 
 
-void dumparray()
-{
-    Cell * cell;
-    int nrofcells = (rowmax+2) * (colmax+2) * genmax;
-
-    printf("r c g s f o a u\n");
-    for (int i=0; i<nrofcells;i++)
-    {
-        cell = cellTable[i];
-        if (cell)
-            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->free, cell->frozen, cell->active, cell->unchecked);
-    }
-    return;
-}
-
-
 void setState(Cell * const cell, const State state)
 {
     /* backup previous state */
