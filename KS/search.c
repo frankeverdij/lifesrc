@@ -55,7 +55,7 @@ static Cell *    cellTable[MAXCELLS];    /* table of usual cells */
 /*
  * Local procedures
  */
-static State choose(Cell *);
+static State choose(const Cell *);
 static Cell * getnormalunknown(void);
 static Cell * getsmartunknown(void); // KAS
 static Bool consistify(Cell *);
@@ -217,9 +217,9 @@ initcells()
     }
 
     if (smart) {
-        getunknown = getsmartunknown; // KAS
+        getunknown = &getsmartunknown; // KAS
     } else {
-        getunknown = getnormalunknown;
+        getunknown = &getnormalunknown;
     }
 
     newset = settable;
@@ -235,104 +235,6 @@ initcells()
     inited = TRUE;
 }
 
-#if 0
-/*
- * The sort routine for searching.
- */
-static int
-ordersortfunc(const void * xxx1, const void * xxx2)
-{
-    Cell ** arg1;
-    Cell ** arg2;
-    Cell * c1;
-    Cell * c2;
-    int midcol;
-    int midrow;
-    int dif1;
-    int dif2;
-
-    arg1 = (Cell**)xxx1;
-    arg2 = (Cell**)xxx2;
-
-    c1 = *arg1;
-    c2 = *arg2;
-
-    /*
-     * If on equal position or not ordering by all generations
-     * then sort primarily by generations
-     */
-    if (((c1->row == c2->row) && (c1->col == c2->col)) || !ordergens)
-    {
-        // Put generation 0 first
-        // or if calculating parents, put generation 0 last
-        if (parent)
-        {
-            if (c1->gen < c2->gen) return 1;
-            if (c1->gen > c2->gen) return -1;
-        } else {
-            if (c1->gen < c2->gen) return -1;
-            if (c1->gen > c2->gen) return 1;
-        }
-        // if we are here, it is the same cell
-    }
-
-    if(diagsort) {
-        if(c1->col+c1->row > c2->col+c2->row) return 1;
-        if(c1->col+c1->row < c2->col+c2->row) return -1;
-        if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (orderwide)?1:(-1);
-        if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (orderwide)?(-1):1;
-    }
-    if(knightsort) {
-        if(c1->col*2+c1->row > c2->col*2+c2->row) return 1;
-        if(c1->col*2+c1->row < c2->col*2+c2->row) return -1;
-        if(abs(c1->col-c1->row) > abs(c2->col-c2->row)) return (orderwide)?1:(-1);
-        if(abs(c1->col-c1->row) < abs(c2->col-c2->row)) return (orderwide)?(-1):1;
-    }
-    
-    /*
-     * Sort on the column number.
-     * By default this is from left to right.
-     * But if middle ordering is set, the ordering is from the center
-     * column outwards.
-     */
-    if (ordermiddle)
-    {
-        midcol = (colmax + 1) / 2;
-
-        dif1 = abs(c1->col - midcol);
-
-        dif2 = abs(c2->col - midcol);
-
-        if (dif1 < dif2) return -1;
-
-        if (dif1 > dif2) return 1;
-    } else {
-        if (c1->col < c2->col) return -1;
-
-        if (c1->col > c2->col) return 1;
-    }
-
-    /*
-     * Sort on the row number.
-     * By default, this is from the middle row outwards.
-     * But if wide ordering is set, the ordering is from the edge
-     * inwards.  Note that we actually set the ordering to be the
-     * opposite of the desired order because the initial setting
-     * for new cells is OFF.
-     */
-    midrow = (rowmax + 1) / 2;
-
-    dif1 = abs(c1->row - midrow);
-
-    dif2 = abs(c2->row - midrow);
-
-    if (dif1 < dif2) return (orderwide ? -1 : 1);
-
-    if (dif1 > dif2) return (orderwide ? 1 : -1);
-
-    return 0;
-}
-#endif
 
 /*
  * Order the cells to be searched by building the search table list.
@@ -341,7 +243,7 @@ ordersortfunc(const void * xxx1, const void * xxx2)
  * from the left to the right columns.  The order can be changed though.
  */
 void
-initsearchorder()
+initsearchorder(void)
 {
     int row, col, gen;
     int count;
@@ -521,20 +423,6 @@ void shortsetcell (Cell * cell, const State state)
     return;
 }
 
-/*static __inline int
-sumtodesc(State futurestate, State currentstate, int neighborsum)
-{
-    // UNK = 0
-    // ON = 1
-    // OFF = 9
-
-    // using the following expression, all different
-    // combinations are mapped to different numbers
-    // if you don't believe it, just try it
-    
-    return (neighborsum*10 + currentstate*3 + futurestate);
-}*/
-
 /*
  * Calculate the current descriptor for a cell.
  */
@@ -648,7 +536,7 @@ consistify10(Cell * cell)
  * Examine the next choice of cell settings.
  */
 Status
-examinenext()
+examinenext(void)
 {
     Cell * cell;
 
@@ -669,7 +557,7 @@ examinenext()
         cell->row, cell->col, cell->gen,
         (cell->free ? "free" : "forced"));
 
-    return consistify10(cell) ? OK : ERROR1;
+    return consistify10(cell) ? OK : ERROR;
 }
 
 
@@ -678,10 +566,7 @@ examinenext()
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
 Bool
-proceed(cell, state, free)
-    Cell * cell;
-    State state;
-    Bool free;
+proceed(Cell * cell, State state, Bool free)
 {
     int status;
 
@@ -702,7 +587,7 @@ proceed(cell, state, free)
  * Returns NULL on an "object cannot exist" error.
  */
 Cell *
-backup()
+backup(void)
 {
     Cell * cell;
 
@@ -785,7 +670,7 @@ go(Cell * cell, State state, Bool free)
  * Returns NULL if there are no more unknown cells.
  */
 static Cell *
-getnormalunknown()
+getnormalunknown(void)
 {
     Cell * cell;
 
@@ -793,8 +678,8 @@ getnormalunknown()
     {
         if ((cell->state == UNK) && (cell->choose))
         {
-                searchidx = i;
-                return cell;
+            searchidx = i;
+            return cell;
         }
     }
 
@@ -894,7 +779,7 @@ static Bool getsmartnumbers(Cell * cell)
 // Smart cell ordering
 
 static Cell *
-getsmartunknown()
+getsmartunknown(void)
 {
     Cell * cell;
     Cell * best;
@@ -1069,8 +954,7 @@ getsmartunknown()
  */
 
 static State
-choose(cell)
-    Cell * cell;
+choose(const Cell * cell)
 {
     /* 
      * if something pre-set by the select algorithm,
@@ -1113,99 +997,82 @@ search(const Bool batch)
 {
     Cell * cell;
     Bool free;
-    Bool needwrite;
     State state;
 
     cell = (*getunknown)();
 
     if (cell == NULL)
     {
-        // nothing to search
-        // so we are at a solution
-        // let's start search for another one
-
+        /*
+         * nothing to search so we are at a solution
+         * let's start search for another one
+         */
         cell = backup();
 
         if (cell == NULL)
-            return ERROR1;
+            return ERROR;
 
         free = FALSE;
         state = (ON + OFF) - prevstate;
-
-    } else {
-
+    }
+    else
+    {
         state = choose(cell);
         free = TRUE;
-
     }
 
-    for (;;) {
-        if(ttycheck()) 
-        {
-            if (!batch) {
-                getcommands();
-            } else {
-                exit(0);
-            }
-        }
-        // Set the state of the new cell.
-
+    for (;;)
+    {
+        /*
+         * Set the state of the new cell.
+         */
         if (!go(cell, state, free)) 
         {
             printgen(curgen);
-
             return NOTEXIST;
         }
 
-
-        // If it is time to dump our state, then do that.
-
+        /*
+         * If it is time to dump our state, then do that.
+         */
         if (dumpfreq && (++dumpcount >= dumpfreq))
         {
-            dumpcount = 0;
             dumpstate(dumpfile);
+            dumpcount = 0;
         }
 
-
-        // If we have enough columns found, then remember to
-        // write it to the output file.  Also keep the last
-        // columns count values up to date.
-
-        needwrite = FALSE;
-
-        if (outputcols &&
-            (fullcolumns >= outputlastcols + outputcols))
-        {
-            outputlastcols = fullcolumns;
-            needwrite = TRUE;
-        }
-
-        if (outputlastcols > fullcolumns)
-            outputlastcols = fullcolumns;
-
-        // If it is time to view the progress,then show it.
-
-        if (needwrite || (viewfreq && (++viewcount >= viewfreq)))
+        /*
+         * If it is time to view the progress,then show it.
+         */
+        if (viewfreq && (++viewcount >= viewfreq))
         {
             printgen(curgen);
         }
 
-        // Write the progress to the output file if needed.
-        // This is done after viewing it so that the write
-        // message will stay visible for a while.
-
-        if (needwrite)
+        /*
+         * Check for commands.
+         */
+        if(!batch)
         {
-            writegen(outputfile, TRUE);
+            if (ttycheck())
+            {
+                getcommands();
+            }
+            else
+            {
+                exit(0);
+            }
         }
 
-
-        // Get the next unknown cell and choose its state.
-
+        /*
+         * Get the next unknown cell and choose its state.
+         */
         cell = (*getunknown)();
 
         if (cell == NULL)
+        {
             return FOUND;
+        }
 
         state = choose(cell);
         free = TRUE;

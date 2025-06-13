@@ -80,7 +80,7 @@ typedef    unsigned int    Status;
 #define    OK        ((Status) 0)
 
 // JES
-#define    ERROR1        ((Status) 1)
+#define    ERROR        ((Status) 1)
 #define    CONSISTENT    ((Status) 2)
 #define    NOTEXIST    ((Status) 3)
 #define    FOUND        ((Status) 4)
