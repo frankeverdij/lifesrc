@@ -857,7 +857,7 @@ getSetting(const char * cp)
         return;
     }
 
-    if (proceed(findCell(row, col, curGen), state, FALSE) != OK)
+    if (!proceed(findCell(row, col, curGen), state, FALSE))
     {
         ttyStatus("Inconsistent state for cell\n");
 
@@ -924,7 +924,7 @@ getBackup(const char * cp)
 
         setState(cell, UNK);
 
-        if (go(cell, state, FALSE) != OK)
+        if (!go(cell, state, FALSE))
         {
             printGen(curGen);
             ttyStatus("Backed up over all possibilities\n");
@@ -1013,7 +1013,7 @@ getClear(const char * cp)
                 if (cell->state != UNK)
                     continue;
 
-                if (proceed(cell, OFF, FALSE) != OK)
+                if (!proceed(cell, OFF, FALSE))
                 {
                     ttyStatus("Inconsistent state for cell\n");
 
@@ -1656,7 +1656,7 @@ loadState(const char * file)
 
         cell = findCell(row, col, gen);
 
-        if (setCell(cell, state, free) != OK)
+        if (!setCell(cell, state, free))
         {
             ttyStatus(
                 "Inconsistently setting cell at r%d c%d g%d \n",
@@ -1857,8 +1857,8 @@ readFile(const char * file)
 
             for (gen = minGen; gen <= maxGen; gen++)
             {
-                if (proceed(findCell(row, col, gen),
-                    state, FALSE) != OK)
+                if (!proceed(findCell(row, col, gen),
+                    state, FALSE))
                 {
                     ttyStatus(
                     "Inconsistent state for cell %d %d\n",

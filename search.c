@@ -63,8 +63,8 @@ static void initSearchOrder(void);
 static State choose(const Cell *);
 static Cell * getNormalUnknown(void);
 static Cell * getAverageUnknown(void);
-static Status consistify(Cell * const);
-static Status consistify10(Cell * const);
+static Bool consistify(Cell * const);
+static Bool consistify10(Cell * const);
 static Status examineNext(void);
 static Cell * (* getUnknown)(void);
 
@@ -322,7 +322,7 @@ initSearchOrder(void)
  * Returns ERROR if the setting is inconsistent.
  * If the cell is newly set, then it is added to the set table.
  */
-Status
+Bool
 setCell(Cell * const cell, const State state, const Bool free)
 {
     if (cell->state == state)
@@ -331,7 +331,7 @@ setCell(Cell * const cell, const State state, const Bool free)
             cell->row, cell->col, cell->gen,
             (state == ON) ? "on" : "off");
 
-        return OK;
+        return TRUE;
     }
 
     if (cell->state == UNK)
@@ -345,14 +345,14 @@ setCell(Cell * const cell, const State state, const Bool free)
 
         cell->free = free;
 
-        return OK;
+        return TRUE;
     }
 
     DPRINTF("setCell %d %d %d to state %s inconsistent\n",
         cell->row, cell->col, cell->gen,
         (state == ON) ? "on" : "off");
 
-    return ERROR;
+    return FALSE;
 }
 
 
@@ -385,7 +385,7 @@ getDesc(const Cell * const cell)
  * make sure that the previous generation can validly produce the
  * current cell.  Returns ERROR if the cell is inconsistent.
  */
-static Status
+static Bool
 consistify(Cell * const cell)
 {
     Cell * prevCell;
@@ -431,11 +431,11 @@ consistify(Cell * const cell)
         }
         else
         {
-            return OK;
+            return TRUE;
         }
     }
     else if ((cell->state ^ state) == ON)
-        return ERROR;
+        return FALSE;
 
     /*
      * Now look up the previous generation in the implic table.
@@ -454,12 +454,12 @@ consistify(Cell * const cell)
     DPRINTF("Implication flags %x\n", flags);
 
     if (flags & N0IC0)
-        if (setCell(prevCell, OFF, FALSE) != OK)
-            return ERROR;
+        if (!setCell(prevCell, OFF, FALSE))
+            return FALSE;
 
     if (flags & N0IC1)
-        if (setCell(prevCell, ON, FALSE) != OK)
-            return ERROR;
+        if (!setCell(prevCell, ON, FALSE))
+            return FALSE;
 
     if (flags & N0ICUN1)
     {
@@ -481,7 +481,7 @@ consistify(Cell * const cell)
         
         DPRINTF("Implications successful\n");
 
-        return OK;
+        return TRUE;
     }
     
     if (flags & N0ICUN0)
@@ -501,7 +501,7 @@ consistify(Cell * const cell)
 
     DPRINTF("Implications successful for prevCell %d %d %d %d\n", prevCell->row, prevCell->col, prevCell->gen, prevCell->state);
 
-    return OK;
+    return TRUE;
 }
 
 
@@ -509,40 +509,40 @@ consistify(Cell * const cell)
  * See if a cell and its neighbors are consistent with the cell and its
  * neighbors in the next generation.
  */
-static Status
+static Bool
 consistify10(Cell * const cell)
 {
-    if (consistify(cell) != OK)
-        return ERROR;
+    if (!consistify(cell))
+        return FALSE;
 
-    if (consistify(cell->future) != OK)
-        return ERROR;
+    if (!consistify(cell->future))
+        return FALSE;
 
-    if (consistify(cell->cul->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cul->future))
+        return FALSE;
 
-    if (consistify(cell->cu->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cu->future))
+        return FALSE;
 
-    if (consistify(cell->cur->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cur->future))
+        return FALSE;
 
-    if (consistify(cell->cl->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cl->future))
+        return FALSE;
 
-    if (consistify(cell->cr->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cr->future))
+        return FALSE;
 
-    if (consistify(cell->cdl->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cdl->future))
+        return FALSE;
 
-    if (consistify(cell->cd->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cd->future))
+        return FALSE;
 
-    if (consistify(cell->cdr->future) != OK)
-        return ERROR;
+    if (!consistify(cell->cdr->future))
+        return FALSE;
 
-    return OK;
+    return TRUE;
 }
 
 
@@ -571,12 +571,12 @@ examineNext(void)
         cell->row, cell->col, cell->gen,
         (cell->free ? "free" : "forced"));
 
-    if (cell->loop && (setCell(cell->loop, cell->state, FALSE) != OK))
+    if (cell->loop && (!setCell(cell->loop, cell->state, FALSE)))
     {
         return ERROR;
     }
 
-    return consistify10(cell);
+    return consistify10(cell) ? OK : ERROR;
 }
 
 
@@ -584,23 +584,23 @@ examineNext(void)
  * Set a cell to the specified value and determine all consequences we
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
-Status
+Bool
 proceed(Cell * cell, State state, Bool free)
 {
     int status;
 
-    if (setCell(cell, state, free) != OK)
-        return ERROR;
+    if (!setCell(cell, state, free))
+        return FALSE;
 
     for (;;)
     {
         status = examineNext();
 
         if (status == ERROR)
-            return ERROR;
+            return FALSE;
 
         if (status == CONSISTENT)
-            return OK;
+            return TRUE;
     }
 }
 
@@ -650,25 +650,25 @@ backup(void)
  * Do checking based on setting the specified cell.
  * Returns ERROR if an inconsistency was found.
  */
-Status
+Bool
 go(Cell * cell, State state, Bool free)
 {
-    Status status;
-
     quitOk = FALSE;
 
     for (;;)
     {
-        status = proceed(cell, state, free);
-
-        if (status == OK)
-            return OK;
+        if (proceed(cell, state, free))
+        {
+            return TRUE;
+        }
 
         ++stepConfl;
         cell = backup();
 
         if (cell == NULL)
-            return ERROR;
+        {
+            return FALSE;
+        }
 
         free = FALSE;
         state = ON - cell->state;
@@ -781,7 +781,7 @@ search(const Bool batch)
         /*
          * Set the state of the new cell.
          */
-        if (go(cell, state, free) != OK)
+        if (!go(cell, state, free))
             return NOT_EXIST;
 
         /*
