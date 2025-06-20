@@ -1050,21 +1050,6 @@ search(const Bool batch)
         }
 
         /*
-         * Check for commands.
-         */
-        if(!batch)
-        {
-            if (ttycheck())
-            {
-                getcommands();
-            }
-            else
-            {
-                exit(0);
-            }
-        }
-
-        /*
          * Get the next unknown cell and choose its state.
          */
         cell = (*getunknown)();
