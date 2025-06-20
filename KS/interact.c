@@ -5,6 +5,7 @@
 
 #include "lifesrc.h"
 #include "subperiods.h"
+#include "loopcells.h"
 
 #define VERSION "3.5"
 
@@ -25,16 +26,10 @@ static char * loadfile;     /* file to load state from */
  * Local procedures
  */
 static void usage(void);
-static void getsetting(char *);
-static void getbackup(char *);
-static void getclear(char *);
-static void getexclude(char *);
-static void getfreeze(char *);
 static void excludecone(int, int, int);
 static void freezecell(int, int);
 static Bool loadstate(const char *);
 static Status readfile(char *);
-static Bool confirm(char *);
 static Bool setrules(char *);
 static long getnum(char **, int);
 static char * getstr(const char *, const char *);
@@ -658,10 +653,9 @@ main(argc, argv)
      * to the last one so that it can be input easily.  Then get the
      * commands to initialize the cells, unless we were told to not wait.
      */
-    if (parent)
-        curgen = genmax - 1;
+    if (parent) curgen = genmax - 1;
 
-        printgen(0);
+    printgen(0);
 
     inited = TRUE;
 
@@ -1518,25 +1512,6 @@ getstr(str, prompt)
         str++;
 
     return str;
-}
-
-
-/*
- * Confirm an action by prompting with the specified string and reading
- * an answer.  Entering 'y' or 'Y' indicates TRUE, everything else FALSE.
- */
-static Bool
-confirm(prompt)
-    char * prompt;
-{
-    int ch;
-
-    ch = *getstr(NULL, prompt);
-
-    if ((ch == 'y') || (ch == 'Y'))
-        return TRUE;
-
-    return FALSE;
 }
 
 

@@ -15,6 +15,7 @@
 #include "state.h"
 #include "tty.h"
 #include "cell.h"
+#include "implication.h"
 
 
 /*
@@ -195,29 +196,42 @@ EXTERN    int    fullcolumns;    /* columns in gen 0 which are fully set */
 EXTERN  int combinedcells;
 EXTERN  int setcombinedcells;
 EXTERN  int differentcombinedcells;
+/*
+ * Other local data.
+ */
+EXTERN    Cell **    searchlist;    /* current list of cells to search */
+EXTERN    int    searchidx;      /* index of first unknown cell in searchlist[] */
+EXTERN Cell *    cellTable[MAXCELLS];    /* table of usual cells */
 
+/*
+ * Table of implications.
+ * Given the state of a cell and its neighbors in one generation,
+ * this table determines deductions about the cell and its neighbors
+ * in the previous generation.
+ * The table is indexed by the descriptor value of a cell.
+ */
+EXTERN FLAGS implic[2304];
 
 /*
  * Global procedures
  */
 
 
-extern    void    getcommands(void);
+//extern    void    getcommands(void);
 extern    void    initcells(void);
 extern  void    initsearchorder(void);
 extern    void    printgen(int);
 extern    void    writegen(char *, Bool);
 extern    void    dumpstate(const char *);
-extern    void    adjustnear(Cell *, int);
 extern    Status    search(const Bool);
 extern    Bool    proceed(Cell *, State, Bool);
-extern    Bool    go(Cell *, State, Bool);
+//extern    Bool    go(Cell *, State, Bool);
 extern    Bool    setcell(Cell *, State, Bool);
 extern  Status  examinenext(void);
 extern    Cell *    findcell(int, int, int);
 extern    Cell *    backup(void);
-extern    Bool    subperiods(void);
-extern    void    loopcells(Cell *, Cell *);
+//extern    Bool    subperiods(void);
+//extern    void    loopcells(Cell *, Cell *);
 extern void setState(Cell * const cell, const State state);
 
 //JES
@@ -226,5 +240,5 @@ extern void setState(Cell * const cell, const State state);
 //Bool    loadstate(void);
 //void    getbackup(char *cp);
 
-extern int currfield[GENMAX][COLMAX][ROWMAX];
+//extern int currfield[GENMAX][COLMAX][ROWMAX];
 /* END CODE */

@@ -1,0 +1,288 @@
+#define EXTERN extern
+
+#include "lifesrc.h"
+#include "allocatecell.h"
+#include "linkcell.h"
+#include "symcell.h"
+#include "mapcell.h"
+#include "loopcells.h"
+#include "sortorder.h"
+#include "enums.h"
+#include "implication.h"
+
+/*
+ * Initialize the table of cells.
+ * Each cell in the active area is set to unknown state.
+ * Boundary cells are set to zero state.
+ */
+void
+initcells()
+{
+    int row, col, gen;
+    int i;
+    Bool edge;
+    Cell * cell;
+    Cell * cell2;
+
+    inited = FALSE;
+    searchlist = NULL;
+
+
+    if ((rowmax <= 0) || (rowmax > ROWMAX) ||
+        (colmax <= 0) || (colmax > COLMAX) ||
+        (genmax <= 0) || (genmax > GENMAX) ||
+        (rowtrans < -TRANSMAX) || (rowtrans > TRANSMAX) ||
+        (coltrans < -TRANSMAX) || (coltrans > TRANSMAX))
+    {
+        ttystatus("ROW, COL, GEN, or TRANS out of range\n");
+        exit(1);
+    }
+
+    for (i = 0; i < MAXCELLS; i++)
+        cellTable[i] = allocateCell();
+
+    /*
+     * Link the cells together.
+     */
+    for (col = 0; col <= colmax+1; col++)
+    {
+        for (row = 0; row <= rowmax+1; row++)
+        {
+            for (gen = 0; gen < genmax; gen++)
+            {
+                edge = ((row == 0) || (col == 0) ||
+                    (row > rowmax) || (col > colmax));
+
+                cell = findcell(row, col, gen);
+                cell->gen = gen;
+                cell->row = row;
+                cell->col = col;
+
+                cell->active = TRUE;
+                cell->choose = TRUE;
+
+                /*
+                 * If this is not an edge cell, then its state
+                 * is unknown and it needs linking to its
+                 * neighbors.
+                 */
+                if (!edge)
+                {
+                    linkCell(cell);
+                    setState(cell, UNK);
+                    cell->free = TRUE;
+                }
+
+                /*
+                 * Map time forwards and backwards,
+                 * wrapping around at the ends.
+                 */
+                cell->past = findcell(row, col,
+                    (gen+genmax-1) % genmax);
+
+                cell->future = findcell(row, col,
+                    (gen+1) % genmax);
+
+                /*
+                 * If this is not an edge cell, and
+                 * there is some symmetry, then put
+                 * this cell in the same loop as the
+                 * next symmetrical cell.
+                 */
+                if(symmetry && !edge)
+                {
+                    loopcells(cell, symCell(cell));
+                }
+            }
+        }
+    }
+
+    /*
+     * Now for the symmetry
+     * Let's look for all loops
+     * and select one cell from each loop as active
+     */
+
+    for (col = 1; col <= colmax; col++)
+    {
+        for (row = 1; row <= rowmax; row++)
+        {
+            for (gen = 0; gen < genmax; gen++)
+            {
+                cell = findcell(row, col, gen);
+
+                if (cell->active)
+                {
+                    cell2 = cell->loop;
+                    while (cell2 != cell)
+                    {
+                        cell2->active = FALSE;
+                        cell2 = cell2->loop;
+                    }
+                }
+            }
+        }
+    }
+
+
+    /*
+     * If there is a non-standard mapping between the last generation
+     * and the first generation, then change the future and past pointers
+     * to implement it.  This is for translations and flips.
+     */
+    if (rowtrans || coltrans || fliprows || flipcols || flipquads)
+    {
+        for (row = 0; row <= rowmax+1; row++)
+        {
+            for (col = 0; col <= colmax+1; col++)
+            {
+                cell = findcell(row, col, 0);
+                cell2 = mapCell(cell);
+                cell->past = cell2;
+                cell2->future = cell;
+            }
+        }
+    }
+
+
+    newset = settable;
+    nextset = settable;
+
+    initsearchorder();
+
+    searchset = searchtable;
+
+    curstatus = OK;
+    initimplic(bornrules, liverules, implic);
+
+    inited = TRUE;
+}
+
+
+/*
+ * Order the cells to be searched by building the search table list.
+ * This list is built backwards from the intended search order.
+ * The default is to do searches from the middle row outwards, and
+ * from the left to the right columns.  The order can be changed though.
+ */
+void
+initsearchorder(void)
+{
+    int row, col, gen;
+    int count;
+    Cell * cell;
+    Cell * table[MAXCELLS];
+    globals_struct g;
+    g.colMax = colmax;
+    g.rowMax = rowmax;
+    g.parent = parent;
+    g.orderGens = ordergens;
+    g.orderMiddle = ordermiddle;
+    g.orderWide = orderwide;
+    g.orderInvert = 0;
+    if (diagsort)
+        g.sortOrder = DIAG;
+    else if (knightsort)
+        g.sortOrder = KNIGHT;
+    else
+        g.sortOrder = DEFAULT;
+    /*
+     * Make a table of cells that will be searched.
+     * Ignore cells that are not relevant to the search due to symmetry.
+     */
+    count = 0;
+
+    for (gen = 0; gen < genmax; gen++)
+    {
+        for (col = 1; col <= colmax; col++)
+        {
+            for (row = 1; row <= rowmax; row++)
+            {
+                cell = findcell(row, col, gen);
+                // cells must be already loaded!!!
+                if ((cell->active) && (cell->state == UNK) && (cell->choose))
+                {
+                    table[count++] = findcell(row, col, gen);
+                }
+            }
+        }
+    }
+
+    /*
+     * Now sort the table based on our desired search order.
+     */
+    qsort_r((char *) table, count, sizeof(Cell *), orderSortFunc, &g);
+
+    /*
+     * If we've been here before, wipe the old searchlist
+     */
+    if (searchlist) free(searchlist);
+
+    /*
+     * Finally build the search list from the table elements in the
+     * final order.
+     */
+    searchlist = (Cell **) malloc(sizeof(Cell *) * (count + 1));
+
+    for (int i = 0; i < count; i++)
+    {
+        searchlist[i] = table[i];
+        searchlist[i]->index = i;
+    }
+    searchlist[count] = NULL;
+    searchidx = 0;
+
+}
+
+static int auxCellCount = 0; /* cells in auxillary table */
+static Cell * auxTable[MAXCELLS]; /* table of auxillary cells */
+
+/*
+ * Find a cell given its coordinates.
+ * Most coordinates range from 0 to colmax+1, 0 to rowmax+1, and 0 to genmax-1.
+ * Cells within this range are quickly found by indexing into celltable.
+ * Cells outside of this range are handled by searching an auxillary table,
+ * and are dynamically created as necessary.
+ */
+Cell * findcell(int row, int col, int gen)
+{
+    Cell * cell;
+    int i;
+
+    /*
+     * If the cell is a normal cell, then we know where it is.
+     */
+    if ((row >= 0) && (row <= rowmax + 1) &&
+        (col >= 0) && (col <= colmax + 1) &&
+        (gen >= 0) && (gen < genmax))
+    {
+        return cellTable[(col * (rowmax + 2) + row) * genmax + gen];
+    }
+
+    /*
+     * See if the cell is already allocated in the auxillary table.
+     */
+    for (i = 0; i < auxCellCount; i++)
+    {
+        cell = auxTable[i];
+
+        if ((cell->row == row) && (cell->col == col) &&
+            (cell->gen == gen))
+        {
+            return cell;
+        }
+    }
+
+    /*
+     * Need to allocate the cell and add it to the auxillary table.
+     */
+    cell = allocateCell();
+    cell->row = row;
+    cell->col = col;
+    cell->gen = gen;
+
+    auxTable[auxCellCount++] = cell;
+
+    return cell;
+}
+
