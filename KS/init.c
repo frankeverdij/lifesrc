@@ -34,7 +34,7 @@ initcells()
         (rowtrans < -TRANSMAX) || (rowtrans > TRANSMAX) ||
         (coltrans < -TRANSMAX) || (coltrans > TRANSMAX))
     {
-        ttystatus("ROW, COL, GEN, or TRANS out of range\n");
+        fprintf(stderr, "ROW, COL, GEN, or TRANS out of range\n");
         exit(1);
     }
 

@@ -13,7 +13,6 @@
 
 #include "bool.h"
 #include "state.h"
-#include "tty.h"
 #include "cell.h"
 #include "implication.h"
 

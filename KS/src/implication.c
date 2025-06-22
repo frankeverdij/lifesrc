@@ -1,6 +1,6 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "implication.h"
-#include "tty.h"
 
 /*
  * Initialize the implication table.
@@ -26,7 +26,7 @@ initimplic(const Bool * bornrules, const Bool * liverules, FLAGS * implic)
                             foff=1-(fon+funk); // off future cell
                             desc = SUMTODESC((State)(funk*UNK+fon*ON+foff*OFF), (State)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
                             if (implic[desc] != IMPVOID) {
-                                ttystatus("Duplicate descriptor!!!");
+                                fprintf(stderr, "Duplicate descriptor!!!\n");
                                 exit(1);
                             }
                             // here we get all possible descriptors

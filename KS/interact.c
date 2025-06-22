@@ -32,7 +32,6 @@ static Bool loadstate(const char *);
 static Status readfile(char *);
 static Bool setrules(char *);
 static long getnum(char **, int);
-static char * getstr(const char *, const char *);
 
 
 /*
@@ -130,7 +129,7 @@ Bool set_initial_cells(void)
                                 } else {
                                     // we should never get here
                                     // because it's already tested that the OFF state is possible
-                                    ttystatus("Program inconsistency found\n");
+                                    fprintf(stderr, "Program inconsistency found\n");
                                     return FALSE;
                                 }
                             }                            
@@ -143,7 +142,7 @@ Bool set_initial_cells(void)
                                 change = TRUE;
                             } else {
                                 // can't set neither ON nor OFF state
-                                ttyprintf("Inconsistent UNK state for cell (col %d,row %d,gen %d)\n",i+1,j+1,g);
+                                printf("Inconsistent UNK state for cell (col %d,row %d,gen %d)\n",i+1,j+1,g);
                                 return FALSE;
                             }
                         }
@@ -545,12 +544,6 @@ main(argc, argv)
         exit(1);
     }
 
-    if (!ttyopen())
-    {
-        fprintf(stderr, "Cannot initialize terminal\n");
-        exit(1);
-    }
-
     symmetry = 0;
     if (rowsym)
     {
@@ -620,7 +613,6 @@ main(argc, argv)
     {
         if (loadstate(loadfile) != OK)
         {
-            ttyclose();
             exit(1);
         }
     }
@@ -632,7 +624,6 @@ main(argc, argv)
         {
             if (readfile(initfile) != OK)
             {
-                ttyclose();
                 exit(1);
             }
             //baseset = nextset;
@@ -693,7 +684,7 @@ main(argc, argv)
             if (!quiet)
             {
                 printgen(0);
-                ttystatus("Object %ld found.\n", ++foundcount);
+                fprintf(stderr, "Object %d found.\n", ++foundcount);
             }
 
             writegen(outputfile, TRUE);
@@ -708,12 +699,10 @@ main(argc, argv)
 
         if (foundcount == 0)
         {
-            ttyclose();
             fprintf(stderr, "No objects found\n");
             exit(1);
         }
 
-        ttyclose();
 
         if (!quiet)
             printf("Search completed, file \"%s\" contains %d object%s\n",
@@ -813,125 +802,122 @@ printgen(gen)
         }
     }
 
-    ttyhome();
-    ttyeeop();
-
     if (islife)
     {
-        ttyprintf("%s (gen %d, cells %d totalcount %ld)", msg, gen, count, showcount());
+        printf("%s (gen %d, cells %d totalcount %ld)", msg, gen, count, showcount());
     }
     else
     {
-        ttyprintf("%s (rule %s, gen %d, cells %di totalcount %ld)",
+        printf("%s (rule %s, gen %d, cells %di totalcount %ld)",
             msg, rulestring, gen, count, showcount());
     }
 
-    ttyprintf(" -r%d -c%d -g%d", rowmax, colmax, genmax);
+    printf(" -r%d -c%d -g%d", rowmax, colmax, genmax);
 
     if (rowtrans)
-        ttyprintf(" -tr%d", rowtrans);
+        printf(" -tr%d", rowtrans);
 
     if (coltrans)
-        ttyprintf(" -tc%d", coltrans);
+        printf(" -tc%d", coltrans);
 
     if (fliprows == 1)
-        ttyprintf(" -fr");
+        printf(" -fr");
 
     if (fliprows > 1)
-        ttyprintf(" -fr%d", fliprows);
+        printf(" -fr%d", fliprows);
 
     if (flipcols == 1)
-        ttyprintf(" -fc");
+        printf(" -fc");
 
     if (flipcols > 1)
-        ttyprintf(" -fc%d", flipcols);
+        printf(" -fc%d", flipcols);
 
     if (flipquads)
-        ttyprintf(" -fq");
+        printf(" -fq");
 
     if (rowsym == 1)
-        ttyprintf(" -sr");
+        printf(" -sr");
 
     if (rowsym > 1)
-        ttyprintf(" -sr%d", rowsym);
+        printf(" -sr%d", rowsym);
 
     if (colsym == 1)
-        ttyprintf(" -sc");
+        printf(" -sc");
 
     if (colsym > 1)
-        ttyprintf(" -sc%d", colsym);
+        printf(" -sc%d", colsym);
 
     if (pointsym)
-        ttyprintf(" -sp");
+        printf(" -sp");
 
     if (fwdsym)
-        ttyprintf(" -sf");
+        printf(" -sf");
 
     if (bwdsym)
-        ttyprintf(" -sb");
+        printf(" -sb");
 
     if (ordergens || orderwide || ordermiddle)
     {
-        ttyprintf(" -o");
+        printf(" -o");
 
         if (ordergens)
-            ttyprintf("g");
+            printf("g");
 
         if (orderwide)
-            ttyprintf("w");
+            printf("w");
 
         if (ordermiddle)
-            ttyprintf("m");
+            printf("m");
     }
 
     if (follow)
-        ttyprintf(" -f");
+        printf(" -f");
 
     if (followgens)
-        ttyprintf(" -fg");
+        printf(" -fg");
 
     if (parent)
-        ttyprintf(" -p");
+        printf(" -p");
 
     if (allobjects)
-        ttyprintf(" -a");
+        printf(" -a");
 
     if (userow)
-        ttyprintf(" -ur%d", userow);
+        printf(" -ur%d", userow);
 
     if (usecol)
-        ttyprintf(" -uc%d", usecol);
+        printf(" -uc%d", usecol);
 
     if (nearcols)
-        ttyprintf(" -nc%d", nearcols);
+        printf(" -nc%d", nearcols);
 
     if (maxcount)
-        ttyprintf(" -mt%d", maxcount);
+        printf(" -mt%d", maxcount);
 
     if (colcells)
-        ttyprintf(" -mc%d", colcells);
+        printf(" -mc%d", colcells);
 
     if (colwidth)
-        ttyprintf(" -wc%d", colwidth);
+        printf(" -wc%d", colwidth);
 
     if (viewfreq)
-        ttyprintf(" -v%ld", viewfreq / VIEWMULT);
+        printf(" -v%ld", viewfreq / VIEWMULT);
 
     if (dumpfreq)
-        ttyprintf(" -d%ld %s", dumpfreq / DUMPMULT, dumpfile);
+        printf(" -d%ld %s", dumpfreq / DUMPMULT, dumpfile);
 
     if (outputfile)
     {
         if (outputcols)
-            ttyprintf(" -o%d %s", outputcols, outputfile);
+            printf(" -o%d %s", outputcols, outputfile);
         else
-            ttyprintf(" -o %s", outputfile);
+            printf(" -o %s", outputfile);
 
         if (foundcount)
-            ttyprintf(" [%d]", foundcount);
+            printf(" [%d]", foundcount);
     }
 
-    ttyprintf("\n");
+    printf("\n");
 
     for (row = 1; row <= rowmax; row++)
     {
@@ -942,21 +928,21 @@ printgen(gen)
             switch (cell->state)
             {
                 case OFF:
-                    msg = ". ";
+                    msg = ".";
                     break;
 
                 case ON:
-                    msg = "O ";
+                    msg = "O";
                     break;
 
                 case UNK:
-                    msg = "? ";
+                    msg = "?";
 
                     if (cell->frozen)
-                        msg = "+ ";
+                        msg = "+";
 
                     if (!cell->choose)
-                        msg = "X ";
+                        msg = "X";
 
                     break;
             }
@@ -965,14 +951,13 @@ printgen(gen)
              * If wide output, print only one character,
              * else print both characters.
              */
-            ttywrite(msg, (colmax < 40) + 1);
+            printf("%s", msg);
+            if (colmax < 40) printf(" ");
         }
 
-        ttywrite("\n", 1);
+        printf("\n");
     }
 
-    ttyhome();
-    ttyflush();
 }
 
 
@@ -994,8 +979,6 @@ writegen(file, append)
     int ch;
     int minrow, maxrow, mincol, maxcol;
 
-    file = getstr(file, "Write object to file: ");
-
     if (*file == '\0')
         return;
 
@@ -1006,7 +989,7 @@ writegen(file, append)
 
     if (fp == NULL)
     {
-        ttystatus("Cannot create \"%s\"\n", file);
+        fprintf(stderr, "Cannot create \"%s\"\n", file);
 
         return;
     }
@@ -1077,7 +1060,7 @@ writegen(file, append)
                     break;
 
                 default:
-                    ttystatus("Bad cell state");
+                    fprintf(stderr, "Bad cell state");
                     fclose(fp);
 
                     return;
@@ -1094,13 +1077,13 @@ writegen(file, append)
 
     if ((fp != stdout) && fclose(fp))
     {
-        ttystatus("Error writing \"%s\"\n", file);
+        fprintf(stderr, "Error writing \"%s\"\n", file);
 
         return;
     }
 
     if (fp != stdout)
-        ttystatus("\"%s\" written\n", file);
+        fprintf(stderr, "\"%s\" written\n", file);
 
     quitok = TRUE;
 }
@@ -1117,8 +1100,6 @@ void dumpstate(const char * file)
     Cell * cell;
     int ** param;
 
-    file = getstr(file, "Dump state to file: ");
-
     if (*file == '\0')
         return;
 
@@ -1126,7 +1107,7 @@ void dumpstate(const char * file)
 
     if (fp == NULL)
     {
-        ttystatus("Cannot create \"%s\"\n", file);
+        fprintf(stderr, "Cannot create \"%s\"\n", file);
 
         return;
     }
@@ -1169,12 +1150,12 @@ void dumpstate(const char * file)
 
     if (fclose(fp))
     {
-        ttystatus("Error writing \"%s\"\n", file);
+        fprintf(stderr, "Error writing \"%s\"\n", file);
 
         return;
     }
 
-    if (!quiet) ttystatus("State dumped to \"%s\"\n", file);
+    if (!quiet) fprintf(stderr, "State dumped to \"%s\"\n", file);
 }
 
 
@@ -1199,15 +1180,13 @@ Bool loadstate(const char * file)
 
     Status status;
 
-    file = getstr(file, "Load state from file: ");
-
     if(file[0]=='\0') return FALSE;
 
     fp = fopen(file, "r");
 
     if (fp == NULL)
     {
-        ttystatus("Cannot open state file \"%s\"\n", file);
+        fprintf(stderr, "Cannot open state file \"%s\"\n", file);
 
         return FALSE;
     }
@@ -1221,7 +1200,7 @@ Bool loadstate(const char * file)
 
     if (buf[0] != 'V')
     {
-        ttystatus("Missing version line in file \"%s\"\n", file);
+        fprintf(stderr, "Missing version line in file \"%s\"\n", file);
         fclose(fp);
 
         return FALSE;
@@ -1232,7 +1211,7 @@ Bool loadstate(const char * file)
 
     if (DUMPVERSION != ver)
     {
-        ttystatus("Incorrect version of the dump file: expected %d, found %d", DUMPVERSION, ver);
+        fprintf(stderr, "Incorrect version of the dump file: expected %d, found %d", DUMPVERSION, ver);
         fclose(fp);
         return FALSE;
     }
@@ -1249,7 +1228,7 @@ Bool loadstate(const char * file)
      */
     if (buf[0] != 'P')
     {
-        ttystatus("Missing parameter line in state file\n");
+        fprintf(stderr, "Missing parameter line in state file\n");
         fclose(fp);
 
         return FALSE;
@@ -1278,7 +1257,7 @@ Bool loadstate(const char * file)
      */
     if (buf[0] != 'R')
     {
-        ttystatus("Missing rule line in state file\n");
+        fprintf(stderr, "Missing rule line in state file\n");
         fclose(fp);
 
         return FALSE;
@@ -1293,7 +1272,7 @@ Bool loadstate(const char * file)
 
     if (!setrules(cp))
     {
-        ttystatus("Bad Life rules in state file\n");
+        fprintf(stderr, "Bad Life rules in state file\n");
         fclose(fp);
 
         return FALSE;
@@ -1329,7 +1308,7 @@ Bool loadstate(const char * file)
 
         if (!setcell(cell, state, free))
         {
-            ttystatus(
+            fprintf(stderr, 
                 "Inconsistently setting cell at r%d c%d g%d \n",
                 row, col, gen);
 
@@ -1348,7 +1327,7 @@ Bool loadstate(const char * file)
     } while (status == OK);
 
     if (status != CONSISTENT) {
-        ttystatus("Inconsistent cell status\n");
+        fprintf(stderr, "Inconsistent cell status\n");
         fclose(fp);
 
         return FALSE;
@@ -1360,7 +1339,7 @@ Bool loadstate(const char * file)
 
     if (buf[0] != 'E')
     {
-        ttystatus("Missing end of file line in state file\n");
+        fprintf(stderr, "Missing end of file line in state file\n");
         fclose(fp);
 
         return FALSE;
@@ -1368,12 +1347,12 @@ Bool loadstate(const char * file)
 
     if (fclose(fp))
     {
-        ttystatus("Error reading \"%s\"\n", file);
+        fprintf(stderr, "Error reading \"%s\"\n", file);
 
         return FALSE;
     }
 
-    ttystatus("State loaded from \"%s\"\n", file);
+    fprintf(stderr, "State loaded from \"%s\"\n", file);
     return TRUE;
 }
 
@@ -1397,8 +1376,6 @@ readfile(file)
     char buf[LINESIZE];
     Cell * cell;
 
-    file = getstr(file, "Read initial object from file: ");
-
     if (*file == '\0')
         return OK;
 
@@ -1406,7 +1383,7 @@ readfile(file)
 
     if (fp == NULL)
     {
-        ttystatus("Cannot open \"%s\"\n", file);
+        fprintf(stderr, "Cannot open \"%s\"\n", file);
 
         return ERROR;
     }
@@ -1454,7 +1431,7 @@ readfile(file)
                     break;
 
                 default:
-                    ttystatus("Bad file format in line %d\n",
+                    fprintf(stderr, "Bad file format in line %d\n",
                         row);
                     fclose(fp);
 
@@ -1464,7 +1441,7 @@ readfile(file)
             cell = findcell(row, col, gen);
             if (!proceed(cell, state, FALSE))
             {
-                ttystatus("Inconsistent state for cell %d %d\n",
+                fprintf(stderr, "Inconsistent state for cell %d %d\n",
                     row, col);
                 fclose(fp);
 
@@ -1475,43 +1452,12 @@ readfile(file)
 
     if (fclose(fp))
     {
-        ttystatus("Error reading \"%s\"\n", file);
+        fprintf(stderr, "Error reading \"%s\"\n", file);
 
         return ERROR;
     }
 
     return OK;
-}
-
-
-/*
- * Check a string for being NULL, and if so, ask the user to specify a
- * value for it.  Returned string may be static and thus is overwritten
- * for each call.  Leading spaces in the string are skipped over.
- */
-static char *
-getstr(str, prompt)
-    char * str;        /* string to check for NULLness */
-    const char * prompt;        /* message to prompt with */
-{
-    static char buf[LINESIZE];
-
-    if ((str == NULL) || (*str == '\0'))
-    {
-        if (!ttyread(prompt, buf, LINESIZE))
-        {
-            buf[0] = '\0';
-
-            return buf;
-        }
-
-        str = buf;
-    }
-
-    while (isblank(*str))
-        str++;
-
-    return str;
 }
 
 
