@@ -2,10 +2,10 @@
 
 CFLAGS = -Ofast -MP -MMD -Wall -Wno-unused-result -fomit-frame-pointer -Iinclude -I. -I..
 
-#CFLAGS = -O -g -pg -MP -MMD -fno-inline -Wall -Wno-unused-result -Iinclude -I. -I.. -I/usr/include/ncurses
+#CFLAGS = -O -g -pg -MP -MMD -fno-inline -Wall -Wno-unused-result -Iinclude -I. -I..
 #LDFLAGS = -pg
 
-#CFLAGS = -O -g --coverage -MP -MMD -Wall -Wno-unused-result -Iinclude -I. -I.. -I/usr/include/ncurses
+#CFLAGS = -O -g --coverage -MP -MMD -Wall -Wno-unused-result -Iinclude -I. -I..
 #LDFLAGS = -lgcov
 
 SOURCES = $(wildcard src/*.c)
@@ -15,16 +15,12 @@ DEPS = $(SOURCES:.c=.d)
 COVERAGE = $(SOURCES:.c=.gcda)
 COVERAGE += $(SOURCES:.c=.gcno)
 
-all:	lifesrcdumb lifesrc
-
-lifesrcdumb:	$(OBJECTS)
-	$(CC) -o lifesrcdumb $(OBJECTS) $(LDFLAGS)
-
-lifesrc:	$(OBJECTS) cursestty.o
+all:	lifesrc
+lifesrc:	$(OBJECTS)
 	$(CC) -o lifesrc $(OBJECTS) $(LDFLAGS)
 clean:
 	rm -f $(OBJECTS) $(DEPS)
-	rm -f lifesrc lifesrcdumb
+	rm -f lifesrc
 cleancov:
 	rm -f $(COVERAGE)
 -include $(DEPS)
