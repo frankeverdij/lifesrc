@@ -9,6 +9,85 @@
 #include "sortorder.h"
 #include "enums.h"
 #include "implication.h"
+#include "macros.h"
+
+
+/*
+ * Order the cells to be searched by building the search table list.
+ * This list is built backwards from the intended search order.
+ * The default is to do searches from the middle row outwards, and
+ * from the left to the right columns.  The order can be changed though.
+ */
+void
+initsearchorder(void)
+{
+    int row;
+    int col;
+    int gen;
+    int count;
+    Cell * cell;
+    Cell * table[MAXCELLS];
+    globals_struct g;
+    g.colMax = colmax;
+    g.rowMax = rowmax;
+    g.parent = parent;
+    g.orderGens = ordergens;
+    g.orderInvert = 0;
+    g.orderMiddle = ordermiddle;
+    g.orderWide = orderwide;
+    if (diagsort)
+        g.sortOrder = DIAG;
+    else if (knightsort)
+        g.sortOrder = KNIGHT;
+    else
+        g.sortOrder = DEFAULT;
+    /*
+     * Make a table of cells that will be searched.
+     * Ignore cells that are not relevant to the search due to symmetry.
+     */
+    count = 0;
+
+    for (gen = 0; gen < genmax; gen++)
+    {
+        for (col = 1; col <= colmax; col++)
+        {
+            for (row = 1; row <= rowmax; row++)
+            {
+                cell = findcell(row, col, gen);
+                // cells must be already loaded!!!
+                if ((cell->active) && (cell->state == UNK) && (cell->choose))
+                {
+                    table[count++] = findcell(row, col, gen);
+                }
+            }
+        }
+    }
+
+    /*
+     * Now sort the table based on our desired search order.
+     */
+    qsort_r((char *) table, count, sizeof(Cell *), &orderSortFunc, &g);
+
+    /*
+     * If we've been here before, wipe the old searchlist
+     */
+    if (searchlist) free(searchlist);
+
+    /*
+     * Finally build the search list from the table elements in the
+     * final order.
+     */
+    searchlist = (Cell **) malloc(sizeof(Cell *) * (count + 1));
+
+    for (int i = 0; i < count; i++)
+    {
+        searchlist[i] = table[i];
+        searchlist[i]->index = i;
+    }
+    searchlist[count] = NULL;
+    searchidx = 0;
+}
+
 
 /*
  * Initialize the table of cells.
@@ -16,9 +95,11 @@
  * Boundary cells are set to zero state.
  */
 void
-initcells()
+initcells(void)
 {
-    int row, col, gen;
+    int row;
+    int col;
+    int gen;
     int i;
     Bool edge;
     Cell * cell;
@@ -27,16 +108,23 @@ initcells()
     inited = FALSE;
     searchlist = NULL;
 
+    /*
+     * Check whether valid parameters have been set.
+     */
+    if ((rowmax <= 0) || (rowmax > ROWMAX))
+        FATAL("Row number out of range");
 
-    if ((rowmax <= 0) || (rowmax > ROWMAX) ||
-        (colmax <= 0) || (colmax > COLMAX) ||
-        (genmax <= 0) || (genmax > GENMAX) ||
-        (rowtrans < -TRANSMAX) || (rowtrans > TRANSMAX) ||
-        (coltrans < -TRANSMAX) || (coltrans > TRANSMAX))
-    {
-        fprintf(stderr, "ROW, COL, GEN, or TRANS out of range\n");
-        exit(1);
-    }
+    if ((colmax <= 0) || (colmax > COLMAX))
+        FATAL("Column number out of range");
+
+    if ((genmax <= 0) || (genmax > GENMAX))
+        FATAL("Generation number out of range");
+
+    if ((rowtrans < -TRANSMAX) || (rowtrans > TRANSMAX))
+        FATAL("Row translation number out of range");
+
+    if ((coltrans < -TRANSMAX) || (coltrans > TRANSMAX))
+        FATAL("Column translation number out of range");
 
     for (i = 0; i < MAXCELLS; i++)
         cellTable[i] = allocateCell();
@@ -144,11 +232,10 @@ initcells()
         }
     }
 
+    initsearchorder();
 
     newset = settable;
     nextset = settable;
-
-    initsearchorder();
 
     searchset = searchtable;
 
@@ -156,80 +243,4 @@ initcells()
     initimplic(bornrules, liverules, implic);
 
     inited = TRUE;
-}
-
-
-/*
- * Order the cells to be searched by building the search table list.
- * This list is built backwards from the intended search order.
- * The default is to do searches from the middle row outwards, and
- * from the left to the right columns.  The order can be changed though.
- */
-void
-initsearchorder(void)
-{
-    int row, col, gen;
-    int count;
-    Cell * cell;
-    Cell * table[MAXCELLS];
-    globals_struct g;
-    g.colMax = colmax;
-    g.rowMax = rowmax;
-    g.parent = parent;
-    g.orderGens = ordergens;
-    g.orderMiddle = ordermiddle;
-    g.orderWide = orderwide;
-    g.orderInvert = 0;
-    if (diagsort)
-        g.sortOrder = DIAG;
-    else if (knightsort)
-        g.sortOrder = KNIGHT;
-    else
-        g.sortOrder = DEFAULT;
-    /*
-     * Make a table of cells that will be searched.
-     * Ignore cells that are not relevant to the search due to symmetry.
-     */
-    count = 0;
-
-    for (gen = 0; gen < genmax; gen++)
-    {
-        for (col = 1; col <= colmax; col++)
-        {
-            for (row = 1; row <= rowmax; row++)
-            {
-                cell = findcell(row, col, gen);
-                // cells must be already loaded!!!
-                if ((cell->active) && (cell->state == UNK) && (cell->choose))
-                {
-                    table[count++] = findcell(row, col, gen);
-                }
-            }
-        }
-    }
-
-    /*
-     * Now sort the table based on our desired search order.
-     */
-    qsort_r((char *) table, count, sizeof(Cell *), orderSortFunc, &g);
-
-    /*
-     * If we've been here before, wipe the old searchlist
-     */
-    if (searchlist) free(searchlist);
-
-    /*
-     * Finally build the search list from the table elements in the
-     * final order.
-     */
-    searchlist = (Cell **) malloc(sizeof(Cell *) * (count + 1));
-
-    for (int i = 0; i < count; i++)
-    {
-        searchlist[i] = table[i];
-        searchlist[i]->index = i;
-    }
-    searchlist[count] = NULL;
-    searchidx = 0;
-
 }
