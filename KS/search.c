@@ -79,7 +79,7 @@ setcell(Cell * cell, State state, Bool free)
     Cell * c1, * c2;
     if (cell->state == state)
     {
-        DPRINTF4("setcell %d %d %d to state %s already set\n",
+        DPRINTF("setcell %d %d %d to state %s already set\n",
             cell->row, cell->col, cell->gen,
             (state == ON) ? "on" : "off");
 
@@ -88,7 +88,7 @@ setcell(Cell * cell, State state, Bool free)
 
     if (cell->state != UNK)
     {
-        DPRINTF4("setcell %d %d %d to state %s inconsistent\n",
+        DPRINTF("setcell %d %d %d to state %s inconsistent\n",
             cell->row, cell->col, cell->gen,
             (state == ON) ? "on" : "off");
 
@@ -97,7 +97,7 @@ setcell(Cell * cell, State state, Bool free)
 
     c1 = cell;
 
-    DPRINTF5("setCell %d %d %d to %s, %s successful\n",
+    DPRINTF("setCell %d %d %d to %s, %s successful\n",
         cell->row, cell->col, cell->gen,
         (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
@@ -127,7 +127,7 @@ setcell(Cell * cell, State state, Bool free)
 }
 
 
-void shortsetcell (Cell * cell, const State state)
+void shortsetcell(Cell * cell, const State state)
 {
     Cell * c1 = cell, * c2;
 
@@ -213,7 +213,7 @@ static Bool consistify(Cell * cell)
         // let's change the parent neighborhood
         state = ((flags & IMPUN1) != 0) ? ON : OFF;
 
-        DPRINTF4("Forcing unknown neighbors of cell %d %d %d %s\n",
+        DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
             prevcell->row, prevcell->col, prevcell->gen, (state == ON) ? "on" : "off");
 
         if (prevcell->cul->state == UNK)
@@ -234,7 +234,7 @@ static Bool consistify(Cell * cell)
             shortsetcell(prevcell->cdr, state);
     }
 
-    DPRINTF4("Implications successful for prevCell %d %d %d %d\n", prevcell->row, prevcell->col, prevcell->gen, prevcell->state);
+    DPRINTF("Implications successful for prevCell %d %d %d %d\n", prevcell->row, prevcell->col, prevcell->gen, prevcell->state);
 
     return TRUE;
 }
@@ -285,7 +285,7 @@ examinenext(void)
      */
     cell = *nextset++;
 
-    DPRINTF4("Examining saved cell %d %d %d (%s) for consistency\n",
+    DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
         cell->row, cell->col, cell->gen,
         (cell->free ? "free" : "forced"));
 
@@ -332,7 +332,7 @@ backup(void)
         cell = *--nextset;
         --searchset;
 
-        DPRINTF5("backing up cell %d %d %d, was %s, %s\n",
+        DPRINTF("backing up cell %d %d %d, was %s, %s\n",
             cell->row, cell->col, cell->gen,
             ((cell->state == ON) ? "on" : "off"),
             ((cell->free) ? "free": "forced"));
@@ -377,7 +377,10 @@ go(Cell * cell, State state, Bool free)
     {
         setpos = nextset;
 
-        if (proceed(cell, state, free)) return TRUE;
+        if (proceed(cell, state, free))
+        {
+            return TRUE;
+        }
 
         if ((setpos == nextset) && free)
         {
@@ -388,7 +391,10 @@ go(Cell * cell, State state, Bool free)
         } else {
             cell = backup();
 
-            if (cell == NULL) return FALSE;
+            if (cell == NULL)
+            {
+                return FALSE;
+            }
 
             state = (ON + OFF) - prevstate;
         }
@@ -408,10 +414,14 @@ getnormalunknown(void)
 
     for (int i = searchidx; (cell = searchlist[i]); i++)
     {
-        if ((cell->state == UNK) && (cell->choose))
+        if (cell->state == UNK)
         {
-            searchidx = i;
-            return cell;
+            if (cell->choose)
+            {
+                searchidx = i;
+
+                return cell;
+            }
         }
     }
 
@@ -692,14 +702,12 @@ choose(const Cell * cell)
      * if something pre-set by the select algorithm,
      * use the selection
      */
-
     if (smartchoice != UNK) return smartchoice;
 
     /*
      * If we are following cells in other generations,
      * then try to do that.
      */
-
     if (followgens)
     {
         if ((cell->past->state == ON) ||
