@@ -585,23 +585,18 @@ examineNext(void)
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
 Bool
-proceed(Cell * cell, State state, Bool free)
+proceed(Cell * cell, const State state, const Bool free)
 {
     int status;
 
     if (!setCell(cell, state, free))
         return FALSE;
 
-    for (;;)
-    {
+    do {
         status = examineNext();
+    } while (status == OK);
 
-        if (status == ERROR)
-            return FALSE;
-
-        if (status == CONSISTENT)
-            return TRUE;
-    }
+    return (status == CONSISTENT) ? TRUE : FALSE;
 }
 
 
