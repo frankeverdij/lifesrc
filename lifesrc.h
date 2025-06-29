@@ -9,9 +9,11 @@
 #include <string.h>
 #include <signal.h>
 
+#include "description.h"
 #include "state.h"
 #include "cell.h"
 #include "enums.h"
+#include "flags.h"
 
 
 /*
@@ -125,6 +127,30 @@ EXTERN	Cell **	nextSet;	/* next cell in setting table to examine */
 EXTERN	Cell **	baseSet;	/* base of changeable part of setting table */
 EXTERN  Cell * cellTable[MAX_CELLS]; /* table of usual cells */
 
+
+/*
+ * Other local data.
+ */
+EXTERN    Cell **    searchList;    /* current list of cells to search */
+EXTERN    int    searchIdx;      /* index of first unknown cell in searchList[] */
+EXTERN Cell *    cellTable[MAX_CELLS];    /* table of usual cells */
+
+/*
+ * Table of transitions.
+ * Given the state of a cell and its neighbors in one generation,
+ * this table determines the state of the cell in the next generation.
+ * The table is indexed by the descriptor value of a cell.
+ */
+EXTERN State transit[TRIMSIZE];
+
+/*
+ * Table of implications.
+ * Given the state of a cell and its neighbors in one generation,
+ * this table determines deductions about the cell and its neighbors
+ * in the previous generation.
+ * The table is indexed by the descriptor value of a cell.
+ */
+EXTERN Flags implic[TRIMSIZE];
 
 /*
  * Global procedures
