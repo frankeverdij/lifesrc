@@ -212,7 +212,7 @@ extern  void    initsearchorder(void);
 extern    void    printgen(int);
 extern    void    writegen(char *, Bool);
 extern    void    dumpstate(const char *);
-extern    Status    search(const Bool);
+extern    Status    search(void);
 extern    Bool    proceed(Cell *, State, Bool);
 //extern    Bool    go(Cell *, State, Bool);
 extern    Bool    setcell(Cell *, State, Bool);

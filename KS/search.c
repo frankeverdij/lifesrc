@@ -732,7 +732,7 @@ choose(const Cell * cell)
  * Returns if an object is found, or is impossible.
  */
 Status
-search(const Bool batch)
+search(void)
 {
     Cell * cell;
     Bool free;

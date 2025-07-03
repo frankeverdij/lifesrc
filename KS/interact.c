@@ -13,7 +13,6 @@
 /*
  * Local data.
  */
-static Bool nowait;         /* don't wait for commands after loading */
 static Bool setall;         /* set all cells from initial file */
 static Bool islife;         /* whether the rules are for standard Life */
 static char rulestring[20]; /* rule string for printouts */
@@ -191,13 +190,6 @@ main(argc, argv)
 
         switch (*str++)
         {
-            case 'b':
-                /*
-                 * Don't enter command mode.
-                 */
-                nowait = TRUE;
-                break;
-
             case 'q':
                 quiet = TRUE; /* don't output */
                 break;
@@ -379,9 +371,6 @@ main(argc, argv)
                 break;
 
             case 'l':            /* load file */
-                if (*str == 'n')
-                    nowait = TRUE;
-
                 if ((argc <= 0) || (**argv == '-'))
                 {
                     fprintf(stderr, "Missing load file name\n");
@@ -656,7 +645,7 @@ main(argc, argv)
     while (TRUE)
     {
         if (curstatus == OK)
-            curstatus = search(nowait);
+            curstatus = search();
 
         if ((curstatus == FOUND) && !allobjects && subPeriods())
         {
@@ -688,13 +677,11 @@ main(argc, argv)
             }
 
             writegen(outputfile, TRUE);
-            if (nowait)
+
+            if (allobjects)
             {
-                if (allobjects)
-                    continue;
+                continue;
             }
-            else
-            continue;
         }
 
         if (foundcount == 0)
