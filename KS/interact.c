@@ -434,6 +434,10 @@ main(argc, argv)
                             ordermiddle = TRUE;
                             break;
 
+                        case 'b':
+                            diagsort = TRUE;
+                            break;
+
                         default:
                             fprintf(stderr,
                             "Bad ordering option\n");
