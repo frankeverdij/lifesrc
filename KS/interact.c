@@ -14,6 +14,7 @@
  * Local data.
  */
 static Bool setall;         /* set all cells from initial file */
+static Bool setdeep;
 static Bool islife;         /* whether the rules are for standard Life */
 static char rulestring[20]; /* rule string for printouts */
 static int foundcount;      /* number of objects found */
@@ -382,8 +383,15 @@ main(argc, argv)
                 break;
 
             case 'i':            /* initial file */
-                if (*str != 'n')
+                if (*str == 'd')
+                {
                     setall = TRUE;
+                    setdeep = TRUE;
+                }
+                else if (*str != 'n')
+                {
+                    setall = TRUE;
+                }
 
                 if ((argc <= 0) || (**argv == '-'))
                 {
@@ -1362,6 +1370,9 @@ readfile(file)
     char ch;
     int row;
     int col;
+    int activegen;
+    int mingen;
+    int maxgen;
     int gen;
     State state;
     char buf[LINESIZE];
@@ -1379,7 +1390,7 @@ readfile(file)
         return ERROR;
     }
 
-    gen = (parent ? (genmax - 1) : 0);
+    activegen = (parent ? (genmax - 1) : 0);
     row = 0;
 
     while (fgets(buf, LINESIZE, fp))
@@ -1390,6 +1401,9 @@ readfile(file)
 
         while (*cp && (*cp != '\n'))
         {
+            mingen = activegen;
+            maxgen = activegen;
+
             col++;
             ch = *cp++;
 
@@ -1400,7 +1414,7 @@ readfile(file)
 
                 case 'x':
                 case 'X':
-                    excludecone(row, col, gen);
+                    excludecone(row, col, activegen);
                     continue;
 
                 case '+':
@@ -1412,6 +1426,18 @@ readfile(file)
                     if (!setall)
                         continue;
 
+                    if (setdeep)
+                    {
+                        mingen = 0;
+                        maxgen = genmax;
+                    }
+
+                    state = OFF;
+                    break;
+
+                case ':':
+                    mingen = 0;
+                    maxgen = genmax;
                     state = OFF;
                     break;
 
@@ -1428,7 +1454,8 @@ readfile(file)
 
                     return ERROR;
             }
-
+            for (gen = mingen; gen <= maxgen; gen++)
+            {
             cell = findcell(row, col, gen);
             if (!proceed(cell, state, FALSE))
             {
@@ -1437,6 +1464,7 @@ readfile(file)
                 fclose(fp);
 
                 return ERROR;
+            }
             }
         }
     }
