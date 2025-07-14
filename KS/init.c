@@ -177,7 +177,7 @@ initcells(void)
                  * this cell in the same loop as the
                  * next symmetrical cell.
                  */
-                if(symmetry && !edge)
+                if((pointsym || colsym || rowsym || fwdsym || bwdsym) && !edge)
                 {
                     loopcells(cell, symCell(cell));
                 }

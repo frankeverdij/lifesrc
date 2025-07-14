@@ -50,7 +50,7 @@ static int * param_table[] =
     &parent, &allobjects, &nearcols, &maxcount,
     &userow, &usecol, &colcells, &colwidth, &follow,
     &orderwide, &ordergens, &ordermiddle, &followgens,
-    &diagsort, &symmetry, &trans_rotate, &trans_flip, &trans_x, &trans_y,
+    &diagsort, &trans_rotate, &trans_flip, &trans_x, &trans_y,
     &knightsort, &chooseUnknown,
     &smart, &smartwindow, &smartthreshold, 
     &foundcount,
@@ -543,55 +543,6 @@ main(argc, argv)
     {
         fprintf(stderr, "Bad column for -uc\n");
         exit(1);
-    }
-
-    symmetry = 0;
-    if (rowsym)
-    {
-        if (colsym)
-        {
-            symmetry = 6;
-        }
-        else
-        {
-            symmetry = 2;
-        }
-    }
-    else
-    {
-        if (colsym)
-        {
-            symmetry = 1;
-        }
-    }
-
-    if (fwdsym)
-    {
-        if (bwdsym)
-        {
-            symmetry = 7;
-        }
-        else
-        {
-            symmetry = 3;
-        }
-    }
-    else
-    {
-        if (bwdsym)
-        {
-            symmetry = 4;
-        }
-    }
-    
-    if (pointsym)
-    {
-        symmetry = 8;
-    }
-    
-    if (colsym && rowsym && fwdsym && bwdsym)
-    {
-        symmetry = 9;
     }
 
     newset = NULL;

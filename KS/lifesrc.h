@@ -137,7 +137,6 @@ EXTERN  int smartstatsumwndc;
 
 EXTERN  int  diagsort;       /* JES - optimize for diagonal objects */
 EXTERN  int  knightsort;     /* JES */
-EXTERN  int  symmetry;       /* JES */
 EXTERN  int  trans_rotate;   /* JES */
 EXTERN  int  trans_flip;     /* JES */
 EXTERN  int  trans_x;        /* JES */
