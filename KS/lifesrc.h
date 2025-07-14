@@ -20,10 +20,10 @@
 /*
  * Maximum dimensions of the search
  */
-#define    ROWMAX        80    /* maximum rows for search rectangle */
-#define    COLMAX        132    /* maximum columns for search rectangle */
-#define    GENMAX        19    /* maximum number of generations */
-#define    TRANSMAX    8    /* largest translation value allowed */
+#define    ROW_MAX        80    /* maximum rows for search rectangle */
+#define    COL_MAX        132    /* maximum columns for search rectangle */
+#define    GEN_MAX        19    /* maximum number of generations */
+#define    TRANS_MAX    8    /* largest translation value allowed */
 #define MAX_PATH    80
 
 
@@ -45,8 +45,8 @@
 #define    DUMPMULT    1000        /* dumping frequency multiplier */
 #define    DUMPFILE    "lifesrc.dmp"    /* default dump file name */
 
-#define    MAXCELLS    ((COLMAX + 2) * (ROWMAX + 2) * GENMAX)
-#define    AUXCELLS    (TRANSMAX * (COLMAX + ROWMAX + 4) * 2)
+#define    MAX_CELLS    ((COL_MAX + 2) * (ROW_MAX + 2) * GEN_MAX)
+#define    AUX_CELLS    (TRANS_MAX * (COL_MAX + ROW_MAX + 4) * 2)
 
 
 /*
@@ -176,10 +176,10 @@ EXTERN  State prevstate; /* the state of the last free cell before backup() */
 /*
  * Data about all of the cells.
  */
-EXTERN    Cell *    settable[MAXCELLS];    /* table of cells whose value is set */
+EXTERN    Cell *    settable[MAX_CELLS];    /* table of cells whose value is set */
 EXTERN    Cell **    newset;        /* where to add new cells into setting table */
 EXTERN    Cell **    nextset;    /* next cell in setting table to examine */
-EXTERN  Cell *  searchtable[MAXCELLS]; /* a stack of searchlist positions */
+EXTERN  Cell *  searchtable[MAX_CELLS]; /* a stack of searchlist positions */
 EXTERN  Cell ** searchset;
 EXTERN    int    fullcolumns;    /* columns in gen 0 which are fully set */
 EXTERN  int combinedcells;
@@ -190,7 +190,7 @@ EXTERN  int differentcombinedcells;
  */
 EXTERN    Cell **    searchlist;    /* current list of cells to search */
 EXTERN    int    searchidx;      /* index of first unknown cell in searchlist[] */
-EXTERN Cell *    cellTable[MAXCELLS];    /* table of usual cells */
+EXTERN Cell *    cellTable[MAX_CELLS];    /* table of usual cells */
 
 /*
  * Table of implications.
@@ -229,5 +229,5 @@ extern void setState(Cell * const cell, const State state);
 //Bool    loadstate(void);
 //void    getbackup(char *cp);
 
-//extern int currfield[GENMAX][COLMAX][ROWMAX];
+//extern int currfield[GEN_MAX][COL_MAX][ROW_MAX];
 /* END CODE */

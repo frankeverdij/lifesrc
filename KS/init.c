@@ -26,7 +26,7 @@ initsearchorder(void)
     int gen;
     int count;
     Cell * cell;
-    Cell * table[MAXCELLS];
+    Cell * table[MAX_CELLS];
     globals_struct g;
     g.colMax = colmax;
     g.rowMax = rowmax;
@@ -111,22 +111,22 @@ initcells(void)
     /*
      * Check whether valid parameters have been set.
      */
-    if ((rowmax <= 0) || (rowmax > ROWMAX))
+    if ((rowmax <= 0) || (rowmax > ROW_MAX))
         FATAL("Row number out of range");
 
-    if ((colmax <= 0) || (colmax > COLMAX))
+    if ((colmax <= 0) || (colmax > COL_MAX))
         FATAL("Column number out of range");
 
-    if ((genmax <= 0) || (genmax > GENMAX))
+    if ((genmax <= 0) || (genmax > GEN_MAX))
         FATAL("Generation number out of range");
 
-    if ((rowtrans < -TRANSMAX) || (rowtrans > TRANSMAX))
+    if ((rowtrans < -TRANS_MAX) || (rowtrans > TRANS_MAX))
         FATAL("Row translation number out of range");
 
-    if ((coltrans < -TRANSMAX) || (coltrans > TRANSMAX))
+    if ((coltrans < -TRANS_MAX) || (coltrans > TRANS_MAX))
         FATAL("Column translation number out of range");
 
-    for (i = 0; i < MAXCELLS; i++)
+    for (i = 0; i < MAX_CELLS; i++)
         cellTable[i] = allocateCell();
 
     /*

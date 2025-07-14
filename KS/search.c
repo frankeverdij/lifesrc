@@ -550,7 +550,7 @@ getsmartunknown(void)
 
     // Prepare threshold
     threshold = smartthreshold;
-    if (threshold <= 0) threshold = MAXCELLS;
+    if (threshold <= 0) threshold = MAX_CELLS;
 
     // Prepare the dummy maximum
     max = 2; // at least 3 cells must change
@@ -638,7 +638,7 @@ getsmartunknown(void)
                 // the cell can be set only one way
                 best = cell;
                 bestchoice = smartchoice;
-                max = MAXCELLS + 1;
+                max = MAX_CELLS + 1;
                 window = 0;
             }
         }
@@ -648,7 +648,7 @@ getsmartunknown(void)
     // Found something?
     if (best != NULL)
     {
-        if (MAXCELLS >= max)
+        if (MAX_CELLS >= max)
         {
             smartstatsumwnd += wnd;
             ++smartstatsumwndc;

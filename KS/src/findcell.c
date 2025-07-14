@@ -3,7 +3,7 @@
 #include "macros.h"
 
 static int auxCellCount = 0; /* cells in auxillary table */
-static Cell * auxTable[MAXCELLS]; /* table of auxillary cells */
+static Cell * auxTable[MAX_CELLS]; /* table of auxillary cells */
 
 /*
  * Find a cell given its coordinates.
@@ -43,7 +43,7 @@ Cell * findcell(const int row, const int col, const int gen)
     /*
      * Need to allocate the cell and add it to the auxillary table.
      */
-    if (auxCellCount >= AUXCELLS)
+    if (auxCellCount >= AUX_CELLS)
         FATAL("Too many auxillary cells");
 
     cell = allocateCell();
