@@ -9,7 +9,7 @@ CFLAGS = -Ofast -MP -MMD -Wall -Wno-unused-result -fomit-frame-pointer -Iinclude
 #LDFLAGS = -lgcov
 
 SOURCES = $(wildcard src/*.c)
-SOURCES += search.c interact.c
+SOURCES += search.c interact.c init.c
 OBJECTS = $(SOURCES:.c=.o)
 DEPS = $(SOURCES:.c=.d) 
 DEPS += cursestty.d dumbtty.d
