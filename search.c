@@ -130,6 +130,12 @@ initCells(void)
     if ((colMax <= 0) || (colMax > COL_MAX))
         fatal("Column number out of range");
 
+    if ((colMax <= edgeDiagOffset) || (colMax + edgeDiagOffset <= 0))
+        fatal("Edge diagonal offset too big");
+
+    if ((edgeDiagOffset != 0) && (rowMax != colMax))
+        fatal("Edge diagonal offset set but search area is not square");
+
     if ((genMax <= 0) || (genMax > GEN_MAX))
         fatal("Generation number out of range");
 
@@ -159,6 +165,15 @@ initCells(void)
             {
                 edge = ((row == 0) || (col == 0) ||
                     (row > rowMax) || (col > colMax));
+                if (edgeDiagOffset > 0)
+                {
+                    edge |= ((row + col - 1 <= edgeDiagOffset) || ((rowMax + 1 - row) + (colMax + 1 - col) -1 <= edgeDiagOffset));
+                }
+                if (edgeDiagOffset < 0)
+                {
+                    edge |= ((row + (colMax + 1 - col) -1 <= -edgeDiagOffset) || ((rowMax + 1 - row) + col -1 <= -edgeDiagOffset));
+                }
+
 
                 cell = findCell(row, col, gen);
                 cell->gen = gen;

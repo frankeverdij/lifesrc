@@ -85,7 +85,7 @@ void alarm_handler(const int signo)
 static int * paramTable[] =
 {
     &curStatus,
-    &rowMax, &colMax, &genMax, &rowTrans, &colTrans,
+    &rowMax, &colMax, &genMax, &edgeDiagOffset, &rowTrans, &colTrans,
     &rowSym, &colSym, &pointSym, &fwdSym, &bwdSym,
     &flipRows, &flipCols, &flipFwd, &flipBwd, &flipQuads,
     &parent, &allObjects,
@@ -149,6 +149,7 @@ main(int argc, char ** argv)
     viewFreq = 10;
     dumpFreq = 0;
     colMax = 75;
+    edgeDiagOffset = 0;
 
     /*
      * Collect the command line options.
@@ -198,6 +199,13 @@ main(int argc, char ** argv)
                  * Set number of generations.
                  */
                 genMax = atoi(str);
+                break;
+
+            case 'e':
+                /*
+                 * Set offset for diagonal areas.
+                 */
+                edgeDiagOffset = atoi(str);
                 break;
 
             case 't':

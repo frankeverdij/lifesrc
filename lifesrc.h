@@ -72,6 +72,7 @@ EXTERN	Status	curStatus;	/* current status of search */
 EXTERN	int	rowMax;		/* maximum number of rows */
 EXTERN	int	colMax;		/* maximum number of columns */
 EXTERN	int	genMax;		/* maximum number of generations */
+EXTERN  int edgeDiagOffset; /* treat lower-right and upper-left corner triangles with n cell-bases as deadcells. A negative number select lower-left and upper-right triangles */
 EXTERN	int	rowTrans;	/* translation of rows */
 EXTERN	int	colTrans;	/* translation of columns */
 EXTERN	Bool	rowSym;		/* enable row symmetry starting at column */
