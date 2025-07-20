@@ -14,6 +14,7 @@
 #include "nextstate.h"
 #include "findcell.h"
 #include "setstate.h"
+#include "isedge.h"
 
 
 /*
@@ -141,20 +142,9 @@ initCells(void)
     {
         for (row = 0; row <= rowMax+1; row++)
         {
+            edge = isEdge(row, col);
             for (gen = 0; gen < genMax; gen++)
             {
-                edge = ((row == 0) || (col == 0) ||
-                    (row > rowMax) || (col > colMax));
-                if (edgeDiagOffset > 0)
-                {
-                    edge |= ((row + col - 1 <= edgeDiagOffset) || ((rowMax + 1 - row) + (colMax + 1 - col) -1 <= edgeDiagOffset));
-                }
-                if (edgeDiagOffset < 0)
-                {
-                    edge |= ((row + (colMax + 1 - col) -1 <= -edgeDiagOffset) || ((rowMax + 1 - row) + col -1 <= -edgeDiagOffset));
-                }
-
-
                 cell = findCell(row, col, gen);
                 cell->gen = gen;
                 cell->row = row;

@@ -1,6 +1,7 @@
 #include "lifesrc.h"
 #include "state.h"
 #include "tty.h"
+#include "isedge.h"
 
 static const char *ascii[128] =
     {".", "O", "\033[1m.\033[0m", "\033[1mO\033[0m", "\033[7m.\033[0m", "\033[7mO\033[0m", "\033[1m\033[7m.\033[0m", "\033[1m\033[7mO\033[0m",
@@ -53,6 +54,8 @@ void printAsc(const int gen, const Bool augment)
                 /* dim all cells not in the searchlist */
                 if (cell->index < 0) idx += 8;
             }
+            if (isEdge(row, col))
+                idx=24;
 
             ttyPrintf("%s ", ascii[idx]);
         }
