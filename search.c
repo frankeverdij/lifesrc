@@ -29,6 +29,7 @@
 #include "findcell.h"
 #include "tty.h"
 
+
 /*
  * Local procedures
  */

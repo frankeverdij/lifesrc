@@ -14,6 +14,7 @@
 #include "nextstate.h"
 #include "findcell.h"
 #include "setstate.h"
+#include "isedge.h"
 
 
 /*
@@ -110,6 +111,12 @@ initCells(void)
     if ((colMax <= 0) || (colMax > COL_MAX))
         fatal("Column number out of range");
 
+    if ((colMax <= edgeDiagOffset) || (colMax + edgeDiagOffset <= 0))
+        fatal("Edge diagonal offset too big");
+
+    if ((edgeDiagOffset != 0) && (rowMax != colMax))
+        fatal("Edge diagonal offset set but search area is not square");
+
     if ((genMax <= 0) || (genMax > GEN_MAX))
         fatal("Generation number out of range");
 
@@ -135,11 +142,9 @@ initCells(void)
     {
         for (row = 0; row <= rowMax+1; row++)
         {
+            edge = isEdge(row, col);
             for (gen = 0; gen < genMax; gen++)
             {
-                edge = ((row == 0) || (col == 0) ||
-                    (row > rowMax) || (col > colMax));
-
                 cell = findCell(row, col, gen);
                 cell->gen = gen;
                 cell->row = row;
