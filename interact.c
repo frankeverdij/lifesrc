@@ -21,6 +21,7 @@
 #include "subperiods.h"
 #include "findcell.h"
 #include "tty.h"
+#include "isedge.h"
 
 #define VERSION "3.8"
 
@@ -63,6 +64,7 @@ static Bool setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
 static void	writeGen(const char *, Bool);
+static Bool initEdgeCells(void);
 
 
 /*
@@ -544,6 +546,13 @@ main(int argc, char ** argv)
 
             baseSet = nextSet;
         }
+        else
+        {
+            if (edgeDiagOffset)
+            {
+                initEdgeCells();
+            }
+        }
     }
 
     /*
@@ -661,6 +670,33 @@ main(int argc, char ** argv)
         }
         exit(0);
     }
+}
+
+
+Bool initEdgeCells(void)
+{
+    for (int col = 1; col <= colMax; col++)
+    {
+        for (int row = 1; row <= rowMax; row++)
+        {
+            if (isEdge(row, col))
+            {
+                for (int gen = 0; gen < genMax; gen++)
+                {
+                    if (!proceed(findCell(row, col, gen), OFF, FALSE))
+                    {
+                        ttyStatus(
+                        "Inconsistent state for cell %d %d\n",
+                            row, col);
+
+                        return FALSE;
+                    }
+                }
+            }
+        }
+    }
+
+    return TRUE;
 }
 
 

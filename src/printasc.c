@@ -54,8 +54,6 @@ void printAsc(const int gen, const Bool augment)
                 /* dim all cells not in the searchlist */
                 if (cell->index < 0) idx += 8;
             }
-            if (isEdge(row, col))
-                idx=24;
 
             ttyPrintf("%s ", ascii[idx]);
         }

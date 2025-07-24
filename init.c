@@ -142,7 +142,7 @@ initCells(void)
     {
         for (row = 0; row <= rowMax+1; row++)
         {
-            edge = isEdge(row, col);
+            edge = ((row == 0) || (col == 0) || (row > rowMax) || (col > colMax));
             for (gen = 0; gen < genMax; gen++)
             {
                 cell = findCell(row, col, gen);
