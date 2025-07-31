@@ -171,9 +171,7 @@ EXTERN    Cell **    nextset;    /* next cell in setting table to examine */
 EXTERN  Cell *  searchtable[MAX_CELLS]; /* a stack of searchlist positions */
 EXTERN  Cell ** searchset;
 EXTERN    int    fullcolumns;    /* columns in gen 0 which are fully set */
-EXTERN  int combinedcells;
-EXTERN  int setcombinedcells;
-EXTERN  int differentcombinedcells;
+
 /*
  * Other local data.
  */

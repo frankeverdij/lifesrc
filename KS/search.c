@@ -447,7 +447,6 @@ getnormalunknown(void)
 static Bool getsmartnumbers(Cell * cell)
 {
     int cellno;
-    int comb0, comb1;
     Cell ** setpos;
 
     // known and inactive cells are unimportant
@@ -459,12 +458,10 @@ static Bool getsmartnumbers(Cell * cell)
     // remember cell count to calculate the change
     cellno = cellcount;
 
-    comb0 = comb1 = differentcombinedcells + setcombinedcells;
     // test the cell
     if (proceed(cell, ON, TRUE))
     {
         smartlen1 = cellcount - cellno;
-        comb1 = differentcombinedcells  + setcombinedcells - comb1;
 
         // back up
         backup(); 
@@ -474,31 +471,7 @@ static Bool getsmartnumbers(Cell * cell)
         if (proceed(cell, OFF, TRUE))
         {
             smartlen0 = cellcount - cellno;
-            comb0 = differentcombinedcells + setcombinedcells - comb0;
-
-            if (smarton)
-            {
-                if (comb0 == comb1)
-                {
-                    smartcomb = comb0;
-                    smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
-                }
-                else if (comb0 > comb1)
-                {
-                    smartcomb = comb0;
-                    smartchoice = OFF;
-                }
-                else
-                {
-                    smartcomb = comb1;
-                    smartchoice = ON;
-                }
-            }
-            else
-            {
-                smartcomb = 0;
-                smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
-            }
+            smartchoice = (smartlen1 > smartlen0) ? ON : OFF;
 
             // back up
             backup();
@@ -545,7 +518,7 @@ getsmartunknown(void)
     State bestchoice = UNK;
 
     int idx;
-    int max, window, threshold, bestlen1, bestlen0, bestcomb, wnd, n1, n2, a, b, c, d;
+    int max, window, threshold, bestlen1, bestlen0, wnd, n1, n2, a, b, c, d;
 
     // Move the searchlist over all known cells
     for (; (cell = searchlist[searchidx]); searchidx++)
@@ -567,7 +540,7 @@ getsmartunknown(void)
     max = 2; // at least 3 cells must change
     bestlen0 = 1;
     bestlen1 = 1;
-    bestcomb = 0;
+//    bestcomb = 0;
 
     best = NULL;
 
@@ -583,8 +556,8 @@ getsmartunknown(void)
         {
             if (getsmartnumbers(cell))
             {
-                if (bestcomb == smartcomb)
-                {
+//                if (bestcomb == smartcomb)
+//                {
                     // (smartlen0, smartlen1) is better than (bestlen0, bestlen1) if
                     // 1/2**smartlen0 + 1/2**smartlen1 < 1/2**bestlen0 + 1/2**bestlen1
                     // i.e.
@@ -635,7 +608,7 @@ getsmartunknown(void)
                         bestlen0 = smartlen0;
                         max = bestlen0 + bestlen1;
                     }
-                }
+/*                }
                 else if (bestcomb < smartcomb)
                 {
                     best = cell;
@@ -644,7 +617,7 @@ getsmartunknown(void)
                     bestlen1 = smartlen1;
                     bestlen0 = smartlen0;
                     max = bestlen0 + bestlen1;
-                }
+                }*/
             } else {
                 // the cell can be set only one way
                 best = cell;
