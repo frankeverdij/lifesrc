@@ -22,6 +22,17 @@
 static Cell * (*getunknown)(void);
 
 
+/*
+ * Local variables
+ */
+static int smartstatlen = 0;
+static int smartstatwnd = 0;
+static int smartstatsumlen = 0;
+static int smartstatsumwnd = 0;
+static int smartstatsumlenc = 0;
+static int smartstatsumwndc = 0;
+
+
 void setState(Cell * const cell, const State state)
 {
     /* backup previous state */
@@ -738,7 +749,7 @@ search(void)
     Bool free;
     State state;
 
-    if (smart) {
+    if (smarton) {
         getunknown = &getsmartunknown; // KAS
     } else {
         getunknown = &getnormalunknown;

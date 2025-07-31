@@ -52,26 +52,11 @@ static int * param_table[] =
     &orderwide, &ordergens, &ordermiddle, &followgens,
     &diagsort, &trans_rotate, &trans_flip, &trans_x, &trans_y,
     &knightsort, &chooseUnknown,
-    &smart, &smartwindow, &smartthreshold, 
+    &smarton, &smartwindow, &smartthreshold,
     &foundcount,
     NULL
 };
 
-void smartinit(void)
-{
-    smart = TRUE;
-    smartwindow = 50;
-    smartthreshold = 4;
-    smartstatlen = 0;
-    smartstatwnd = 0;
-    smartstatsumlen = 0;
-    smartstatsumwnd = 0;
-    smartstatsumlenc = 0;
-    smartstatsumwndc = 0;
-    smarton = TRUE;
-    combine = FALSE;
-    combining = FALSE;
-}
 
 long showcount()
 {
@@ -257,7 +242,9 @@ main(argc, argv)
                         break;
 
                     case 's':
-                        smartinit();
+                        smarton = TRUE;
+                        smartwindow = 50;
+                        smartthreshold = 4;
                         break;
 
                     case '\0':

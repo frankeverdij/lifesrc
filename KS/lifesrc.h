@@ -121,19 +121,9 @@ EXTERN    Bool    ordermiddle;    /* ordering tries middle columns first */
 EXTERN    Bool    followgens;    /* try to follow setting of other gens */
 EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
 
-EXTERN  Bool    smart;      /* use smart method (KAS) */
-EXTERN  Bool    smarton;
-EXTERN  Bool    combine;
-EXTERN  Bool    combining;
+EXTERN  Bool    smarton;      /* use smart method (KAS) */
 EXTERN  int smartwindow; /* no. of cells to check */
 EXTERN  int smartthreshold; /* check threshold */
-EXTERN  int smartstatlen;
-EXTERN  int smartstatwnd;
-EXTERN  int smartstatsumlen;
-EXTERN  int smartstatsumwnd;
-EXTERN  int smartstatsumlenc;
-EXTERN  int smartstatsumwndc;
-
 
 EXTERN  int  diagsort;       /* JES - optimize for diagonal objects */
 EXTERN  int  knightsort;     /* JES */
