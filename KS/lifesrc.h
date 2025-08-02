@@ -120,10 +120,6 @@ EXTERN  int smartthreshold; /* check threshold */
 
 EXTERN  int  diagsort;       /* JES - optimize for diagonal objects */
 EXTERN  int  knightsort;     /* JES */
-EXTERN  int  trans_rotate;   /* JES */
-EXTERN  int  trans_flip;     /* JES */
-EXTERN  int  trans_x;        /* JES */
-EXTERN  int  trans_y;        /* JES */
 
 /*
  * These values are not affected when dumping and loading since they
@@ -134,8 +130,8 @@ EXTERN    Bool    quiet;        /* don't output */
 EXTERN    Bool    debug;        /* enable debugging output (if compiled so) */
 EXTERN    Bool    quitok;        /* ok to quit without confirming */
 EXTERN    Bool    inited;        /* initialization has been done */
-EXTERN    Bool    bornrules[16];    /* rules for whether a cell is to be born */
-EXTERN    Bool    liverules[16];    /* rules for whether a live cell stays alive */
+EXTERN    State    bornrules[9];    /* rules for whether a cell is to be born */
+EXTERN    State    liverules[9];    /* rules for whether a live cell stays alive */
 EXTERN    int    curgen;        /* current generation for display */
 
 EXTERN    long    dumpfreq;    /* how often to perform dumps */

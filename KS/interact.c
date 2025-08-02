@@ -49,7 +49,7 @@ static int * param_table[] =
     &fliprows, &flipcols, &flipquads,
     &parent, &allobjects,
     &orderwide, &ordergens, &ordermiddle, &followgens,
-    &diagsort, &trans_rotate, &trans_flip, &trans_x, &trans_y,
+    &diagsort,
     &knightsort, &chooseUnknown,
     &smarton, &smartwindow, &smartthreshold,
     &foundcount,
@@ -1370,8 +1370,8 @@ setrules(cp)
 
     for (i = 0; i < 9; i++)
     {
-        bornrules[i] = FALSE;
-        liverules[i] = FALSE;
+        bornrules[i] = OFF;
+        liverules[i] = OFF;
     }
 
     if (*cp == '\0')
@@ -1405,10 +1405,10 @@ setrules(cp)
         for (i = 0; i < 9; i++)
         {
             if (bits & 0x01)
-                bornrules[i] = TRUE;
+                bornrules[i] = ON;
 
             if (bits & 0x02)
-                liverules[i] = TRUE;
+                liverules[i] = ON;
 
             bits >>= 2;
         }
@@ -1422,7 +1422,7 @@ setrules(cp)
             cp++;
 
         while ((*cp >= '0') && (*cp <= '8'))
-            bornrules[*cp++ - '0'] = TRUE;
+            bornrules[*cp++ - '0'] = ON;
 
         if ((*cp != ',') && (*cp != '/'))
             return FALSE;
@@ -1433,7 +1433,7 @@ setrules(cp)
             cp++;
 
         while ((*cp >= '0') && (*cp <= '8'))
-            liverules[*cp++ - '0'] = TRUE;
+            liverules[*cp++ - '0'] = ON;
 
         if (*cp)
             return FALSE;
@@ -1449,7 +1449,7 @@ setrules(cp)
 
     for (i = 0; i < 9; i++)
     {
-        if (bornrules[i])
+        if (bornrules[i] == ON)
             *cp++ = '0' + i;
     }
 
@@ -1458,7 +1458,7 @@ setrules(cp)
 
     for (i = 0; i < 9; i++)
     {
-        if (liverules[i])
+        if (liverules[i] == ON)
             *cp++ = '0' + i;
     }
 

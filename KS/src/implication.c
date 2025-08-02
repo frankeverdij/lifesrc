@@ -6,7 +6,7 @@
  * Initialize the implication table.
  */
 void
-initimplic(const Bool * bornrules, const Bool * liverules, FLAGS * implic)
+initimplic(const State * bornrules, const State * liverules, FLAGS * implic)
 {
     int nunk, non, noff, cunk, con, coff, funk, fon, foff, naon, caon, faon, desc;
     Bool valid, cison, cisoff, fison, fisoff, nison, nisoff;
@@ -43,10 +43,10 @@ initimplic(const Bool * bornrules, const Bool * liverules, FLAGS * implic)
                                     for (faon = fon; faon <= 1-foff; faon++) { // try future
                                         // here we have all possible states for the descriptor
                                         // now for the rules
-                                        if (((caon == 0) && (faon == 0) && !bornrules[naon]) // both dead
-                                            || ((caon != 0) && (faon == 0) && !liverules[naon]) // dying
-                                            || ((caon == 0) && (faon != 0) && bornrules[naon]) // birth
-                                            || ((caon != 0) && (faon != 0) && liverules[naon])) { // survival
+                                        if (((caon == 0) && (faon == 0) && (bornrules[naon] == OFF)) // both dead
+                                            || ((caon != 0) && (faon == 0) && (liverules[naon] == OFF)) // dying
+                                            || ((caon == 0) && (faon != 0) && (bornrules[naon] == ON)) // birth
+                                            || ((caon != 0) && (faon != 0) && (liverules[naon] == ON))) { // survival
                                             // woohoo! we got a valid state
                                             valid = TRUE;
                                             if (caon == 0) {
