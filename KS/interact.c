@@ -47,8 +47,7 @@ static int * param_table[] =
     &rowmax, &colmax, &genmax, &rowtrans, &coltrans,
     &rowsym, &colsym, &pointsym, &fwdsym, &bwdsym,
     &fliprows, &flipcols, &flipquads,
-    &parent, &allobjects, &nearcols, &maxcount,
-    &userow, &usecol, &colcells, &colwidth, &follow,
+    &parent, &allobjects,
     &orderwide, &ordergens, &ordermiddle, &followgens,
     &diagsort, &trans_rotate, &trans_flip, &trans_x, &trans_y,
     &knightsort, &chooseUnknown,
@@ -247,10 +246,6 @@ main(argc, argv)
                         smartthreshold = 4;
                         break;
 
-                    case '\0':
-                        follow = TRUE;
-                        break;
-
                     default:
                         fprintf(stderr, "Bad flip\n");
                         exit(1);
@@ -291,52 +286,6 @@ main(argc, argv)
 
                     default:
                         fprintf(stderr, "Bad symmetry\n");
-                        exit(1);
-                }
-
-                break;
-
-            case 'n':            /* near cells */
-                switch (*str++)
-                {
-                    case 'c':
-                        nearcols = atoi(str);
-                        break;
-
-                    default:
-                        fprintf(stderr, "Bad near\n");
-                        exit(1);
-                }
-
-                break;
-
-            case 'w':            /* max width */
-                switch (*str++)
-                {
-                    case 'c':
-                        colwidth = atoi(str);
-                        break;
-
-                    default:
-                        fprintf(stderr, "Bad width\n");
-                        exit(1);
-                }
-
-                break;
-
-            case 'u':            /* use row or column */
-                switch (*str++)
-                {
-                    case 'r':
-                        userow = atoi(str);
-                        break;
-
-                    case 'c':
-                        usecol = atoi(str);
-                        break;
-
-                    default:
-                        fprintf(stderr, "Bad use\n");
                         exit(1);
                 }
 
@@ -391,13 +340,11 @@ main(argc, argv)
                 break;
 
             case 'o':
-                if ((*str == '\0') || isdigit(*str))
+                if (*str == '\0')
                 {
                     /*
                      * Output file name
                      */
-                    outputcols = atol(str);
-
                     if ((argc <= 0) || (**argv == '-'))
                     {
                         fprintf(stderr,
@@ -438,24 +385,6 @@ main(argc, argv)
                             "Bad ordering option\n");
                             exit(1);
                     }
-                }
-
-                break;
-
-            case 'm':            /* max cell count */
-                switch (*str++)
-                {
-                    case 'c':
-                        colcells = atoi(str);
-                        break;
-
-                    case 't':
-                        maxcount = atoi(str);
-                        break;
-
-                    default:
-                        fprintf(stderr, "Bad maximum\n");
-                        exit(1);
                 }
 
                 break;
@@ -520,27 +449,9 @@ main(argc, argv)
         exit(1);
     }
 
-    if ((userow < 0) || (userow > rowmax))
-    {
-        fprintf(stderr, "Bad row for -ur\n");
-        exit(1);
-    }
-
-    if ((usecol < 0) || (usecol > colmax))
-    {
-        fprintf(stderr, "Bad column for -uc\n");
-        exit(1);
-    }
-
     newset = NULL;
     nextset = NULL;
-    outputlastcols = 0;
-    fullcolumns = 0;
     curstatus = OK;
-    g0oncellcount = 0; // KAS
-    cellcount = 0; // KAS
-    smartchoice = UNK; // KAS
-
     viewcount = -1; // KAS
 
 
@@ -807,9 +718,6 @@ printgen(gen)
             printf("m");
     }
 
-    if (follow)
-        printf(" -f");
-
     if (followgens)
         printf(" -fg");
 
@@ -819,24 +727,6 @@ printgen(gen)
     if (allobjects)
         printf(" -a");
 
-    if (userow)
-        printf(" -ur%d", userow);
-
-    if (usecol)
-        printf(" -uc%d", usecol);
-
-    if (nearcols)
-        printf(" -nc%d", nearcols);
-
-    if (maxcount)
-        printf(" -mt%d", maxcount);
-
-    if (colcells)
-        printf(" -mc%d", colcells);
-
-    if (colwidth)
-        printf(" -wc%d", colwidth);
-
     if (viewfreq)
         printf(" -v%ld", viewfreq / VIEWMULT);
 
@@ -845,10 +735,7 @@ printgen(gen)
 
     if (outputfile)
     {
-        if (outputcols)
-            printf(" -o%d %s", outputcols, outputfile);
-        else
-            printf(" -o %s", outputfile);
+        printf(" -o %s", outputfile);
 
         if (foundcount)
             printf(" [%d]", foundcount);

@@ -7,7 +7,7 @@
 /*
  * Information about one cell of the search.
  */
-typedef    char        PACKED_BOOL;
+typedef    unsigned char cellFlags;
 typedef    struct Cell Cell;
 
 struct Cell
@@ -19,10 +19,10 @@ struct Cell
     // it makes one byte
     // let's align the address before the pointers start
 
-    PACKED_BOOL free;    /* TRUE if this cell still has free choice */
-    PACKED_BOOL frozen;    /* TRUE if this cell is frozen in all gens */
-    PACKED_BOOL active; /* FALSE if mirror by a symmetry */
-    PACKED_BOOL choose; /* TRUE for unchecked cells */
+    cellFlags free;    /* TRUE if this cell still has free choice */
+    cellFlags frozen;    /* TRUE if this cell is frozen in all gens */
+    cellFlags active; /* FALSE if mirror by a symmetry */
+    cellFlags choose; /* TRUE for unchecked cells */
 
     // aligned to two bytes - let's round it up to four
 

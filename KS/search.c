@@ -32,6 +32,13 @@ static int smartstatsumwnd = 0;
 static int smartstatsumlenc = 0;
 static int smartstatsumwndc = 0;
 
+static State smartchoice = UNK;
+static int smartlen0;
+static int smartlen1;
+
+static int cellcount = 0; /* number of set cells */
+static State prevstate; /* the state of the last free cell before backup() */
+
 
 void setState(Cell * const cell, const State state)
 {
