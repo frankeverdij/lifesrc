@@ -4,6 +4,7 @@
  */
  
 #define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,6 +100,11 @@ EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OF
 EXTERN  long stepConfl; /* step counter for one Proceed-Backup action */
 EXTERN  int sortOrder; /* sort direction */
 
+EXTERN Bool smartOn;      /* use smart method (KAS) */
+EXTERN  int smartWindow; /* no. of cells to check */
+EXTERN  int smartThreshold; /* check threshold */
+
+
 /*
  * These values are not affected when dumping and loading since they
  * do not affect the status of a search in progress.
@@ -126,7 +132,8 @@ EXTERN	Cell *	setTable[MAX_CELLS];	/* table of cells whose value is set */
 EXTERN	Cell **	newSet;		/* where to add new cells into setting table */
 EXTERN	Cell **	nextSet;	/* next cell in setting table to examine */
 EXTERN	Cell **	baseSet;	/* base of changeable part of setting table */
-EXTERN  Cell * cellTable[MAX_CELLS]; /* table of usual cells */
+EXTERN  Cell *  searchTable[MAX_CELLS]; /* a stack of searchlist positions */
+EXTERN  Cell ** searchSet;
 
 
 /*

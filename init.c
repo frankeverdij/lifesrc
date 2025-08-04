@@ -11,6 +11,7 @@
 #include "flags.h"
 #include "transition.h"
 #include "implication.h"
+#include "implicationKS.h"
 #include "nextstate.h"
 #include "findcell.h"
 #include "setstate.h"
@@ -30,7 +31,9 @@ initSearchOrder(void)
     int col;
     int gen;
     int count;
+    Cell * cell;
     Cell * table[MAX_CELLS];
+
     globals_struct g;
     g.colMax = colMax;
     g.rowMax = rowMax;
@@ -47,22 +50,32 @@ initSearchOrder(void)
     count = 0;
 
     for (gen = 0; gen < genMax; gen++)
-        for (col = 1; col <= colMax; col++)
-            for (row = 1; row <= rowMax; row++)
     {
-        if (rowSym && (col >= rowSym) && (row * 2 > rowMax + 1))
-            continue;
+        for (col = 1; col <= colMax; col++)
+        {
+            for (row = 1; row <= rowMax; row++)
+            {
+                cell = findCell(row, col,gen);
+                if (smartOn)
+                {
+                    if (!((cell->active) && (cell->state == UNK) && (cell->choose)))
+                        continue;
+                } else {
+                    if (rowSym && (col >= rowSym) && (row * 2 > rowMax + 1))
+                        continue;
 
-        if (colSym && (row >= colSym) && (col * 2 > colMax + 1))
-            continue;
+                    if (colSym && (row >= colSym) && (col * 2 > colMax + 1))
+                        continue;
 
-        if (fwdSym && (colMax + 1 > row + col))
-            continue;
+                    if (fwdSym && (colMax + 1 > row + col))
+                        continue;
 
-        if (bwdSym && (col > row ))
-            continue;
-
-        table[count++] = findCell(row, col, gen);
+                    if (bwdSym && (col > row ))
+                        continue;
+                }
+                table[count++] = cell;
+            }
+        }
     }
 
     /*
@@ -149,6 +162,8 @@ initCells(void)
                 cell->gen = gen;
                 cell->row = row;
                 cell->col = col;
+
+                cell->active = TRUE;
                 cell->choose = TRUE;
 
                 /*
@@ -188,6 +203,37 @@ initCells(void)
         }
     }
 
+    if (smartOn)
+    {
+        /*
+         * Now for the symmetry
+         * Let's look for all loops
+         * and select one cell from each loop as active
+         */
+
+        for (col = 1; col <= colMax; col++)
+        {
+            for (row = 1; row <= rowMax; row++)
+            {
+                for (gen = 0; gen < genMax; gen++)
+                {
+                    cell = findCell(row, col, gen);
+
+                    if (cell->active)
+                    {
+                        cell2 = cell->loop;
+                        while (cell2 != cell)
+                        {
+                            cell2->active = FALSE;
+                            cell2 = cell2->loop;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     /*
      * If there is a non-standard mapping between the last generation
      * and the first generation, then change the future and past pointers
@@ -199,10 +245,13 @@ initCells(void)
         {
             for (col = 0; col <= colMax+1; col++)
             {
-                cell = findCell(row, col, genMax - 1);
-                cell2 = mapCell(cell, TRUE);
-                cell->future = cell2;
-                cell2->past = cell;
+                if (!smartOn)
+                {
+                    cell = findCell(row, col, genMax - 1);
+                    cell2 = mapCell(cell, TRUE);
+                    cell->future = cell2;
+                    cell2->past = cell;
+                }
 
                 cell = findCell(row, col, 0);
                 cell2 = mapCell(cell, FALSE);
@@ -217,11 +266,17 @@ initCells(void)
     newSet = setTable;
     nextSet = setTable;
     baseSet = setTable;
+    searchSet = searchTable;
 
     stepConfl = 0;
     curGen = 0;
     curStatus = OK;
-    initNextState(bornRules, liveRules);
-    initTransit(transit);
-    initImplic(implic);
+    if (smartOn)
+    {
+        initImplicKS(bornRules, liveRules, implic);
+    } else {
+        initNextState(bornRules, liveRules);
+        initTransit(transit);
+        initImplic(implic);
+    }
 }
