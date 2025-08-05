@@ -117,7 +117,6 @@ EXTERN	Bool	inited;		/* initialization has been done */
 EXTERN	State	bornRules[9];	/* rules for whether a cell is to be born */
 EXTERN	State	liveRules[9];	/* rules for whether a live cell stays alive */
 EXTERN	int	curGen;		/* current generation for display */
-EXTERN	int	cellCount;	/* number of live cells in generation 0 */
 
 EXTERN	sig_atomic_t	dumpFlag;	/* sigaction flag for dumps */
 EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
