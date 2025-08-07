@@ -94,7 +94,6 @@ rescell(Cell * cell)
 Bool
 setcell(Cell * cell, State state, Bool free)
 {
-    Cell * c1, * c2;
     if (cell->state == state)
     {
         DPRINTF("setcell %d %d %d to state %s already set\n",
@@ -104,44 +103,45 @@ setcell(Cell * cell, State state, Bool free)
         return TRUE;
     }
 
-    if (cell->state != UNK)
+    if (cell->state == UNK)
     {
-        DPRINTF("setcell %d %d %d to state %s inconsistent\n",
+        DPRINTF("setCell %d %d %d to %s, %s successful\n",
             cell->row, cell->col, cell->gen,
-            (state == ON) ? "on" : "off");
+            (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
-        return FALSE;
+        Cell * c1 = cell, * c2;
+
+        do {
+            setState(cell, state);
+            cell->free = free;
+
+            if (cell->active) {
+                *newset++ = cell;
+                *searchset++ = searchlist[searchidx];
+
+                for (; (c2 = searchlist[searchidx]); searchidx++)
+                {
+                    if (c2->state == UNK)
+                    {
+                        break;
+                    }
+                }
+                free = FALSE; // all following cells in the loop are not free
+
+            }
+            cell = cell->loop;
+        } while (c1 != cell);
+
+        ++cellcount; // take whole loop as a single cell
+
+        return TRUE;
     }
 
-    c1 = cell;
-
-    DPRINTF("setCell %d %d %d to %s, %s successful\n",
+    DPRINTF("setcell %d %d %d to state %s inconsistent\n",
         cell->row, cell->col, cell->gen,
-        (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
+        (state == ON) ? "on" : "off");
 
-    do {
-        setState(cell, state);
-        cell->free = free;
-
-        if (cell->active) {
-            *newset++ = cell;
-            *searchset++ = searchlist[searchidx];
-            for (; (c2 = searchlist[searchidx]); searchidx++)
-            {
-                if (c2->state == UNK)
-                {
-                    break;
-                }
-            }
-            free = FALSE; // all following cells in the loop are not free
-
-        }
-        cell = cell->loop;
-    } while (c1 != cell);
-
-    ++cellcount; // take whole loop as a single cell
-
-    return TRUE;
+    return FALSE;
 }
 
 
