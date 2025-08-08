@@ -85,6 +85,35 @@ rescell(Cell * cell)
 }
 
 
+void shortsetcell(Cell * cell, const State state, Bool free)
+{
+    Cell * c1 = cell, * c2;
+
+    do {
+        setState(cell, state);
+        cell->free = free;
+
+        if (cell->active) {
+            *newset++ = cell;
+            *searchset++ = searchlist[searchidx];
+            for (; (c2 = searchlist[searchidx]); searchidx++)
+            {
+                if (c2->state == UNK)
+                {
+                    break;
+                }
+            }
+            free = FALSE;
+        }
+        cell = cell->loop;
+    } while (c1 != cell);
+
+    ++cellcount; // take whole loop as a single cell
+
+    return;
+}
+
+
 /*
  * Set the state of a cell to the specified state.
  * The state is either ON or OFF.
@@ -109,30 +138,7 @@ setcell(Cell * cell, State state, Bool free)
             cell->row, cell->col, cell->gen,
             (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
 
-        Cell * c1 = cell, * c2;
-
-        do {
-            setState(cell, state);
-            cell->free = free;
-
-            if (cell->active) {
-                *newset++ = cell;
-                *searchset++ = searchlist[searchidx];
-
-                for (; (c2 = searchlist[searchidx]); searchidx++)
-                {
-                    if (c2->state == UNK)
-                    {
-                        break;
-                    }
-                }
-                free = FALSE; // all following cells in the loop are not free
-
-            }
-            cell = cell->loop;
-        } while (c1 != cell);
-
-        ++cellcount; // take whole loop as a single cell
+        shortsetcell(cell, state, free);
 
         return TRUE;
     }
@@ -144,33 +150,6 @@ setcell(Cell * cell, State state, Bool free)
     return FALSE;
 }
 
-
-void shortsetcell(Cell * cell, const State state)
-{
-    Cell * c1 = cell, * c2;
-
-    do {
-        setState(cell, state);
-        cell->free = FALSE;
-
-        if (cell->active) {
-            *newset++ = cell;
-            *searchset++ = searchlist[searchidx];
-            for (; (c2 = searchlist[searchidx]); searchidx++)
-            {
-                if (c2->state == UNK)
-                {
-                    break;
-                }
-            }
-        }
-        cell = cell->loop;
-    } while (c1 != cell);
-
-    ++cellcount; // take whole loop as a single cell
-
-    return;
-}
 
 /*
  * Calculate the current descriptor for a cell.
@@ -235,21 +214,21 @@ static Bool consistify(Cell * cell)
             prevcell->row, prevcell->col, prevcell->gen, (state == ON) ? "on" : "off");
 
         if (prevcell->cul->state == UNK)
-            shortsetcell(prevcell->cul, state);
+            shortsetcell(prevcell->cul, state, FALSE);
         if (prevcell->cu->state == UNK)
-            shortsetcell(prevcell->cu, state);
+            shortsetcell(prevcell->cu, state, FALSE);
         if (prevcell->cur->state == UNK)
-            shortsetcell(prevcell->cur, state);
+            shortsetcell(prevcell->cur, state, FALSE);
         if (prevcell->cl->state == UNK)
-            shortsetcell(prevcell->cl, state);
+            shortsetcell(prevcell->cl, state, FALSE);
         if (prevcell->cr->state == UNK)
-            shortsetcell(prevcell->cr, state);
+            shortsetcell(prevcell->cr, state, FALSE);
         if (prevcell->cdl->state == UNK)
-            shortsetcell(prevcell->cdl, state);
+            shortsetcell(prevcell->cdl, state, FALSE);
         if (prevcell->cd->state == UNK)
-            shortsetcell(prevcell->cd, state);
+            shortsetcell(prevcell->cd, state, FALSE);
         if (prevcell->cdr->state == UNK)
-            shortsetcell(prevcell->cdr, state);
+            shortsetcell(prevcell->cdr, state, FALSE);
     }
 
     DPRINTF("Implications successful for prevCell %d %d %d %d\n", prevcell->row, prevcell->col, prevcell->gen, prevcell->state);
