@@ -14,8 +14,27 @@
 #include "implicationKS.h"
 #include "nextstate.h"
 #include "findcell.h"
-#include "setstate.h"
 #include "isedge.h"
+
+
+static void setState(Cell * const cell, const State state)
+{
+    /* backup previous state */
+    int diffState = state - cell->state;
+    /* set cell state */
+    cell->state = state;
+    /* correct the neighbor sum for cells touching this cell */
+    cell->cul->sumNear += diffState;
+    cell->cu->sumNear += diffState;
+    cell->cur->sumNear += diffState;
+    cell->cl->sumNear += diffState;
+    cell->cr->sumNear += diffState;
+    cell->cdl->sumNear += diffState;
+    cell->cd->sumNear += diffState;
+    cell->cdr->sumNear += diffState;
+
+    return;
+}
 
 
 /*
@@ -143,10 +162,10 @@ initCells(void)
      * The first allocation of a cell MUST be deadCell.
      * Then allocate the cells in the cell table.
      */
-    allocateCell();
+    allocateCell(smartOn);
 
     for (i = 0; i < MAX_CELLS; i++)
-        cellTable[i] = allocateCell();
+        cellTable[i] = allocateCell(smartOn);
 
     /*
      * Link the cells together.
@@ -197,7 +216,7 @@ initCells(void)
                 if ((rowSym || colSym || pointSym ||
                     fwdSym || bwdSym) && !edge)
                 {
-                    loopCells(cell, symCell(cell));
+                    loopCells(smartOn, cell, symCell(cell));
                 }
             }
         }

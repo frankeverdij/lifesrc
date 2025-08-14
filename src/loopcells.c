@@ -12,20 +12,23 @@
  * If any cells in the loop are frozen, then they all are.
  */
 void
-loopCells(Cell * cell1, Cell * cell2)
+loopCells(const Bool smartOn, Cell * cell1, Cell * cell2)
 {
     Cell * cell;
     Bool frozen;
 
+    if (cell2 == NULL) return;
+
+    if (cell1 == cell2) return;
+
+    if (!smartOn)
+    {
     /*
      * Check simple cases of equality, or of either cell
      * being the deadCell.
      */
     if ((cell1 == deadCell) || (cell2 == deadCell))
         FATAL("Attemping to use deadCell in a loop\n");
-
-    if (cell1 == cell2)
-        return;
 
     /*
      * Make the cells belong to their own loop if required.
@@ -36,7 +39,7 @@ loopCells(Cell * cell1, Cell * cell2)
 
     if (cell2->loop == NULL)
         cell2->loop = cell2;
-
+    }
     /*
      * See if the second cell is already part of the first cell's loop.
      * If so, they they are already joined.  We don't need to
@@ -44,8 +47,7 @@ loopCells(Cell * cell1, Cell * cell2)
      */
     for (cell = cell1->loop; cell != cell1; cell = cell->loop)
     {
-        if (cell == cell2)
-            return;
+        if (cell == cell2) return;
     }
 
     /*

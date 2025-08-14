@@ -13,7 +13,7 @@ static int    newCellCount = 0;  /* amount of allocated cells in block */
  * The cell is initialized as if it was a boundary cell.
  * Warning: The first allocation MUST be of the deadCell.
  */
-Cell * allocateCell(void)
+Cell * allocateCell(const Bool isSmart)
 {
     Cell * cell;
 
@@ -45,12 +45,27 @@ Cell * allocateCell(void)
     cell->state = OFF;
     cell->free = FALSE;
     cell->frozen = FALSE;
+    cell->active = TRUE;
     cell->choose = TRUE;
     cell->gen = -1;
     cell->row = -1;
     cell->col = -1;
     cell->sumNear = 0;
     cell->index = -1;
+    if (isSmart)
+    {
+    cell->past = cell;
+    cell->future = cell;
+    cell->cul = cell;
+    cell->cu = cell;
+    cell->cur = cell;
+    cell->cl = cell;
+    cell->cr = cell;
+    cell->cdl = cell;
+    cell->cd = cell;
+    cell->cdr = cell;
+	cell->loop = cell;
+    } else {
     cell->past = deadCell;
     cell->future = deadCell;
     cell->cul = deadCell;
@@ -62,6 +77,7 @@ Cell * allocateCell(void)
     cell->cd = deadCell;
     cell->cdr = deadCell;
     cell->loop = NULL;
+    }
 
     return cell;
 }

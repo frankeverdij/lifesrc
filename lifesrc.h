@@ -122,6 +122,7 @@ EXTERN	sig_atomic_t	dumpFlag;	/* sigaction flag for dumps */
 EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
 EXTERN	char *	outputFile;	/* file to output results to */
+EXTERN    long    viewcount;    /* counter for viewing */
 
 
 /*
@@ -166,13 +167,16 @@ extern	void	getCommands(void);
 extern	void	initCells(void);
 extern	void	printGen(int);
 extern	void	dumpState(const char *);
-extern	Status	search(const Bool);
-extern	Bool	proceed(Cell *, State, Bool);
-extern	Bool	go(Cell *, State, Bool);
-extern	Bool	setCell(Cell * const , const State, const Bool);
 extern	Cell *	findCell(int, int, int);
-extern	Cell *	backup(void);
 extern	void	fatal(const char *);
 extern  void    dumparray(void);
+extern	Status	Search(const Bool);
+extern	Status	search(const Bool);
+extern	Bool	Proceed(Cell *, State, Bool);
+extern	Bool	proceed(Cell *, State, Bool);
+extern	Bool	setCell(Cell * const , const State, const Bool);
+extern	Bool	setcell(Cell * const , const State, const Bool);
+extern	Cell *	Backup(void);
+extern	Cell *	backup(void);
 
 /* END CODE */

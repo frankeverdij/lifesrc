@@ -50,7 +50,6 @@ static	int	viewFreq;	/* how often to view results in seconds */
  */
 static void usage(void);
 static void getSetting(const char *);
-static void getBackup(const char *);
 static void getClear(const char *);
 static void getExclude(const char *);
 static void getFreeze(const char *);
@@ -63,6 +62,10 @@ static Bool setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
 static void	writeGen(const char *, Bool);
+
+static Status (*pSearch)(const Bool);
+static Bool (*pProceed)(Cell *, State, Bool);
+static Bool (*pSetCell)(Cell * const , const State, const Bool);
 
 
 /*
@@ -107,6 +110,10 @@ main(int argc, char ** argv)
     const char * str;
 
     size_t asize = 1;
+
+    pProceed = &Proceed;
+    pSearch = &Search;
+    pSetCell = &setCell;
 
     setSigaction(&actDump, SIGUSR1, &alarm_handler);
     setSigaction(&actView, SIGUSR2, &alarm_handler);
@@ -268,6 +275,15 @@ main(int argc, char ** argv)
 
                     case 'o':
                         chooseUnknown = ON;
+                        break;
+
+                    case 's':
+                        smartOn = TRUE;
+                        smartWindow = 50;
+                        smartThreshold = 4;
+                        pProceed = &proceed;
+                        pSearch = &search;
+                        pSetCell = &setcell;
                         break;
 
                     default:
@@ -593,7 +609,7 @@ main(int argc, char ** argv)
     {
         if (curStatus == OK)
         {
-            curStatus = search(noWait);
+            curStatus = pSearch(noWait);
             time(&end);
             dif = end - startTime;
             secToHMS(dif, timeBuf);
@@ -719,13 +735,6 @@ getCommands(void)
                  * Add a cell setting.
                  */
                 getSetting(cp);
-                break;
-
-            case 'b':
-                /*
-                 * Back up the search.
-                 */
-                getBackup(cp);
                 break;
 
             case 'c':
@@ -865,7 +874,7 @@ getSetting(const char * cp)
         return;
     }
 
-    if (!proceed(findCell(row, col, curGen), state, FALSE))
+    if (!pProceed(findCell(row, col, curGen), state, FALSE))
     {
         ttyStatus("Inconsistent state for cell\n");
 
@@ -873,74 +882,6 @@ getSetting(const char * cp)
     }
 
     baseSet = nextSet;
-    printGen(curGen);
-}
-
-
-/*
- * Backup the search to the nth latest free choice.
- * Notice: This skips examinination of some of the possibilities, thus
- * maybe missing a solution.  Therefore this should only be used when it
- * is obvious that the current search state is useless.
- */
-static void
-getBackup(const char * cp)
-{
-    Cell * cell;
-    State state;
-    int count;
-    int blanksToo;
-
-    blanksToo = TRUE;
-#if 0
-    /*
-     * This doesn't work!
-     */
-    blanksToo = FALSE;
-
-    if (*cp == 'b')
-    {
-        blanksToo = TRUE;
-        cp++;
-    }
-#endif
-    count = getNum(&cp, 0);
-
-    if ((count <= 0) || *cp)
-    {
-        ttyStatus("Must back up at least one cell\n");
-
-        return;
-    }
-
-    while (count > 0)
-    {
-        cell = backup();
-
-        if (cell == NULL)
-        {
-            printGen(curGen);
-            ttyStatus("Backed up over all possibilities\n");
-
-            return;
-        }
-
-        state = 1 - cell->state;
-
-        if (blanksToo || (state == ON))
-            count--;
-
-        setState(cell, UNK);
-
-        if (!go(cell, state, FALSE))
-        {
-            printGen(curGen);
-            ttyStatus("Backed up over all possibilities\n");
-
-            return;
-        }
-    }
-
     printGen(curGen);
 }
 
@@ -1021,7 +962,7 @@ getClear(const char * cp)
                 if (cell->state != UNK)
                     continue;
 
-                if (!proceed(cell, OFF, FALSE))
+                if (!pProceed(cell, OFF, FALSE))
                 {
                     ttyStatus("Inconsistent state for cell\n");
 
@@ -1199,7 +1140,7 @@ freezeCell(int row, int col)
 
         cell->frozen = TRUE;
 
-        loopCells(cell0, cell);
+        loopCells(smartOn, cell0, cell);
     }
 }
 
@@ -1664,7 +1605,7 @@ loadState(const char * file)
 
         cell = findCell(row, col, gen);
 
-        if (!setCell(cell, state, free))
+        if (!pSetCell(cell, state, free))
         {
             ttyStatus(
                 "Inconsistently setting cell at r%d c%d g%d \n",
@@ -1865,7 +1806,7 @@ readFile(const char * file)
 
             for (gen = minGen; gen <= maxGen; gen++)
             {
-                if (!proceed(findCell(row, col, gen),
+                if (!pProceed(findCell(row, col, gen),
                     state, FALSE))
                 {
                     ttyStatus(

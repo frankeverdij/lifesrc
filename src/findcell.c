@@ -45,7 +45,7 @@ Cell * findCell(const int row, const int col, const int gen)
     if (auxCellCount >= AUX_CELLS)
         fatal("Too many auxillary cells");
 
-    cell = allocateCell();
+    cell = allocateCell(smartOn);
     cell->row = row;
     cell->col = col;
     cell->gen = gen;

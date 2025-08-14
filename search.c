@@ -20,7 +20,6 @@
 #include "nextstate.h"
 #include "description.h"
 #include "sortorder.h"
-#include "setstate.h"
 #include "loopcells.h"
 #include "allocatecell.h"
 #include "linkcell.h"
@@ -28,12 +27,6 @@
 #include "mapcell.h"
 #include "findcell.h"
 #include "tty.h"
-
-
-/*
- * Local procedures
- */
-static Cell * (*getUnknown)(void);
 
 
 /*
@@ -54,7 +47,7 @@ static int cellCount = 0; /* number of set cells */
 static State prevState; /* the state of the last free cell before backup() */
 
 
-void setState(Cell * const cell, const State state)
+static void setState(Cell * const cell, const State state)
 {
     /* backup previous state */
     int diffState = state - cell->state;
@@ -367,7 +360,7 @@ examineNext(void)
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
 Bool
-proceed(Cell * cell, const State state, const Bool free)
+Proceed(Cell * cell, const State state, const Bool free)
 {
     int status;
 
@@ -388,7 +381,7 @@ proceed(Cell * cell, const State state, const Bool free)
  * Returns NULL on an "object cannot exist" error.
  */
 Cell *
-backup(void)
+Backup(void)
 {
     Cell * cell;
 
@@ -427,20 +420,20 @@ backup(void)
  * Do checking based on setting the specified cell.
  * Returns ERROR if an inconsistency was found.
  */
-Bool
+static Bool
 go(Cell * cell, State state, Bool free)
 {
     quitOk = FALSE;
 
     for (;;)
     {
-        if (proceed(cell, state, free))
+        if (Proceed(cell, state, free))
         {
             return TRUE;
         }
 
         ++stepConfl;
-        cell = backup();
+        cell = Backup();
 
         if (cell == NULL)
         {
@@ -499,22 +492,22 @@ static Bool getSmartNumbers(Cell * cell)
     cellno = cellCount;
 
     // test the cell
-    if (proceed(cell, ON, TRUE))
+    if (Proceed(cell, ON, TRUE))
     {
         smartLen1 = cellCount - cellno;
 
         // back up
-        backup();
+        Backup();
 
         // and now let's try the OFF choice
 
-        if (proceed(cell, OFF, TRUE))
+        if (Proceed(cell, OFF, TRUE))
         {
             smartLen0 = cellCount - cellno;
             smartChoice = (smartLen1 > smartLen0) ? ON : OFF;
 
             // back up
-            backup();
+            Backup();
 
             return TRUE;
 
@@ -524,7 +517,7 @@ static Bool getSmartNumbers(Cell * cell)
             smartChoice = OFF;
 
             // back up if something changed
-            if (setpos != newSet) backup();
+            if (setpos != newSet) Backup();
 
             return FALSE;
         }
@@ -535,7 +528,7 @@ static Bool getSmartNumbers(Cell * cell)
         smartChoice = ON;
 
         // back up if something changed
-        if (setpos != newSet) backup();
+        if (setpos != newSet) Backup();
 
         return FALSE;
 
@@ -756,23 +749,17 @@ choose(const Cell * cell)
  * Returns if an object is found, or is impossible.
  */
 Status
-search(const Bool batch)
+Search(const Bool batch)
 {
     Cell * cell;
     Bool free;
     State state;
 
-    if (smartOn) {
-        getUnknown = &getSmartUnknown;
-    } else {
-        getUnknown = &getNormalUnknown;
-    }
-
-    cell = (*getUnknown)();
+    cell = getNormalUnknown();
 
     if (cell == NULL)
     {
-        cell = backup();
+        cell = Backup();
 
         if (cell == NULL)
             return ERROR;
@@ -825,7 +812,7 @@ search(const Bool batch)
         /*
          * Get the next unknown cell and choose its state.
          */
-        cell = (*getUnknown)();
+        cell = getNormalUnknown();
 
         if (cell == NULL)
             return FOUND;
