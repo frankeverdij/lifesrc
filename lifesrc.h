@@ -165,6 +165,7 @@ EXTERN Flags implic[TRIMSIZE];
  */
 extern	void	getCommands(void);
 extern	void	initCells(void);
+extern	void	initSearchOrder(void);
 extern	void	printGen(int);
 extern	void	dumpState(const char *);
 extern	Cell *	findCell(int, int, int);

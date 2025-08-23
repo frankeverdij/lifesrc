@@ -65,6 +65,7 @@ static void	writeGen(const char *, Bool);
 
 static Status (*pSearch)(const Bool);
 static Bool (*pProceed)(Cell *, State, Bool);
+static Cell * (*pBackup)(void);
 static Bool (*pSetCell)(Cell * const , const State, const Bool);
 
 
@@ -97,6 +98,78 @@ static int * paramTable[] =
 };
 
 
+// copy my format to dbells format...
+// ... and make a backup of the current state (KAS)
+Bool set_initial_cells(void)
+{
+    Cell * cell;
+    Cell ** setpos;
+    Bool change;
+    int i,j,g;
+
+    newSet = setTable;
+    nextSet = setTable;
+
+    // now let's try all UNK cells for ON and OFF state
+    // set those which allow only one
+
+    setpos = newSet;
+    do {
+        change = FALSE;
+        for(g=0;g<genMax;g++)
+        {
+            for(i=0;i<colMax;i++)
+            {
+                for(j=0;j<rowMax;j++)
+                {
+                    cell = findCell(j+1,i+1,g);
+                    if (cell->active && (cell->state == UNK))
+                    {
+                        if (pProceed(cell, OFF, TRUE))
+                        {
+                            pBackup();
+                            if (pProceed(cell, ON, TRUE))
+                            {
+                                pBackup();
+                            } else {
+                                // OFF possible, ON impossible
+                                if (setpos != newSet) pBackup();
+                                if (pProceed(cell, OFF, TRUE))
+                                {
+                                    change = TRUE;
+                                } else {
+                                    // we should never get here
+                                    // because it's already tested that the OFF state is possible
+                                    printf("Program inconsistency found\n");
+                                    return FALSE;
+                                }
+                            }
+                        } else {
+                            // can't set OFF state
+                            // let's try ON state
+                            if (setpos != newSet) pBackup();
+                            if (pProceed(cell, ON, TRUE))
+                            {
+                                change = TRUE;
+                            } else {
+                                // can't set neither ON nor OFF state
+                                printf("Inconsistent UNK state for cell (col %d,row %d,gen %d)\n",i+1,j+1,g);
+                                return FALSE;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } while (change);
+
+    newSet = setTable;
+    nextSet = setTable;
+
+    return TRUE;
+}
+
+
 int
 main(int argc, char ** argv)
 {
@@ -112,6 +185,7 @@ main(int argc, char ** argv)
     size_t asize = 1;
 
     pProceed = &Proceed;
+    pBackup = &Backup;
     pSearch = &Search;
     pSetCell = &setCell;
 
@@ -239,22 +313,16 @@ main(int argc, char ** argv)
                 /*
                  * Flip cells around an axis.
                  */
+                while (*str)
+                {
                 switch (*str++)
                 {
                     case 'r':
                         flipRows = 1;
-
-                        if (*str)
-                            flipRows = atoi(str);
-
                         break;
 
                     case 'c':
                         flipCols = 1;
-
-                        if (*str)
-                            flipCols = atoi(str);
-
                         break;
 
                     case 'f':
@@ -282,12 +350,14 @@ main(int argc, char ** argv)
                         smartWindow = 50;
                         smartThreshold = 4;
                         pProceed = &proceed;
+                        pBackup = &backup;
                         pSearch = &search;
                         pSetCell = &setcell;
                         break;
 
                     default:
                         fatal("Bad flip");
+                }
                 }
 
                 break;
@@ -559,6 +629,17 @@ main(int argc, char ** argv)
             }
 
             baseSet = nextSet;
+        }
+        if (smartOn)
+        {
+            set_initial_cells();
+
+            /*
+             * set_initial_cells() cannot be called if the searchlist is not
+             * initialised, but then set cells will not be excluded from the
+             * searchlist, so let's call initsearchorder() again.
+             */
+            initSearchOrder();
         }
     }
 

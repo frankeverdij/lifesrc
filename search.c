@@ -346,7 +346,7 @@ examineNext(void)
         cell->row, cell->col, cell->gen,
         (cell->free ? "free" : "forced"));
 
-    if (!smartOn && cell->loop && (!setCell(cell->loop, cell->state, FALSE)))
+    if (cell->loop && (!setCell(cell->loop, cell->state, FALSE)))
     {
         return ERROR;
     }
@@ -715,12 +715,6 @@ getSmartUnknown(void)
 static State
 choose(const Cell * cell)
 {
-    /*
-     * if something pre-set by the select algorithm,
-     * use the selection
-     */
-    if (smartChoice != UNK) return smartChoice;
-
     /*
      * If we are following cells in other generations,
      * then try to do that.
