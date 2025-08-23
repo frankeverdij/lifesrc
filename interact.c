@@ -184,6 +184,15 @@ main(int argc, char ** argv)
 
     size_t asize = 1;
 
+    /*
+     * Set a couple of defaults.
+     */
+    viewFreq = 10;
+    dumpFreq = 0;
+    colMax = 75;
+    edgeDiagOffset = 0;
+    smartOn = 0;
+
     pProceed = &Proceed;
     pBackup = &Backup;
     pSearch = &Search;
@@ -223,14 +232,6 @@ main(int argc, char ** argv)
 
     if (!setRules("3/23"))
         fatal("Cannot set Life rules!");
-
-    /*
-     * Set a couple of defaults.
-     */
-    viewFreq = 10;
-    dumpFreq = 0;
-    colMax = 75;
-    edgeDiagOffset = 0;
 
     /*
      * Collect the command line options.
@@ -346,9 +347,11 @@ main(int argc, char ** argv)
                         break;
 
                     case 's':
-                        smartOn = TRUE;
+                        smartOn += 1;
                         smartWindow = 50;
                         smartThreshold = 4;
+                    case 'k':
+                        smartOn += 1;
                         pProceed = &proceed;
                         pBackup = &backup;
                         pSearch = &search;

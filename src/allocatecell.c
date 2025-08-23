@@ -13,7 +13,7 @@ static int    newCellCount = 0;  /* amount of allocated cells in block */
  * The cell is initialized as if it was a boundary cell.
  * Warning: The first allocation MUST be of the deadCell.
  */
-Cell * allocateCell(const Bool isSmart)
+Cell * allocateCell(const int isSmart)
 {
     Cell * cell;
 

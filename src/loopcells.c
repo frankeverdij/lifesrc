@@ -12,7 +12,7 @@
  * If any cells in the loop are frozen, then they all are.
  */
 void
-loopCells(const Bool smartOn, Cell * cell1, Cell * cell2)
+loopCells(const int smartOn, Cell * cell1, Cell * cell2)
 {
     Cell * cell;
     Bool frozen;

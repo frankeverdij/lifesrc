@@ -4,6 +4,6 @@
 #include "cell.h"
 #include "enums.h"
 
-void loopCells(const Bool, Cell * cell1, Cell * cell2);
+void loopCells(const int, Cell * cell1, Cell * cell2);
 
 #endif /* LOOPCELLS_H */

@@ -100,7 +100,12 @@ EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OF
 EXTERN  long stepConfl; /* step counter for one Proceed-Backup action */
 EXTERN  int sortOrder; /* sort direction */
 
-EXTERN Bool smartOn;      /* use smart method (KAS) */
+EXTERN  int smartOn;      /*
+                           * use smart method (KAS):
+                           * 0 = classic JS method with getNormalUnknown()
+                           * 1 = KS method with getnormalunknown()
+                           * 2 = KS method with getsmartunknown()
+                           */
 EXTERN  int smartWindow; /* no. of cells to check */
 EXTERN  int smartThreshold; /* check threshold */
 

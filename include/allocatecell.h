@@ -6,6 +6,6 @@
 
 #define ALLOC_SIZE 50000 /* chunk size for cell allocation */
 
-Cell * allocateCell(const Bool);
+Cell * allocateCell(const int);
 
 #endif /* ALLOCATECELL_H */
