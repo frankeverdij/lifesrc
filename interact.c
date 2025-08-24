@@ -23,7 +23,7 @@
 #include "tty.h"
 #include "isedge.h"
 
-#define VERSION "3.8"
+#define VERSION "4.0"
 
 
 /*
@@ -316,8 +316,6 @@ main(int argc, char ** argv)
                 /*
                  * Flip cells around an axis.
                  */
-                while (*str)
-                {
                 switch (*str++)
                 {
                     case 'r':
@@ -340,6 +338,18 @@ main(int argc, char ** argv)
                         flipQuads = TRUE;
                         break;
 
+                    default:
+                        fatal("Bad flip");
+                }
+
+                break;
+
+            case 'u':
+                /*
+                 * Set choose strategy for getNormalUnknown search method.
+                 */
+                switch (*str++)
+                {
                     case 'g':
                         followGens = TRUE;
                         break;
@@ -347,22 +357,6 @@ main(int argc, char ** argv)
                     case 'o':
                         chooseUnknown = ON;
                         break;
-
-                    case 's':
-                        smartOn += 1;
-                        smartWindow = 50;
-                        smartThreshold = 4;
-                    case 'k':
-                        smartOn += 1;
-                        pProceed = &proceed;
-                        pBackup = &backup;
-                        pSearch = &search;
-                        pSetCell = &setcell;
-                        break;
-
-                    default:
-                        fatal("Bad flip");
-                }
                 }
 
                 break;
@@ -375,18 +369,10 @@ main(int argc, char ** argv)
                 {
                     case 'r':
                         rowSym = 1;
-
-                        if (*str)
-                            rowSym = atoi(str);
-
                         break;
 
                     case 'c':
                         colSym = 1;
-
-                        if (*str)
-                            colSym = atoi(str);
-
                         break;
 
                     case 'p':
@@ -403,6 +389,26 @@ main(int argc, char ** argv)
 
                     default:
                         fatal("Bad symmetry");
+                }
+
+                break;
+
+            case 'w':
+                /*
+                 * Set search method from WinLifeSearch.
+                 */
+                switch (*str++)
+                {
+                    case 's':
+                        smartOn += 1;
+                        smartWindow = 50;
+                        smartThreshold = 4;
+                    default:
+                        smartOn += 1;
+                        pProceed = &proceed;
+                        pBackup = &backup;
+                        pSearch = &search;
+                        pSetCell = &setcell;
                 }
 
                 break;
@@ -2189,52 +2195,69 @@ usage(void)
 
     static const char * const text[] =
     {
+    "Original code by David Bell, developed from an algorithm by",
+    " Dean Hickerson coded in 6502 assembly.",
+    "This code contains smartsearch segments from WinLifeSearch",
+    " created by Jason Summers and Karel Suhajda.",
+    "Extensively modified by Frank Everdij.",
     "",
     "lifesrc -r# -c# -g# [other options]",
     "lifesrc -l[n] file -v# -o# file -d# file",
     "",
-    "   -r   Number of rows",
-    "   -c   Number of columns",
-    "   -g   Number of generations",
+    "   -r n Number of rows",
+    "   -c n Number of columns",
+    "   -g n Number of generations",
+    "   -e n Clear corner triangles from the search space by setting cells to OFF",
+    "        The triangles have n cells as base. A positive number clears the",
+    "        NW-SE corners (|/ /|), a negative number clears NE-SW (|\\ \\|)",
     "   -tr  Translate rows between last and first generation",
     "   -tc  Translate columns between last and first generation",
     "   -fr  Flip rows between last and first generation",
     "   -fc  Flip columns between last and first generation",
     "   -ff  Flip forward diagonals (/) between last and first generation",
     "   -fb  Flip backward diagonals (\\) between last and first generation",
-    "   -fq  Flip quadrants between last and first generation",
+    "   -fq  Flip quadrants (+) between last and first generation",
     "   -sr  Enforce symmetry on rows",
     "   -sc  Enforce symmetry on columns",
-    "   -sp  Enforce symmetry around central point",
+    "   -sp  Enforce point symmetry around center",
     "   -sf  Enforce symmetry on forward diagonal",
     "   -sb  Enforce symmetry on backward diagonal",
-    "   -fg  First follow settings of previous or next generation",
-    "   -fo  First choice for unknown cell should be ON instead of OFF",
+    "   -ug  First follow settings of previous or next generation",
+    "   -uo  First choice for unknown cell should be ON instead of OFF",
+    "   -w   Select WinLifeSearch's getNormalUnknown search method",
+    "        (Default is DB/JS getNormalUnknown search method)",
+    "   -ws  Select WinLifeSearch's getSmartUnknown search method",
     "   -ow  Set search order to find wide objects first",
-    "   -og  Set search order to examine all gens in a column before next column",
-    "   -om  Set search order to examine from middle column outwards",
-    "   -or  Set search order to examine from top to bottom",
-    "   -oc  Set search order to examine from left to right",
-    "   -of  Set search order to examine from top left forward diagonal",
-    "   -ob  Set search order to examine from top right backward diagonal",
-    "   -oO  Set search order to examine outwards from the center",
+    "   -og  Set search order from lowest generation to highest",
+    "   -om  Set search order from middle column outwards",
+    "   -or  Set search order from top to bottom",
+    "   -oc  Set search order from left to right",
+    "   -of  Set search order from top left to down right",
+    "   -ob  Set search order from top right to down left",
+    "   -oO  Set search order circular outwards from the center",
+    "   -oi  Invert search order",
     "   -p   Only look for parents of last generation",
     "   -a   Find all objects (even those with subPeriods)",
-    "   -v   View object every N million searches",
-    "   -d   Dump status to file every N million searches",
-    "   -l   Load status from file",
-    "   -ln  Load status without entering command mode",
     "   -b   Batch. Don't enter command mode",
-    "   -i   Read initial object setting both ON and OFF cells",
-    "   -in  Read initial object from file setting only ON cells",
-    "   -id  Read initial object setting OFF cells deeply (all gens)",
-    "   -o   Output objects to file (appending) every N columns",
+    "   -D   Enter debug mode if the code is compiled with -DDEBUGFLAG",
     "   -R   Use Life rules specified by born,live values",
+    "   -vn  View object every n seconds using expanded lif format",
+    "   -vrn Like -vn but prints additional rle of object after the lif output",
+    "   -Vn  Like -vn but shows symmetry and first searchlist cell in lif output",
+    "   -vbn View object every n seconds using UTF8 block format",
+    "   -vbrn Like -vbn but prints additional rle of object after the block output",
+    "   -dn file  Dump status to file every n seconds",
+    "   -l  file  Load status from file",
+    "   -ln file  Load status from file without entering command mode",
+    "   -i  file  Read initial object setting both ON and OFF cells",
+    "   -in file  Read initial object from file setting only ON cells",
+    "   -id file  Read initial object setting OFF cells deeply (all gens)",
+    "   -o  file  Output objects to file (appending mode)",
     NULL
     };
 
     fprintf(stderr,
-        "Program to search for Life oscillators or spaceships (version %s)\n",
+        "Program to search for Life oscillators or spaceships (version %s)\n\n",
         VERSION);
 
     for (cpp = text; *cpp; cpp++)
