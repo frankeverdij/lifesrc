@@ -543,6 +543,7 @@ Search(const Bool batch)
         /*
          * If it is time to view the progress,then show it.
          */
+        ++viewCount;
         if (viewFlag)
         {
             printGen(curGen);

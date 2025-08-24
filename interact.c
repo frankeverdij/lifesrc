@@ -1279,24 +1279,24 @@ printGen(int gen)
     {
         if (curStatus == FOUND)
         {
-            ttyPrintf("%s%s (gen %d, cells %d unk %d confl %ld)", msg, timeBuf, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s%s (gen %d, cells %d unk %d confl %ld count %lld)", msg, timeBuf, gen, count, unkCount, stepConfl, viewCount);
         }
         else
         {
-            ttyPrintf("%s (gen %d, cells %d unk %d confl %ld)", msg, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s (gen %d, cells %d unk %d confl %ld count %lld)", msg, gen, count, unkCount, stepConfl, viewCount);
         }
     }
     else
     {
         if (curStatus == FOUND)
         {
-            ttyPrintf("%s%s (rule %s, gen %d, cells %d unk %d confl %ld)",
-            msg, timeBuf, ruleString, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s%s (rule %s, gen %d, cells %d unk %d confl %ld count %lld)",
+            msg, timeBuf, ruleString, gen, count, unkCount, stepConfl, viewCount);
         }
         else
         {
-            ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld)",
-            msg, ruleString, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld count %lld)",
+            msg, ruleString, gen, count, unkCount, stepConfl, viewCount);
         }
     }
 
