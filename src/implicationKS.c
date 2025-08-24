@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "implication.h"
+#include "implicationKS.h"
 
 /*
  * Initialize the implication table.
  */
 void
-initimplic(const State * bornrules, const State * liverules, FLAGS * implic)
+initImplicKS(const State * bornrules, const State * liverules, FLAGS * implic)
 {
     int nunk, non, noff, cunk, con, coff, funk, fon, foff, naon, caon, faon, desc;
     Bool valid, cison, cisoff, fison, fisoff, nison, nisoff;
 
-    for (desc=0; desc<IMPLICSIZE; desc++) {
+    for (desc=0; desc<IMPLICSIZEKS; desc++) {
         implic[desc] = IMPVOID;
     }
 
@@ -24,7 +24,7 @@ initimplic(const State * bornrules, const State * liverules, FLAGS * implic)
                     for (funk=0; funk<=1; funk++) { // unknown future cell
                         for (fon=0; fon+funk<=1; fon++) { // on future cell
                             foff=1-(fon+funk); // off future cell
-                            desc = SUMTODESC((State)(funk*UNK+fon*ON+foff*OFF), (State)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
+                            desc = SUMTODESCKS((State)(funk*UNK+fon*ON+foff*OFF), (State)(cunk*UNK+con*ON+coff*OFF), nunk*UNK+non*ON+noff*OFF);
                             if (implic[desc] != IMPVOID) {
                                 fprintf(stderr, "Duplicate descriptor!!!\n");
                                 exit(1);
@@ -103,7 +103,7 @@ initimplic(const State * bornrules, const State * liverules, FLAGS * implic)
         }
     }
 
-    for (desc=0; desc<IMPLICSIZE; desc++) {
+    for (desc=0; desc<IMPLICSIZEKS; desc++) {
         if (implic[desc] == IMPVOID) {
             implic[desc] = IMPBAD;
         }

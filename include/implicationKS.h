@@ -1,18 +1,18 @@
-#ifndef IMPLICATION_H
-#define IMPLICATION_H
+#ifndef IMPLICATIONKS_H
+#define IMPLICATIONKS_H
 
-#include "bool.h"
+#include "enums.h"
 #include "state.h"
 
 /*
  * Descriptor for use with the implications table
  */
-#define SUMTODESC(a, b, c)  ((a) + 2 * (b) + 4 * (c))
+#define SUMTODESCKS(a, b, c)  ((a) + 2 * (b) + 4 * (c))
 
 /*
  * Size of the implication array for the values OFF=0, ON=1 and UNK=64 (0x40)
  */
-#define IMPLICSIZE 2304
+#define IMPLICSIZEKS 2304
 
 /*
  * IMPLIC flag values.
@@ -28,6 +28,6 @@ typedef unsigned char FLAGS;
 #define IMPVOID ((FLAGS) 0x40)  // invalid/unset implication
 #define IMPOK   ((FLAGS) 0x80)  // valid state
 
-void initimplic(const State * born, const State * live, FLAGS * implic);
+void initImplicKS(const State * born, const State * live, FLAGS * implic);
 
-#endif /* IMPLICATION_H */
+#endif /* IMPLICATIONKS_H */

@@ -1,28 +1,29 @@
 #include "lifesrc.h"
 #include "allocatecell.h"
+#include "macros.h"
 
 static int auxCellCount = 0; /* cells in auxillary table */
 static Cell * auxTable[MAX_CELLS]; /* table of auxillary cells */
 
 /*
  * Find a cell given its coordinates.
- * Most coordinates range from 0 to colMax+1, 0 to rowMax+1, and 0 to genMax-1.
- * Cells within this range are quickly found by indexing into cellTable.
+ * Most coordinates range from 0 to colmax+1, 0 to rowmax+1, and 0 to genmax-1.
+ * Cells within this range are quickly found by indexing into celltable.
  * Cells outside of this range are handled by searching an auxillary table,
  * and are dynamically created as necessary.
  */
-Cell * findCell(const int row, const int col, const int gen)
+Cell * findcell(const int row, const int col, const int gen)
 {
     Cell * cell;
 
     /*
      * If the cell is a normal cell, then we know where it is.
      */
-    if ((row >= 0) && (row <= rowMax + 1) &&
-        (col >= 0) && (col <= colMax + 1) &&
-        (gen >= 0) && (gen < genMax))
+    if ((row >= 0) && (row <= rowmax + 1) &&
+        (col >= 0) && (col <= colmax + 1) &&
+        (gen >= 0) && (gen < genmax))
     {
-        return cellTable[(col * (rowMax + 2) + row) * genMax + gen];
+        return cellTable[(col * (rowmax + 2) + row) * genmax + gen];
     }
 
     /*
@@ -43,9 +44,9 @@ Cell * findCell(const int row, const int col, const int gen)
      * Need to allocate the cell and add it to the auxillary table.
      */
     if (auxCellCount >= AUX_CELLS)
-        fatal("Too many auxillary cells");
+        FATAL("Too many auxillary cells");
 
-    cell = allocateCell(smartOn);
+    cell = allocateCell();
     cell->row = row;
     cell->col = col;
     cell->gen = gen;

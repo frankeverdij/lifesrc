@@ -51,7 +51,6 @@ static	int	viewFreq;	/* how often to view results in seconds */
  */
 static void usage(void);
 static void getSetting(const char *);
-static void getBackup(const char *);
 static void getClear(const char *);
 static void getExclude(const char *);
 static void getFreeze(const char *);
@@ -65,6 +64,11 @@ static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
 static void	writeGen(const char *, Bool);
 static Bool initEdgeCells(void);
+
+static Status (*pSearch)(const Bool);
+static Bool (*pProceed)(Cell *, State, Bool);
+static Cell * (*pBackup)(void);
+static Bool (*pSetCell)(Cell * const , const State, const Bool);
 
 
 /*
@@ -96,6 +100,78 @@ static int * paramTable[] =
 };
 
 
+// copy my format to dbells format...
+// ... and make a backup of the current state (KAS)
+Bool set_initial_cells(void)
+{
+    Cell * cell;
+    Cell ** setpos;
+    Bool change;
+    int i,j,g;
+
+    newSet = setTable;
+    nextSet = setTable;
+
+    // now let's try all UNK cells for ON and OFF state
+    // set those which allow only one
+
+    setpos = newSet;
+    do {
+        change = FALSE;
+        for(g=0;g<genMax;g++)
+        {
+            for(i=0;i<colMax;i++)
+            {
+                for(j=0;j<rowMax;j++)
+                {
+                    cell = findCell(j+1,i+1,g);
+                    if (cell->active && (cell->state == UNK))
+                    {
+                        if (pProceed(cell, OFF, TRUE))
+                        {
+                            pBackup();
+                            if (pProceed(cell, ON, TRUE))
+                            {
+                                pBackup();
+                            } else {
+                                // OFF possible, ON impossible
+                                if (setpos != newSet) pBackup();
+                                if (pProceed(cell, OFF, TRUE))
+                                {
+                                    change = TRUE;
+                                } else {
+                                    // we should never get here
+                                    // because it's already tested that the OFF state is possible
+                                    printf("Program inconsistency found\n");
+                                    return FALSE;
+                                }
+                            }
+                        } else {
+                            // can't set OFF state
+                            // let's try ON state
+                            if (setpos != newSet) pBackup();
+                            if (pProceed(cell, ON, TRUE))
+                            {
+                                change = TRUE;
+                            } else {
+                                // can't set neither ON nor OFF state
+                                printf("Inconsistent UNK state for cell (col %d,row %d,gen %d)\n",i+1,j+1,g);
+                                return FALSE;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } while (change);
+
+    newSet = setTable;
+    nextSet = setTable;
+
+    return TRUE;
+}
+
+
 int
 main(int argc, char ** argv)
 {
@@ -109,6 +185,20 @@ main(int argc, char ** argv)
     const char * str;
 
     size_t asize = 1;
+
+    /*
+     * Set a couple of defaults.
+     */
+    viewFreq = 10;
+    dumpFreq = 0;
+    colMax = 75;
+    edgeDiagOffset = 0;
+    smartOn = 0;
+
+    pProceed = &Proceed;
+    pBackup = &Backup;
+    pSearch = &Search;
+    pSetCell = &setCell;
 
     setSigaction(&actDump, SIGUSR1, &alarm_handler);
     setSigaction(&actView, SIGUSR2, &alarm_handler);
@@ -144,14 +234,6 @@ main(int argc, char ** argv)
 
     if (!setRules("3/23"))
         fatal("Cannot set Life rules!");
-
-    /*
-     * Set a couple of defaults.
-     */
-    viewFreq = 10;
-    dumpFreq = 0;
-    colMax = 75;
-    edgeDiagOffset = 0;
 
     /*
      * Collect the command line options.
@@ -234,22 +316,16 @@ main(int argc, char ** argv)
                 /*
                  * Flip cells around an axis.
                  */
+                while (*str)
+                {
                 switch (*str++)
                 {
                     case 'r':
                         flipRows = 1;
-
-                        if (*str)
-                            flipRows = atoi(str);
-
                         break;
 
                     case 'c':
                         flipCols = 1;
-
-                        if (*str)
-                            flipCols = atoi(str);
-
                         break;
 
                     case 'f':
@@ -272,8 +348,21 @@ main(int argc, char ** argv)
                         chooseUnknown = ON;
                         break;
 
+                    case 's':
+                        smartOn += 1;
+                        smartWindow = 50;
+                        smartThreshold = 4;
+                    case 'k':
+                        smartOn += 1;
+                        pProceed = &proceed;
+                        pBackup = &backup;
+                        pSearch = &search;
+                        pSetCell = &setcell;
+                        break;
+
                     default:
                         fatal("Bad flip");
+                }
                 }
 
                 break;
@@ -553,6 +642,18 @@ main(int argc, char ** argv)
                 initEdgeCells();
             }
         }
+
+        if (smartOn)
+        {
+            set_initial_cells();
+
+            /*
+             * set_initial_cells() cannot be called if the searchlist is not
+             * initialised, but then set cells will not be excluded from the
+             * searchlist, so let's call initsearchorder() again.
+             */
+            initSearchOrder();
+        }
     }
 
     /*
@@ -602,7 +703,7 @@ main(int argc, char ** argv)
     {
         if (curStatus == OK)
         {
-            curStatus = search(noWait);
+            curStatus = pSearch(noWait);
             time(&end);
             dif = end - startTime;
             secToHMS(dif, timeBuf);
@@ -683,7 +784,7 @@ Bool initEdgeCells(void)
             {
                 for (int gen = 0; gen < genMax; gen++)
                 {
-                    if (!proceed(findCell(row, col, gen), OFF, FALSE))
+                    if (!pProceed(findCell(row, col, gen), OFF, FALSE))
                     {
                         ttyStatus(
                         "Inconsistent state for cell %d %d\n",
@@ -755,13 +856,6 @@ getCommands(void)
                  * Add a cell setting.
                  */
                 getSetting(cp);
-                break;
-
-            case 'b':
-                /*
-                 * Back up the search.
-                 */
-                getBackup(cp);
                 break;
 
             case 'c':
@@ -901,7 +995,7 @@ getSetting(const char * cp)
         return;
     }
 
-    if (!proceed(findCell(row, col, curGen), state, FALSE))
+    if (!pProceed(findCell(row, col, curGen), state, FALSE))
     {
         ttyStatus("Inconsistent state for cell\n");
 
@@ -909,74 +1003,6 @@ getSetting(const char * cp)
     }
 
     baseSet = nextSet;
-    printGen(curGen);
-}
-
-
-/*
- * Backup the search to the nth latest free choice.
- * Notice: This skips examinination of some of the possibilities, thus
- * maybe missing a solution.  Therefore this should only be used when it
- * is obvious that the current search state is useless.
- */
-static void
-getBackup(const char * cp)
-{
-    Cell * cell;
-    State state;
-    int count;
-    int blanksToo;
-
-    blanksToo = TRUE;
-#if 0
-    /*
-     * This doesn't work!
-     */
-    blanksToo = FALSE;
-
-    if (*cp == 'b')
-    {
-        blanksToo = TRUE;
-        cp++;
-    }
-#endif
-    count = getNum(&cp, 0);
-
-    if ((count <= 0) || *cp)
-    {
-        ttyStatus("Must back up at least one cell\n");
-
-        return;
-    }
-
-    while (count > 0)
-    {
-        cell = backup();
-
-        if (cell == NULL)
-        {
-            printGen(curGen);
-            ttyStatus("Backed up over all possibilities\n");
-
-            return;
-        }
-
-        state = 1 - cell->state;
-
-        if (blanksToo || (state == ON))
-            count--;
-
-        setState(cell, UNK);
-
-        if (!go(cell, state, FALSE))
-        {
-            printGen(curGen);
-            ttyStatus("Backed up over all possibilities\n");
-
-            return;
-        }
-    }
-
     printGen(curGen);
 }
 
@@ -1057,7 +1083,7 @@ getClear(const char * cp)
                 if (cell->state != UNK)
                     continue;
 
-                if (!proceed(cell, OFF, FALSE))
+                if (!pProceed(cell, OFF, FALSE))
                 {
                     ttyStatus("Inconsistent state for cell\n");
 
@@ -1235,7 +1261,7 @@ freezeCell(int row, int col)
 
         cell->frozen = TRUE;
 
-        loopCells(cell0, cell);
+        loopCells(smartOn, cell0, cell);
     }
 }
 
@@ -1290,24 +1316,24 @@ printGen(int gen)
     {
         if (curStatus == FOUND)
         {
-            ttyPrintf("%s%s (gen %d, cells %d unk %d confl %ld)", msg, timeBuf, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s%s (gen %d, cells %d unk %d confl %ld count %lld)", msg, timeBuf, gen, count, unkCount, stepConfl, viewCount);
         }
         else
         {
-            ttyPrintf("%s (gen %d, cells %d unk %d confl %ld)", msg, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s (gen %d, cells %d unk %d confl %ld count %lld)", msg, gen, count, unkCount, stepConfl, viewCount);
         }
     }
     else
     {
         if (curStatus == FOUND)
         {
-            ttyPrintf("%s%s (rule %s, gen %d, cells %d unk %d confl %ld)",
-            msg, timeBuf, ruleString, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s%s (rule %s, gen %d, cells %d unk %d confl %ld count %lld)",
+            msg, timeBuf, ruleString, gen, count, unkCount, stepConfl, viewCount);
         }
         else
         {
-            ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld)",
-            msg, ruleString, gen, count, unkCount, stepConfl);
+            ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld count %lld)",
+            msg, ruleString, gen, count, unkCount, stepConfl, viewCount);
         }
     }
 
@@ -1700,7 +1726,7 @@ loadState(const char * file)
 
         cell = findCell(row, col, gen);
 
-        if (!setCell(cell, state, free))
+        if (!pSetCell(cell, state, free))
         {
             ttyStatus(
                 "Inconsistently setting cell at r%d c%d g%d \n",
@@ -1901,7 +1927,7 @@ readFile(const char * file)
 
             for (gen = minGen; gen <= maxGen; gen++)
             {
-                if (!proceed(findCell(row, col, gen),
+                if (!pProceed(findCell(row, col, gen),
                     state, FALSE))
                 {
                     ttyStatus(

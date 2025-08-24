@@ -3,9 +3,9 @@
 
 #include "bool.h"
 
-extern    BOOL    ttyopen(void);
-extern    BOOL    ttycheck(void);
-extern    BOOL    ttyread(const char *, char *, int);
+extern    Bool    ttyopen(void);
+extern    Bool    ttycheck(void);
+extern    Bool    ttyread(const char *, char *, int);
 extern    void    ttyprintf(const char *, ...);
 extern    void    ttystatus(const char *, ...);
 extern    void    ttywrite(const char *, int);

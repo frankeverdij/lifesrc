@@ -20,7 +20,6 @@
 #include "nextstate.h"
 #include "description.h"
 #include "sortorder.h"
-#include "setstate.h"
 #include "loopcells.h"
 #include "allocatecell.h"
 #include "linkcell.h"
@@ -31,28 +30,12 @@
 
 
 /*
- * Local procedures
+ * Local variables
  */
-static Cell * (* getUnknown)(void);
+static int cellCount = 0; /* number of set cells */
 
 
-void dumparray()
-{
-    Cell * cell;
-    int nrofcells = (rowMax+2) * (colMax+2) * genMax;
-
-    printf("r c g s f o 0 u\n");
-    for (int i=0; i<nrofcells;i++)
-    {
-        cell = cellTable[i];
-        if (cell)
-            printf("%d %d %d %d %x %x %x %x\n",cell->row, cell->col, cell->gen, cell->state, cell->free, cell->frozen, 1, cell->choose ? 0:1);
-    }
-    return;
-}
-
-
-void setState(Cell * const cell, const State state)
+static void setState(Cell * const cell, const State state)
 {
     /* backup previous state */
     int diffState = state - cell->state;
@@ -69,6 +52,31 @@ void setState(Cell * const cell, const State state)
     cell->cdr->sumNear += diffState;
 
     return;
+}
+
+
+/*
+ * Set the state of a cell back to UNK/FREE
+ * Proceed through the loop if present
+ */
+
+void
+resCell(Cell * cell)
+{
+    Cell * c1;
+
+    if (cell->state == UNK) return;
+
+    --cellCount; // take all loops as a single cell
+
+    c1 = cell;
+
+    do {
+        setState(cell, UNK);
+        cell->free = TRUE;
+
+        cell = cell->loop;
+    } while (cell != c1);
 }
 
 
@@ -98,7 +106,6 @@ setCell(Cell * const cell, const State state, const Bool free)
 
         *newSet++ = cell;
         setState(cell, state);
-
         cell->free = free;
 
         return TRUE;
@@ -341,7 +348,7 @@ examineNext(void)
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
 Bool
-proceed(Cell * cell, const State state, const Bool free)
+Proceed(Cell * cell, const State state, const Bool free)
 {
     int status;
 
@@ -362,7 +369,7 @@ proceed(Cell * cell, const State state, const Bool free)
  * Returns NULL on an "object cannot exist" error.
  */
 Cell *
-backup(void)
+Backup(void)
 {
     Cell * cell;
 
@@ -401,20 +408,20 @@ backup(void)
  * Do checking based on setting the specified cell.
  * Returns ERROR if an inconsistency was found.
  */
-Bool
+static Bool
 go(Cell * cell, State state, Bool free)
 {
     quitOk = FALSE;
 
     for (;;)
     {
-        if (proceed(cell, state, free))
+        if (Proceed(cell, state, free))
         {
             return TRUE;
         }
 
         ++stepConfl;
-        cell = backup();
+        cell = Backup();
 
         if (cell == NULL)
         {
@@ -422,7 +429,7 @@ go(Cell * cell, State state, Bool free)
         }
 
         free = FALSE;
-        state = ON - cell->state;
+        state = (ON + OFF) - cell->state;
         setState(cell, UNK);
     }
 }
@@ -450,17 +457,6 @@ getNormalUnknown(void)
         }
     }
 
-    return NULL;
-}
-
-
-/*
- * Find another unknown cell when averaging is done.
- * Returns NULL if there are no more unknown cells.
- */
-static Cell *
-getAverageUnknown(void)
-{
     return NULL;
 }
 
@@ -502,28 +498,23 @@ choose(const Cell * cell)
  * Returns if an object is found, or is impossible.
  */
 Status
-search(const Bool batch)
+Search(const Bool batch)
 {
     Cell * cell;
     Bool free;
     State state;
 
-    if (0)
-        getUnknown = getAverageUnknown;
-    else
-        getUnknown = getNormalUnknown;
-
-    cell = (*getUnknown)();
+    cell = getNormalUnknown();
 
     if (cell == NULL)
     {
-        cell = backup();
+        cell = Backup();
 
         if (cell == NULL)
             return ERROR;
 
         free = FALSE;
-        state = ON - cell->state;
+        state = (ON + OFF) - cell->state;
         setState(cell, UNK);
     }
     else
@@ -552,6 +543,7 @@ search(const Bool batch)
         /*
          * If it is time to view the progress,then show it.
          */
+        ++viewCount;
         if (viewFlag)
         {
             printGen(curGen);
@@ -570,7 +562,7 @@ search(const Bool batch)
         /*
          * Get the next unknown cell and choose its state.
          */
-        cell = (*getUnknown)();
+        cell = getNormalUnknown();
 
         if (cell == NULL)
             return FOUND;

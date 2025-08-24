@@ -1,8 +1,7 @@
-#include "stdlib.h"
-#include "loopcells.h"
-#include "deadcell.h"
-#include "enums.h"
-#include "macros.h"
+#include <stddef.h>
+
+#include "cell.h"
+#include "bool.h"
 
 /*
  * Make the two specified cells belong to the same loop.
@@ -11,8 +10,7 @@
  * Symmetry uses this feature, and so does setting stable cells.
  * If any cells in the loop are frozen, then they all are.
  */
-void
-loopCells(const int smartOn, Cell * cell1, Cell * cell2)
+void loopcells(Cell * cell1, Cell * cell2)
 {
     Cell * cell;
     Bool frozen;
@@ -21,25 +19,6 @@ loopCells(const int smartOn, Cell * cell1, Cell * cell2)
 
     if (cell1 == cell2) return;
 
-    if (!smartOn)
-    {
-    /*
-     * Check simple cases of equality, or of either cell
-     * being the deadCell.
-     */
-    if ((cell1 == deadCell) || (cell2 == deadCell))
-        FATAL("Attemping to use deadCell in a loop\n");
-
-    /*
-     * Make the cells belong to their own loop if required.
-     * This will simplify the code.
-     */
-    if (cell1->loop == NULL)
-        cell1->loop = cell1;
-
-    if (cell2->loop == NULL)
-        cell2->loop = cell2;
-    }
     /*
      * See if the second cell is already part of the first cell's loop.
      * If so, they they are already joined.  We don't need to

@@ -15,7 +15,7 @@
 #include "lifesrc.h"
 
 
-static	BOOL	inputready;
+static	Bool	inputready;
 static	int	statusline;
 static	int	inputline;
 
@@ -27,7 +27,7 @@ static void	gotinput(int);
  * Open the terminal and enable for detecting terminal input.
  * Returns TRUE if successful.
  */
-BOOL
+Bool
 ttyopen(void)
 {
 	initscr();
@@ -69,10 +69,10 @@ ttyclose(void)
  * Test to see if a keyboard character is ready.
  * Returns nonzero if so (and clears the ready flag).
  */
-BOOL
+Bool
 ttycheck(void)
 {
-	BOOL	result;
+	Bool	result;
 
 	result = inputready;
 	inputready = FALSE;
@@ -158,7 +158,7 @@ ttyflush(void)
  * Returns TRUE if a string was read, or FALSE (and an empty buffer)
  * on end of file or error.
  */
-BOOL
+Bool
 ttyread(const char * prompt, char * buf, int buflen)
 {
 	int	c;

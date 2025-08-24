@@ -4,6 +4,7 @@
  */
  
 #define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,6 +100,16 @@ EXTERN	State   chooseUnknown;  /* First choice for unknown cell, either ON or OF
 EXTERN  long stepConfl; /* step counter for one Proceed-Backup action */
 EXTERN  int sortOrder; /* sort direction */
 
+EXTERN  int smartOn;      /*
+                           * use smart method (KAS):
+                           * 0 = classic JS method with getNormalUnknown()
+                           * 1 = KS method with getnormalunknown()
+                           * 2 = KS method with getsmartunknown()
+                           */
+EXTERN  int smartWindow; /* no. of cells to check */
+EXTERN  int smartThreshold; /* check threshold */
+
+
 /*
  * These values are not affected when dumping and loading since they
  * do not affect the status of a search in progress.
@@ -111,12 +122,12 @@ EXTERN	Bool	inited;		/* initialization has been done */
 EXTERN	State	bornRules[9];	/* rules for whether a cell is to be born */
 EXTERN	State	liveRules[9];	/* rules for whether a live cell stays alive */
 EXTERN	int	curGen;		/* current generation for display */
-EXTERN	int	cellCount;	/* number of live cells in generation 0 */
 
 EXTERN	sig_atomic_t	dumpFlag;	/* sigaction flag for dumps */
 EXTERN	sig_atomic_t	viewFlag;	/* sigaction flag for viewing */
 EXTERN	char *	dumpFile;	/* dump file name */
 EXTERN	char *	outputFile;	/* file to output results to */
+EXTERN  long long    viewCount;    /* counter for viewing */
 
 
 /*
@@ -126,7 +137,8 @@ EXTERN	Cell *	setTable[MAX_CELLS];	/* table of cells whose value is set */
 EXTERN	Cell **	newSet;		/* where to add new cells into setting table */
 EXTERN	Cell **	nextSet;	/* next cell in setting table to examine */
 EXTERN	Cell **	baseSet;	/* base of changeable part of setting table */
-EXTERN  Cell * cellTable[MAX_CELLS]; /* table of usual cells */
+EXTERN  Cell *  searchTable[MAX_CELLS]; /* a stack of searchlist positions */
+EXTERN  Cell ** searchSet;
 
 
 /*
@@ -158,15 +170,19 @@ EXTERN Flags implic[TRIMSIZE];
  */
 extern	void	getCommands(void);
 extern	void	initCells(void);
+extern	void	initSearchOrder(void);
 extern	void	printGen(int);
 extern	void	dumpState(const char *);
-extern	Status	search(const Bool);
-extern	Bool	proceed(Cell *, State, Bool);
-extern	Bool	go(Cell *, State, Bool);
-extern	Bool	setCell(Cell * const , const State, const Bool);
 extern	Cell *	findCell(int, int, int);
-extern	Cell *	backup(void);
 extern	void	fatal(const char *);
 extern  void    dumparray(void);
+extern	Status	Search(const Bool);
+extern	Status	search(const Bool);
+extern	Bool	Proceed(Cell *, State, Bool);
+extern	Bool	proceed(Cell *, State, Bool);
+extern	Bool	setCell(Cell * const , const State, const Bool);
+extern	Bool	setcell(Cell * const , const State, const Bool);
+extern	Cell *	Backup(void);
+extern	Cell *	backup(void);
 
 /* END CODE */

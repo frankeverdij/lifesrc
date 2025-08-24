@@ -1,9 +1,9 @@
 #ifndef BOOL_H
 #define BOOL_H
 
-typedef    int        BOOL;
+typedef    int        Bool;
 
-#define    FALSE        ((BOOL) 0)
-#define    TRUE        ((BOOL) 1)
+#define    FALSE        ((Bool) 0)
+#define    TRUE        ((Bool) 1)
 
 #endif /* BOOL_H */
