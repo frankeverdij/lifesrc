@@ -68,3 +68,6 @@ dkms.conf
 .vscode
 data
 patch
+
+# Old code that needs to be saved
+*.save
