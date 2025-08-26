@@ -63,3 +63,44 @@ void printAsc(const int gen, const Bool augment)
 
     return;
 }
+
+void printOrder(const int dummygen, const Bool augment)
+{
+    int idx;
+    Cell * cell;
+
+    for (int gen = 0; gen < genMax; gen++)
+    {
+    ttyPrintf("%d\n", gen);
+    for (int row = 1; row <= rowMax; row++)
+    {
+        for (int col = 1; col <= colMax; col++)
+        {
+
+            cell = findCell(row, col, gen);
+            idx = cell->index;
+
+            if (idx < 0)
+            {
+                ttyPrintf("%s ", "\033[2m-\033[0m");
+            }
+            else if (idx == 0)
+            {
+                ttyPrintf("%s ", "\033[7m@\033[0m");
+            }
+            else if (idx < 127-64)
+            {
+                ttyPrintf("%c ", 64 + idx);
+            }
+            else
+            {
+                ttyWrite("0 ", 2);
+            }
+        }
+
+        ttyWrite("\n", 1);
+    }
+        ttyWrite("\n", 1);
+    }
+    return;
+}
