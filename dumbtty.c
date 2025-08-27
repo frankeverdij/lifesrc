@@ -11,37 +11,33 @@
 #include "enums.h"
 
 
-static	Bool	inputready;		/* TRUE if input now ready */
-
-static	void	gotinput(int);
+static Bool inputready;  /* TRUE if input now ready */
+static void gotinput(int);
 
 
 /*
  * Open the terminal and enable for detecting terminal input.
  * Returns TRUE if successful.
  */
-Bool
-ttyOpen(void)
+Bool ttyOpen(void)
 {
-	signal(SIGINT, gotinput);
+    signal(SIGINT, gotinput);
 
-	return TRUE;
+    return TRUE;
 }
 
 
-static void
-gotinput(int signalNumber)
+static void gotinput(int signalNumber)
 {
-	signal(SIGINT, gotinput);
-	inputready = TRUE;
+    signal(SIGINT, gotinput);
+    inputready = TRUE;
 }
 
 
 /*
  * Close the terminal.
  */
-void
-ttyClose(void)
+void ttyClose(void)
 {
 }
 
@@ -50,31 +46,29 @@ ttyClose(void)
  * Test to see if a keyboard character is ready.
  * Returns nonzero if so (and clears the ready flag).
  */
-Bool
-ttyCheck(void)
+Bool ttyCheck(void)
 {
-	Bool	result;
+    Bool result;
 
-	result = inputready;
-	inputready = FALSE;
+    result = inputready;
+    inputready = FALSE;
 
-	return result;
+    return result;
 }
 
 
 /*
  * Write the specified number of characters to the terminal.
  */
-void
-ttyWrite(const char * buf, int count)
+void ttyWrite(const char * buf, int count)
 {
-	int	ch;
+    int ch;
 
-	while (count-- > 0)
-	{
-		ch = *buf++;
-		putchar(ch);
-	}
+    while (count-- > 0)
+    {
+        ch = *buf++;
+        putchar(ch);
+    }
 }
 
 
@@ -82,16 +76,15 @@ ttyWrite(const char * buf, int count)
  * Print a formatted string to the terminal.
  * The string length is limited to 256 characters.
  */
-void
-ttyPrintf(const char * fmt, ...)
+void ttyPrintf(const char * fmt, ...)
 {
-	va_list		ap;
-	static char	buf[256];
+    va_list ap;
+    static char buf[256];
 
-	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
-	va_end(ap);
-	ttyWrite(buf, strlen(buf));
+    va_start(ap, fmt);
+    vsprintf(buf, fmt, ap);
+    va_end(ap);
+    ttyWrite(buf, strlen(buf));
 }
 
 
@@ -99,35 +92,31 @@ ttyPrintf(const char * fmt, ...)
  * Print a status message, like printf.
  * The string length is limited to 256 characters.
  */
-void
-ttyStatus(const char * fmt, ...)
+void ttyStatus(const char * fmt, ...)
 {
-	va_list		ap;
-	static char	buf[256];
+    va_list ap;
+    static char buf[256];
 
-	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
-	va_end(ap);
-	ttyWrite(buf, strlen(buf));
+    va_start(ap, fmt);
+    vsprintf(buf, fmt, ap);
+    va_end(ap);
+    ttyWrite(buf, strlen(buf));
 }
 
 
-void
-ttyHome(void)
-{
-}
-
-
-void
-ttyEEop(void)
+void ttyHome(void)
 {
 }
 
 
-void
-ttyFlush(void)
+void ttyEEop(void)
 {
-	fflush(stdout);
+}
+
+
+void ttyFlush(void)
+{
+    fflush(stdout);
 }
 
 
@@ -137,27 +126,28 @@ ttyFlush(void)
  * Returns TRUE on successful read, or FALSE (with an empty buffer)
  * on end of file or error.
  */
-Bool
-ttyRead(const char * prompt, char * buf, int buflen)
+Bool ttyRead(const char * prompt, char * buf, int buflen)
 {
-	int	len;
+    int len;
 
-	fputs(prompt, stdout);
-	fflush(stdout);
+    fputs(prompt, stdout);
+    fflush(stdout);
 
-	if (fgets(buf, buflen, stdin) == NULL)
-	{
-		buf[0] = '\0';
+    if (fgets(buf, buflen, stdin) == NULL)
+    {
+        buf[0] = '\0';
 
-		return FALSE;
-	}
+        return FALSE;
+    }
 
-	len = strlen(buf) - 1;
+    len = strlen(buf) - 1;
 
-	if ((len >= 0) && (buf[len] == '\n'))
-		buf[len] = '\0';
+    if ((len >= 0) && (buf[len] == '\n'))
+    {
+        buf[len] = '\0';
+    }
 
-	return TRUE;
+    return TRUE;
 }
 
 /* END CODE */

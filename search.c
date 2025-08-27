@@ -50,8 +50,6 @@ static void setState(Cell * const cell, const State state)
     cell->cdl->sumNear += diffState;
     cell->cd->sumNear += diffState;
     cell->cdr->sumNear += diffState;
-
-    return;
 }
 
 
@@ -60,12 +58,12 @@ static void setState(Cell * const cell, const State state)
  * Proceed through the loop if present
  */
 
-void
-resCell(Cell * cell)
+void resCell(Cell * cell)
 {
     Cell * c1;
 
-    if (cell->state == UNK) return;
+    if (cell->state == UNK)
+        return;
 
     --cellCount; // take all loops as a single cell
 
@@ -74,7 +72,6 @@ resCell(Cell * cell)
     do {
         setState(cell, UNK);
         cell->free = TRUE;
-
         cell = cell->loop;
     } while (cell != c1);
 }
@@ -86,14 +83,12 @@ resCell(Cell * cell)
  * Returns ERROR if the setting is inconsistent.
  * If the cell is newly set, then it is added to the set table.
  */
-Bool
-setCell(Cell * const cell, const State state, const Bool free)
+Bool setCell(Cell * const cell, const State state, const Bool free)
 {
     if (cell->state == state)
     {
         DPRINTF("setCell %d %d %d to state %s already set\n",
-            cell->row, cell->col, cell->gen,
-            (state == ON) ? "on" : "off");
+            cell->row, cell->col, cell->gen, (state == ON) ? "on" : "off");
 
         return TRUE;
     }
@@ -101,8 +96,8 @@ setCell(Cell * const cell, const State state, const Bool free)
     if (cell->state == UNK)
     {
         DPRINTF("setCell %d %d %d to %s, %s successful\n",
-            cell->row, cell->col, cell->gen,
-            (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
+            cell->row, cell->col, cell->gen, (free ? "free" : "forced"),
+            ((state == ON) ? "on" : "off"));
 
         *newSet++ = cell;
         setState(cell, state);
@@ -112,8 +107,7 @@ setCell(Cell * const cell, const State state, const Bool free)
     }
 
     DPRINTF("setCell %d %d %d to state %s inconsistent\n",
-        cell->row, cell->col, cell->gen,
-        (state == ON) ? "on" : "off");
+        cell->row, cell->col, cell->gen, (state == ON) ? "on" : "off");
 
     return FALSE;
 }
@@ -127,8 +121,6 @@ void shortSetCell(Cell * const cell, const State state)
         setState(cell, state);
         cell->free = FALSE;
     }
-
-    return;
 }
 
 #if 0
@@ -148,8 +140,7 @@ getDesc(const Cell * const cell)
  * make sure that the previous generation can validly produce the
  * current cell.  Returns ERROR if the cell is inconsistent.
  */
-static Bool
-consistify(Cell * const cell)
+static Bool consistify(Cell * const cell)
 {
     Cell * prevCell;
     int desc;
@@ -193,9 +184,7 @@ consistify(Cell * const cell)
             cell->free = FALSE;
         }
         else
-        {
             return TRUE;
-        }
     }
     else if ((cell->state ^ state) == ON)
         return FALSE;
@@ -217,12 +206,16 @@ consistify(Cell * const cell)
     DPRINTF("Implication flags %x\n", flags);
 
     if (flags & N0IC0)
+    {
         if (!setCell(prevCell, OFF, FALSE))
             return FALSE;
+    }
 
     if (flags & N0IC1)
+    {
         if (!setCell(prevCell, ON, FALSE))
             return FALSE;
+    }
 
     if (flags & N0ICUN1)
     {
@@ -262,7 +255,8 @@ consistify(Cell * const cell)
         shortSetCell(prevCell->cdr, OFF);
     }
 
-    DPRINTF("Implications successful for prevCell %d %d %d %d\n", prevCell->row, prevCell->col, prevCell->gen, prevCell->state);
+    DPRINTF("Implications successful for prevCell %d %d %d %d\n",
+        prevCell->row, prevCell->col, prevCell->gen, prevCell->state);
 
     return TRUE;
 }
@@ -272,8 +266,7 @@ consistify(Cell * const cell)
  * See if a cell and its neighbors are consistent with the cell and its
  * neighbors in the next generation.
  */
-static Bool
-consistify10(Cell * const cell)
+static Bool consistify10(Cell * const cell)
 {
     if (!consistify(cell))
         return FALSE;
@@ -312,8 +305,7 @@ consistify10(Cell * const cell)
 /*
  * Examine the next choice of cell settings.
  */
-static Status
-examineNext(void)
+static Status examineNext(void)
 {
     Cell * cell;
 
@@ -331,13 +323,10 @@ examineNext(void)
     cell = *nextSet++;
 
     DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
-        cell->row, cell->col, cell->gen,
-        (cell->free ? "free" : "forced"));
+        cell->row, cell->col, cell->gen, (cell->free ? "free" : "forced"));
 
     if (cell->loop && (!setCell(cell->loop, cell->state, FALSE)))
-    {
         return ERROR;
-    }
 
     return consistify10(cell) ? OK : ERROR;
 }
@@ -347,8 +336,7 @@ examineNext(void)
  * Set a cell to the specified value and determine all consequences we
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
-Bool
-Proceed(Cell * cell, const State state, const Bool free)
+Bool Proceed(Cell * cell, const State state, const Bool free)
 {
     int status;
 
@@ -368,26 +356,22 @@ Proceed(Cell * cell, const State state, const Bool free)
  * Returns the cell which is to be tried for the other possibility.
  * Returns NULL on an "object cannot exist" error.
  */
-Cell *
-Backup(void)
+Cell * Backup(void)
 {
     Cell * cell;
-
 
     while (newSet != baseSet)
     {
         cell = *--newSet;
 
         DPRINTF("backing up cell %d %d %d, was %s, %s\n",
-            cell->row, cell->col, cell->gen,
-            ((cell->state == ON) ? "on" : "off"),
+            cell->row, cell->col, cell->gen, ((cell->state == ON) ? "on" : "off"),
             (cell->free ? "free": "forced"));
 
         if (!cell->free)
         {
             setState(cell, UNK);
             cell->free = TRUE;
-
             continue;
         }
 
@@ -408,25 +392,20 @@ Backup(void)
  * Do checking based on setting the specified cell.
  * Returns ERROR if an inconsistency was found.
  */
-static Bool
-go(Cell * cell, State state, Bool free)
+static Bool go(Cell * cell, State state, Bool free)
 {
     quitOk = FALSE;
 
     for (;;)
     {
         if (Proceed(cell, state, free))
-        {
             return TRUE;
-        }
 
         ++stepConfl;
         cell = Backup();
 
         if (cell == NULL)
-        {
             return FALSE;
-        }
 
         free = FALSE;
         state = (ON + OFF) - cell->state;
@@ -439,8 +418,7 @@ go(Cell * cell, State state, Bool free)
  * Find another unknown cell in a normal search.
  * Returns NULL if there are no more unknown cells.
  */
-static Cell *
-getNormalUnknown(void)
+static Cell * getNormalUnknown(void)
 {
     Cell * cell;
 
@@ -467,8 +445,7 @@ getNormalUnknown(void)
  * But for follow generations mode, we try to choose the same setting
  * as a nearby generation.
  */
-static State
-choose(const Cell * cell)
+static State choose(const Cell * cell)
 {
     /*
      * If we are following cells in other generations,
@@ -476,17 +453,11 @@ choose(const Cell * cell)
      */
     if (followGens)
     {
-        if ((cell->past->state == ON) ||
-            (cell->future->state == ON))
-        {
+        if ((cell->past->state == ON) || (cell->future->state == ON))
             return ON;
-        }
 
-        if ((cell->past->state == OFF) ||
-            (cell->future->state == OFF))
-        {
+        if ((cell->past->state == OFF) || (cell->future->state == OFF))
             return OFF;
-        }
     }
 
     return chooseUnknown;
@@ -497,8 +468,7 @@ choose(const Cell * cell)
  * The top level search routine.
  * Returns if an object is found, or is impossible.
  */
-Status
-Search(const Bool batch)
+Status Search(const Bool batch)
 {
     Cell * cell;
     Bool free;
@@ -556,7 +526,9 @@ Search(const Bool batch)
         if (!batch)
         {
             if (ttyCheck())
+            {
                 getCommands();
+            }
         }
 
         /*

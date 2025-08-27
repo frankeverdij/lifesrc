@@ -39,12 +39,13 @@ static char * loadFile;      /* file to load state from */
 static Bool blockOutput;     /* print Unicode blocks instead of character */
 static Bool RLEOutput;       /* print additional RLE code */
 static Bool augmentOutput;   /* print additional UTF8 code for stateList info */
-static Bool	setDeep;	/* set cleared cells deeply from init file */
+static Bool setDeep;         /* set cleared cells deeply from init file */
 static time_t startTime;
 static char timeBuf[256] = {0};
 static char * argstr;
-static	int	dumpFreq;	/* how often to perform dumps in seconds */
-static	int	viewFreq;	/* how often to view results in seconds */
+static int  dumpFreq;        /* how often to perform dumps in seconds */
+static int  viewFreq;        /* how often to view results in seconds */
+
 
 /*
  * Local procedures
@@ -62,7 +63,7 @@ static Bool confirm(const char *);
 static Bool setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
-static void	writeGen(const char *, Bool);
+static void writeGen(const char *, Bool);
 static Bool initEdgeCells(void);
 
 static Status (*pSearch)(const Bool);
@@ -76,8 +77,14 @@ static Bool (*pSetCell)(Cell * const , const State, const Bool);
  */
 void alarm_handler(const int signo)
 {
-    if (signo == SIGUSR1) dumpFlag = TRUE;
-    if (signo == SIGUSR2) viewFlag = TRUE;
+    if (signo == SIGUSR1)
+    {
+        dumpFlag = TRUE;
+    }
+    if (signo == SIGUSR2)
+    {
+        viewFlag = TRUE;
+    }
 }
 
 
@@ -118,13 +125,13 @@ Bool set_initial_cells(void)
     setpos = newSet;
     do {
         change = FALSE;
-        for(g=0;g<genMax;g++)
+        for (g = 0; g < genMax; g++)
         {
-            for(i=0;i<colMax;i++)
+            for (i = 0; i < colMax; i++)
             {
-                for(j=0;j<rowMax;j++)
+                for (j = 0; j < rowMax; j++)
                 {
-                    cell = findCell(j+1,i+1,g);
+                    cell = findCell(j + 1, i + 1, g);
                     if (cell->active && (cell->state == UNK))
                     {
                         if (pProceed(cell, OFF, TRUE))
@@ -135,7 +142,10 @@ Bool set_initial_cells(void)
                                 pBackup();
                             } else {
                                 // OFF possible, ON impossible
-                                if (setpos != newSet) pBackup();
+                                if (setpos != newSet)
+                                {
+                                    pBackup();
+                                }
                                 if (pProceed(cell, OFF, TRUE))
                                 {
                                     change = TRUE;
@@ -143,19 +153,24 @@ Bool set_initial_cells(void)
                                     // we should never get here
                                     // because it's already tested that the OFF state is possible
                                     printf("Program inconsistency found\n");
+
                                     return FALSE;
                                 }
                             }
                         } else {
                             // can't set OFF state
                             // let's try ON state
-                            if (setpos != newSet) pBackup();
+                            if (setpos != newSet)
+                            {
+                                pBackup();
+                            }
                             if (pProceed(cell, ON, TRUE))
                             {
                                 change = TRUE;
                             } else {
                                 // can't set neither ON nor OFF state
-                                printf("Inconsistent UNK state for cell (col %d,row %d,gen %d)\n",i+1,j+1,g);
+                                printf("Inconsistent UNK state for cell (col %d,row %d,gen %d)\n", i + 1, j + 1, g);
+
                                 return FALSE;
                             }
                         }
@@ -172,8 +187,7 @@ Bool set_initial_cells(void)
 }
 
 
-int
-main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
     struct sigaction actDump, actView;
     struct sigevent sevDump, sevView;
@@ -219,7 +233,9 @@ main(int argc, char ** argv)
         assert(argstr[asize] == '\0');
     }
     if (asize > 0)
+    {
         argstr[--asize] = '\0';
+    }
 
     ttyPrintf("Command line: \n");
     ttyPrintf("%s\n", argstr);
@@ -233,7 +249,9 @@ main(int argc, char ** argv)
     argv++;
 
     if (!setRules("3/23"))
+    {
         fatal("Cannot set Life rules!");
+    }
 
     /*
      * Collect the command line options.
@@ -309,7 +327,6 @@ main(int argc, char ** argv)
                     default:
                         fatal("Bad translate");
                 }
-
                 break;
 
             case 'f':
@@ -345,7 +362,6 @@ main(int argc, char ** argv)
                     default:
                         fatal("Bad flip");
                 }
-
                 break;
 
             case 'u':
@@ -362,7 +378,6 @@ main(int argc, char ** argv)
                         chooseUnknown = ON;
                         break;
                 }
-
                 break;
 
             case 's':
@@ -398,7 +413,6 @@ main(int argc, char ** argv)
                     default:
                         fatal("Bad symmetry");
                 }
-
                 break;
 
             case 'w':
@@ -418,7 +432,6 @@ main(int argc, char ** argv)
                         pSearch = &search;
                         pSetCell = &setcell;
                 }
-
                 break;
 
             case 'd':
@@ -433,7 +446,6 @@ main(int argc, char ** argv)
                     argc--;
                     dumpFile = *argv++;
                 }
-
                 break;
 
             case 'V':
@@ -449,14 +461,17 @@ main(int argc, char ** argv)
                         case 'b':
                             blockOutput = TRUE;
                             break;
+
                         case 'r':
                             RLEOutput = TRUE;
                             break;
                     }
                 }
-                if (*str)
-                    viewFreq = atoi(str);
 
+                if (*str)
+                {
+                    viewFreq = atoi(str);
+                }
                 break;
 
             case 'l':
@@ -464,10 +479,14 @@ main(int argc, char ** argv)
                  * Load file.
                  */
                 if (*str == 'n')
+                {
                     noWait = TRUE;
+                }
 
                 if ((argc <= 0) || (**argv == '-'))
+                {
                     fatal("Missing load file name");
+                }
 
                 loadFile = *argv++;
                 argc--;
@@ -483,10 +502,14 @@ main(int argc, char ** argv)
                     setDeep = TRUE;
                 }
                 else if (*str != 'n')
+                {
                     setAll = TRUE;
+                }
 
                 if ((argc <= 0) || (**argv == '-'))
+                {
                     fatal("Missing initial file name");
+                }
 
                 initFile = *argv++;
                 argc--;
@@ -502,7 +525,9 @@ main(int argc, char ** argv)
                      * Output file name
                      */
                     if ((argc <= 0) || (**argv == '-'))
+                    {
                         fatal("Missing output file name");
+                    }
 
                     outputFile = *argv++;
                     argc--;
@@ -556,7 +581,6 @@ main(int argc, char ** argv)
                             fatal("Bad ordering or sorting option");
                     }
                 }
-
                 break;
 
             case 'p':
@@ -585,37 +609,44 @@ main(int argc, char ** argv)
                  * Set rules.
                  */
                 if (!setRules(str))
+                {
                     fatal("Bad rule string");
-
+                }
                 break;
 
             default:
                 ttyClose();
-
-                fprintf(stderr, "Unknown option -%c\n",
-                    str[-1]);
-
+                fprintf(stderr, "Unknown option -%c\n", str[-1]);
                 exit(1);
         }
     }
 
-    if (parent &&
-        (rowTrans || colTrans || flipPoint || flipQuads || flipRows || flipCols || flipFwd || flipBwd))
+    if (parent && (rowTrans || colTrans || flipPoint || flipQuads ||
+        flipRows || flipCols || flipFwd || flipBwd))
     {
         fatal("Cannot specify translations or flips with -p");
     }
 
     if (pointSym + quadSym + (rowSym || colSym) + (fwdSym || bwdSym) > 1)
+    {
         fatal("Conflicting symmetries specified");
+    }
 
-    if ((fwdSym || bwdSym || flipFwd || flipBwd || flipQuads) && (rowMax != colMax))
+    if ((fwdSym || bwdSym || flipFwd || flipBwd || flipQuads) &&
+        (rowMax != colMax))
+    {
         fatal("Rows must equal cols with -sf, -sb, -ff, -fb or -fq");
+    }
 
     if ((rowTrans || colTrans) + flipPoint + flipQuads > 1)
+    {
         fatal("Conflicting translation or flipping specified");
+    }
 
     if ((rowTrans && flipRows) || (colTrans && flipCols))
+    {
         fatal("Conflicting translation or flipping specified");
+    }
 
     if (!noWait)
     {
@@ -676,15 +707,21 @@ main(int argc, char ** argv)
      * commands to initialize the cells, unless we were told to not wait.
      */
     if (parent)
+    {
         curGen = genMax - 1;
+    }
 
     if (noWait)
     {
         if (!quiet)
+        {
             printGen(0);
+        }
     }
     else
+    {
         getCommands();
+    }
 
     inited = TRUE;
 
@@ -800,9 +837,7 @@ Bool initEdgeCells(void)
                 {
                     if (!pProceed(findCell(row, col, gen), OFF, FALSE))
                     {
-                        ttyStatus(
-                        "Inconsistent state for cell %d %d\n",
-                            row, col);
+                        ttyStatus("Inconsistent state for cell %d %d\n", row, col);
 
                         return FALSE;
                     }
@@ -819,8 +854,7 @@ Bool initEdgeCells(void)
  * Get one or more user commands.
  * Commands are ended by a blank line.
  */
-void
-getCommands(void)
+void getCommands(void)
 {
     const char * cp;
     const char * cmd;
@@ -839,15 +873,21 @@ getCommands(void)
         cp = buf;
 
         while (isblank(*cp))
+        {
             cp++;
+        }
 
         cmd = cp;
 
         if (*cp)
+        {
             cp++;
+        }
 
         while (isblank(*cp))
+        {
             cp++;
+        }
 
         switch (*cmd)
         {
@@ -906,7 +946,9 @@ getCommands(void)
                  * Find next object.
                  */
                 if (curStatus == FOUND)
+                {
                     curStatus = OK;
+                }
 
                 return;
 
@@ -920,7 +962,6 @@ getCommands(void)
                     ttyClose();
                     exit(0);
                 }
-
                 break;
 
             case 'x':
@@ -967,8 +1008,7 @@ getCommands(void)
  * Warning: Use of this routine invalidates backing up over
  * the setting, so that the setting is permanent.
  */
-static void
-getSetting(const char * cp)
+static void getSetting(const char * cp)
 {
     int row;
     int col;
@@ -979,20 +1019,27 @@ getSetting(const char * cp)
     if (*cp == '\0')
         return;
 
+
     row = getNum(&cp, -1);
 
     if (*cp == ',')
+    {
         cp++;
+    }
 
     col = getNum(&cp, -1);
 
     if (*cp == ',')
+    {
         cp++;
+    }
 
     state = getNum(&cp, 1);
 
     while (isblank(*cp))
+    {
         cp++;
+    }
 
     if (*cp != '\0')
     {
@@ -1026,8 +1073,7 @@ getSetting(const char * cp)
  * generations, or else just the specified rectangular area.  If
  * clearing the whole area, then confirmation is required.
  */
-static void
-getClear(const char * cp)
+static void getClear(const char * cp)
 {
     int beggen;
     int begRow;
@@ -1055,7 +1101,9 @@ getClear(const char * cp)
     }
 
     while (isblank(*cp))
+    {
         cp++;
+    }
 
     /*
      * Get the coordinates.
@@ -1116,8 +1164,7 @@ getClear(const char * cp)
  * Exclude cells in a rectangular area from searching.
  * This simply means that such cells will not be selected for setting.
  */
-static void
-getExclude(const char * cp)
+static void getExclude(const char * cp)
 {
     int begRow;
     int begCol;
@@ -1127,7 +1174,9 @@ getExclude(const char * cp)
     int col;
 
     while (isblank(*cp))
+    {
         cp++;
+    }
 
     if (*cp == '\0')
     {
@@ -1142,7 +1191,9 @@ getExclude(const char * cp)
     endCol = begCol;
 
     while (isblank(*cp))
+    {
         cp++;
+    }
 
     if (*cp)
     {
@@ -1161,7 +1212,9 @@ getExclude(const char * cp)
     for (row = begRow; row <= endRow; row++)
     {
         for (col = begCol; col <= endCol; col++)
+        {
             excludeCone(row, col, curGen);
+        }
     }
 
     printGen(curGen);
@@ -1172,8 +1225,7 @@ getExclude(const char * cp)
  * Exclude all cells within the previous light cone centered at the
  * specified cell from searching.
  */
-static void
-excludeCone(int row, int col, int gen)
+static void excludeCone(const int row, const int col, const int gen)
 {
     int tGen;
     int tRow;
@@ -1201,8 +1253,7 @@ excludeCone(int row, int col, int gen)
  * Freeze cells in a rectangular area so that their states in all
  * generations are the same.
  */
-static void
-getFreeze(const char * cp)
+static void getFreeze(const char * cp)
 {
     int begRow;
     int begCol;
@@ -1246,7 +1297,9 @@ getFreeze(const char * cp)
     for (row = begRow; row <= endRow; row++)
     {
         for (col = begCol; col <= endCol; col++)
+        {
             freezeCell(row, col);
+        }
     }
 
     printGen(curGen);
@@ -1260,8 +1313,7 @@ getFreeze(const char * cp)
  * the generation into the same loop so that they will be forced
  * to have the same state.
  */
-void
-freezeCell(int row, int col)
+void freezeCell(const int row, const int col)
 {
     int gen;
     Cell * cell0;
@@ -1272,9 +1324,7 @@ freezeCell(int row, int col)
     for (gen = 0; gen < genMax; gen++)
     {
         cell = findCell(row, col, gen);
-
         cell->frozen = TRUE;
-
         loopCells(smartOn, cell0, cell);
     }
 }
@@ -1284,8 +1334,7 @@ freezeCell(int row, int col)
  * Print out the current status of the specified generation.
  * This also sets the current generation.
  */
-void
-printGen(int gen)
+void printGen(int gen)
 {
     int row;
     int col;
@@ -1302,12 +1351,14 @@ printGen(int gen)
         case NOT_EXIST:
             msg = "No such object";
             break;
+
         case FOUND:
             time(&mark);
             dif = mark - startTime;
             secToHMS(dif, timeBuf);
             msg = "Found object";
             break;
+
         default:
             msg = "";
             break;
@@ -1330,11 +1381,13 @@ printGen(int gen)
     {
         if (curStatus == FOUND)
         {
-            ttyPrintf("%s%s (gen %d, cells %d unk %d confl %ld count %lld)", msg, timeBuf, gen, count, unkCount, stepConfl, viewCount);
+            ttyPrintf("%s%s (gen %d, cells %d unk %d confl %ld count %lld)",
+                msg, timeBuf, gen, count, unkCount, stepConfl, viewCount);
         }
         else
         {
-            ttyPrintf("%s (gen %d, cells %d unk %d confl %ld count %lld)", msg, gen, count, unkCount, stepConfl, viewCount);
+            ttyPrintf("%s (gen %d, cells %d unk %d confl %ld count %lld)",
+                msg, gen, count, unkCount, stepConfl, viewCount);
         }
     }
     else
@@ -1342,19 +1395,21 @@ printGen(int gen)
         if (curStatus == FOUND)
         {
             ttyPrintf("%s%s (rule %s, gen %d, cells %d unk %d confl %ld count %lld)",
-            msg, timeBuf, ruleString, gen, count, unkCount, stepConfl, viewCount);
+                msg, timeBuf, ruleString, gen, count, unkCount, stepConfl, viewCount);
         }
         else
         {
             ttyPrintf("%s (rule %s, gen %d, cells %d unk %d confl %ld count %lld)",
-            msg, ruleString, gen, count, unkCount, stepConfl, viewCount);
+                msg, ruleString, gen, count, unkCount, stepConfl, viewCount);
         }
     }
 
     if (outputFile)
     {
         if (foundCount)
+        {
             ttyPrintf(" [%d]", foundCount);
+        }
     }
 
     ttyPrintf("\n");
@@ -1384,8 +1439,7 @@ printGen(int gen)
  * If no file is specified, it is asked for.
  * Filename of "." means write to stdout.
  */
-void
-writeGen(const char * file, Bool append)
+void writeGen(const char * file, const Bool append)
 {
     FILE * fp;
     const Cell * cell;
@@ -1405,7 +1459,9 @@ writeGen(const char * file, Bool append)
     fp = stdout;
 
     if (strcmp(file, "."))
+    {
         fp = fopen(file, append ? "a" : "w");
+    }
 
     if (fp == NULL)
     {
@@ -1432,16 +1488,24 @@ writeGen(const char * file, Bool append)
                 continue;
 
             if (row < minRow)
+            {
                 minRow = row;
+            }
 
             if (row > maxRow)
+            {
                 maxRow = row;
+            }
 
             if (col < minCol)
+            {
                 minCol = col;
+            }
 
             if (col > maxCol)
+            {
                 maxCol = col;
+            }
         }
     }
 
@@ -1454,7 +1518,9 @@ writeGen(const char * file, Bool append)
     }
 
     if (fp == stdout)
+    {
         fprintf(fp, "#\n");
+    }
 
     /*
      * Now write out the bounded area.
@@ -1464,18 +1530,23 @@ writeGen(const char * file, Bool append)
         for (col = minCol; col <= maxCol; col++)
         {
             cell = findCell(row, col, curGen);
-
             switch (cell->state)
             {
-                case OFF:    ch = '.'; break;
-                case ON:    ch = '*'; break;
-                case UNK:    ch =
-                        (cell->choose ? '?' : 'X');
-                        break;
+                case OFF:
+                    ch = '.';
+                    break;
+
+                case ON:
+                    ch = '*';
+                    break;
+
+                case UNK:
+                    ch = (cell->choose ? '?' : 'X');
+                    break;
+
                 default:
                     ttyStatus("Bad cell state");
                     fclose(fp);
-
                     return;
             }
 
@@ -1486,7 +1557,9 @@ writeGen(const char * file, Bool append)
     }
 
     if (append)
+    {
         fprintf(fp, "\n");
+    }
 
     if ((fp != stdout) && fclose(fp))
     {
@@ -1506,8 +1579,7 @@ writeGen(const char * file, Bool append)
  * Dump the current state of the search in the specified file.
  * If no file is specified, it is asked for.
  */
-void
-dumpState(const char * file)
+void dumpState(const char * file)
 {
     FILE * fp;
     Cell ** set;
@@ -1540,7 +1612,9 @@ dumpState(const char * file)
      * Dump out the life rule if it is not the normal one.
      */
     if (!isLife)
+    {
         fprintf(fp, "R %s\n", ruleString);
+    }
 
     /*
      * Dump out the parameter values.
@@ -1548,7 +1622,9 @@ dumpState(const char * file)
     fprintf(fp, "P");
 
     for (param = paramTable; *param; param++)
+    {
         fprintf(fp, " %d", **param);
+    }
 
     fprintf(fp, "\n");
 
@@ -1569,15 +1645,18 @@ dumpState(const char * file)
      * Dump out those cells which are being excluded from the search.
      */
     for (row = 1; row <= rowMax; row++)
-        for (col = 1; col < colMax; col++)
-            for (gen = 0; gen < genMax; gen++)
     {
-        cell = findCell(row, col, gen);
+        for (col = 1; col < colMax; col++)
+        {
+            for (gen = 0; gen < genMax; gen++)
+            {
+                cell = findCell(row, col, gen);
+                if (cell->choose)
+                    continue;
 
-        if (cell->choose)
-            continue;
-
-        fprintf(fp, "X %d %d %d\n", row, col, gen);
+                fprintf(fp, "X %d %d %d\n", row, col, gen);
+            }
+        }
     }
 
     /*
@@ -1586,12 +1665,15 @@ dumpState(const char * file)
      * generations since they will be copied from generation 0.
      */
     for (row = 1; row <= rowMax; row++)
-        for (col = 1; col < colMax; col++)
     {
-        cell = findCell(row, col, 0);
-
-        if (cell->frozen)
-            fprintf(fp, "F %d %d\n", row, col);
+        for (col = 1; col < colMax; col++)
+        {
+            cell = findCell(row, col, 0);
+            if (cell->frozen)
+            {
+                fprintf(fp, "F %d %d\n", row, col);
+            }
+        }
     }
 
     /*
@@ -1617,8 +1699,7 @@ dumpState(const char * file)
  * Warning: Almost no checks are made for validity of the state.
  * Returns OK on success, ERROR on failure.
  */
-static Status
-loadState(const char * file)
+static Status loadState(const char * file)
 {
     FILE * fp;
     const char * cp;
@@ -1678,12 +1759,16 @@ loadState(const char * file)
         len = strlen(buf) - 1;
 
         if (buf[len] == '\n')
+        {
             buf[len] = '\0';
+        }
 
         cp = &buf[1];
 
         while (isblank(*cp))
+        {
             cp++;
+        }
 
         if (!setRules(cp))
         {
@@ -1711,7 +1796,9 @@ loadState(const char * file)
     cp = &buf[1];
 
     for (param = paramTable; *param; param++)
+    {
         **param = getNum(&cp, 0);
+    }
 
     /*
      * Initialize the cells.
@@ -1742,10 +1829,8 @@ loadState(const char * file)
 
         if (!pSetCell(cell, state, free))
         {
-            ttyStatus(
-                "Inconsistently setting cell at r%d c%d g%d \n",
+            ttyStatus("Inconsistently setting cell at r%d c%d g%d \n",
                 row, col, gen);
-
             fclose(fp);
 
             return ERROR;
@@ -1826,8 +1911,7 @@ loadState(const char * file)
  * If setDeep is TRUE, then OFF cells will be set deeply (in all generations).
  * Returns OK on success, ERROR on error.
  */
-static Status
-readFile(const char * file)
+static Status readFile(const char * file)
 {
     FILE * fp;
     const char * cp;
@@ -1878,11 +1962,8 @@ readFile(const char * file)
              */
             if ((row > rowMax) || (col > colMax))
             {
-                if ((ch == '.') || (ch == ' ') ||
-                    (ch == ':') || (ch == '?'))
-                {
+                if ((ch == '.') || (ch == ' ') || (ch == ':') || (ch == '?'))
                     continue;
-                }
 
                 fatal("File sets cells beyond defined area");
             }
@@ -1932,8 +2013,7 @@ readFile(const char * file)
                     break;
 
                 default:
-                    ttyStatus("Bad file format in line %d\n",
-                        row);
+                    ttyStatus("Bad file format in line %d\n", row);
                     fclose(fp);
 
                     return ERROR;
@@ -1941,13 +2021,9 @@ readFile(const char * file)
 
             for (gen = minGen; gen <= maxGen; gen++)
             {
-                if (!pProceed(findCell(row, col, gen),
-                    state, FALSE))
+                if (!pProceed(findCell(row, col, gen), state, FALSE))
                 {
-                    ttyStatus(
-                    "Inconsistent state for cell %d %d\n",
-                        row, col);
-
+                    ttyStatus("Inconsistent state for cell %d %d\n", row, col);
                     fclose(fp);
 
                     return ERROR;
@@ -1972,8 +2048,7 @@ readFile(const char * file)
  * value for it.  Returned string may be static and thus is overwritten
  * for each call.  Leading spaces in the string are skipped over.
  */
-static const char *
-getStr(const char * str, const char * prompt)
+static const char * getStr(const char * str, const char * prompt)
 {
     static char buf[LINE_SIZE];
 
@@ -1990,7 +2065,9 @@ getStr(const char * str, const char * prompt)
     }
 
     while (isblank(*str))
+    {
         str++;
+    }
 
     return str;
 }
@@ -2000,8 +2077,7 @@ getStr(const char * str, const char * prompt)
  * Confirm an action by prompting with the specified string and reading
  * an answer.  Entering 'y' or 'Y' indicates TRUE, everything else FALSE.
  */
-static Bool
-confirm(const char * prompt)
+static Bool confirm(const char * prompt)
 {
     int ch;
 
@@ -2030,7 +2106,9 @@ getNum(const char ** cpp, int defnum)
     cp = *cpp;
 
     while (isblank(*cp))
+    {
         cp++;
+    }
 
     if (*cp == '-')
     {
@@ -2048,13 +2126,19 @@ getNum(const char ** cpp, int defnum)
     num = 0;
 
     while (isdigit(*cp))
+    {
         num = num * 10 + (*cp++ - '0');
+    }
 
     if (isNeg)
+    {
         num = -num;
+    }
 
     while (isblank(*cp))
+    {
         cp++;
+    }
 
     *cpp = cp;
 
@@ -2068,8 +2152,7 @@ getNum(const char ** cpp, int defnum)
  * The rules can be "mmm,nnn",  "mmm/nnn", "Bmmm,Snnn", "Bmmm/Snnn",
  * or a hex number in the Wolfram encoding.
  */
-static Bool
-setRules(const char * cp)
+static Bool setRules(const char * cp)
 {
     char * cpTemp;
     int i;
@@ -2097,11 +2180,17 @@ setRules(const char * cp)
             bits <<= 4;
 
             if ((*cp >= '0') && (*cp <= '9'))
+            {
                 bits += *cp - '0';
+            }
             else if ((*cp >= 'a') && (*cp <= 'f'))
+            {
                 bits += *cp - 'a' + 10;
+            }
             else if ((*cp >= 'A') && (*cp <= 'F'))
+            {
                 bits += *cp - 'A' + 10;
+            }
             else
                 return FALSE;
         }
@@ -2112,10 +2201,14 @@ setRules(const char * cp)
         for (i = 0; i < 9; i++)
         {
             if (bits & 0x01)
+            {
                 bornRules[i] = ON;
+            }
 
             if (bits & 0x02)
+            {
                 liveRules[i] = ON;
+            }
 
             bits >>= 2;
         }
@@ -2126,10 +2219,14 @@ setRules(const char * cp)
          * It is in normal born/survive format.
          */
         if ((*cp == 'b') || (*cp == 'B'))
+        {
             cp++;
+        }
 
         while ((*cp >= '0') && (*cp <= '8'))
+        {
             bornRules[*cp++ - '0'] = ON;
+        }
 
         if ((*cp != ',') && (*cp != '/'))
             return FALSE;
@@ -2137,10 +2234,14 @@ setRules(const char * cp)
         cp++;
 
         if ((*cp == 's') || (*cp == 'S'))
+        {
             cp++;
+        }
 
         while ((*cp >= '0') && (*cp <= '8'))
+        {
             liveRules[*cp++ - '0'] = ON;
+        }
 
         if (*cp)
             return FALSE;
@@ -2157,7 +2258,9 @@ setRules(const char * cp)
     for (i = 0; i < 9; i++)
     {
         if (bornRules[i] == ON)
+        {
             *cpTemp++ = '0' + i;
+        }
     }
 
     *cpTemp++ = '/';
@@ -2166,11 +2269,12 @@ setRules(const char * cp)
     for (i = 0; i < 9; i++)
     {
         if (liveRules[i] == ON)
+        {
             *cpTemp++ = '0' + i;
+        }
     }
 
     *cpTemp = '\0';
-
     isLife = (strcmp(ruleString, "B3/S23") == 0);
 
     return TRUE;
@@ -2182,13 +2286,10 @@ setRules(const char * cp)
  * The terminal is closed before the message is printed.
  * A newline is added after the supplied message.
  */
-void
-fatal(const char * msg)
+void fatal(const char * msg)
 {
     ttyClose();
-
     fprintf(stderr, "%s\n", msg);
-
     exit(1);
 }
 
@@ -2196,8 +2297,7 @@ fatal(const char * msg)
 /*
  * Print usage text.
  */
-static void
-usage(void)
+static void usage(void)
 {
     const char * const * cpp;
 
@@ -2269,7 +2369,9 @@ usage(void)
         VERSION);
 
     for (cpp = text; *cpp; cpp++)
+    {
         fprintf(stderr, "%s\n", *cpp);
+    }
 }
 
 /* END CODE */

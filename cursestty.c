@@ -9,61 +9,58 @@
 #include <locale.h>
 
 
-#undef	FALSE
-#undef	TRUE
-#undef	OK
+#undef FALSE
+#undef TRUE
+#undef OK
 
 #include "enums.h"
 
 
-static	Bool	inputready;
-static	int	statusline;
-static	int	inputline;
+static Bool inputready;
+static int statusline;
+static int inputline;
 
 
-static void	gotinput(int);
+static void gotinput(int);
 
 
 /*
  * Open the terminal and enable for detecting terminal input.
  * Returns TRUE if successful.
  */
-Bool
-ttyOpen(void)
+Bool ttyOpen(void)
 {
-	setlocale(LC_ALL, "");
-	initscr();
-	cbreak();
-	noecho();
-	signal(SIGINT, gotinput);
+    setlocale(LC_ALL, "");
+    initscr();
+    cbreak();
+    noecho();
+    signal(SIGINT, gotinput);
 
-	/*
-	 * Remember the lines used for printing results and reading input.
-	 * These are the bottom lines of the screen.
-	 */
-	statusline = LINES - 1;
-	inputline = LINES - 1;
+    /*
+     * Remember the lines used for printing results and reading input.
+     * These are the bottom lines of the screen.
+     */
+    statusline = LINES - 1;
+    inputline = LINES - 1;
 
-	return TRUE;
+    return TRUE;
 }
 
 
-static void
-gotinput(int sigalNumber)
+static void gotinput(int sigalNumber)
 {
-	signal(SIGINT, gotinput);
-	inputready = TRUE;
+    signal(SIGINT, gotinput);
+    inputready = TRUE;
 }
 
 
 /*
  * Close the terminal.
  */
-void
-ttyClose(void)
+void ttyClose(void)
 {
-	refresh();
-	endwin();
+    refresh();
+    endwin();
 }
 
 
@@ -71,15 +68,14 @@ ttyClose(void)
  * Test to see if a keyboard character is ready.
  * Returns nonzero if so (and clears the ready flag).
  */
-Bool
-ttyCheck(void)
+Bool ttyCheck(void)
 {
-	Bool	result;
+    Bool result;
 
-	result = inputready;
-	inputready = FALSE;
+    result = inputready;
+    inputready = FALSE;
 
-	return result;
+    return result;
 }
 
 
@@ -87,16 +83,15 @@ ttyCheck(void)
  * Print a formatted string to the terminal.
  * The string length is limited to 256 characters.
  */
-void
-ttyPrintf(const char * fmt, ...)
+void ttyPrintf(const char * fmt, ...)
 {
-	va_list		ap;
-	static char	buf[256];
+    va_list ap;
+    static char buf[256];
 
-	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
-	va_end(ap);
-	addstr(buf);
+    va_start(ap, fmt);
+    vsprintf(buf, fmt, ap);
+    va_end(ap);
+    addstr(buf);
 }
 
 
@@ -104,53 +99,48 @@ ttyPrintf(const char * fmt, ...)
  * Print a status line, similar to printf.
  * The string length is limited to 256 characters.
  */
-void
-ttyStatus(const char * fmt, ...)
+void ttyStatus(const char * fmt, ...)
 {
-	va_list 	ap;
-	static char	buf[256];
+    va_list ap;
+    static char buf[256];
 
-	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    vsprintf(buf, fmt, ap);
+    va_end(ap);
 
-	move(statusline, 0);
-	addstr(buf);
-	clrtobot();
-	move(0, 0);
-	refresh();
+    move(statusline, 0);
+    addstr(buf);
+    clrtobot();
+    move(0, 0);
+    refresh();
 }
 
 
-void
-ttyWrite(const char * cp, int len)
+void ttyWrite(const char * cp, int len)
 {
-	while (len-- > 0)
-	{
-		addch(*cp);
-		cp++;
-	}
+    while (len-- > 0)
+    {
+        addch(*cp);
+        cp++;
+    }
 }
 
 
-void
-ttyHome(void)
+void ttyHome(void)
 {
-	move(0, 0);
+    move(0, 0);
 }
 
 
-void
-ttyEEop(void)
+void ttyEEop(void)
 {
-	clrtobot();
+    clrtobot();
 }
 
 
-void
-ttyFlush(void)
+void ttyFlush(void)
 {
-	refresh();
+    refresh();
 }
 
 
@@ -160,67 +150,66 @@ ttyFlush(void)
  * Returns TRUE if a string was read, or FALSE (and an empty buffer)
  * on end of file or error.
  */
-Bool
-ttyRead(const char * prompt, char * buf, int buflen)
+Bool ttyRead(const char * prompt, char * buf, int buflen)
 {
-	int	c;
-	char *	cp;
+    int c;
+    char * cp;
 
-	move(inputline, 0);
-	addstr(prompt);
-	clrtoeol();
+    move(inputline, 0);
+    addstr(prompt);
+    clrtoeol();
 
-	cp = buf;
+    cp = buf;
 
-	for (;;)
-	{
-		refresh();
+    for (;;)
+    {
+        refresh();
 
-		c = fgetc(stdin);
+        c = fgetc(stdin);
 
-		switch (c)
-		{
-		case EOF:
-			buf[0] = '\0';
-			move(inputline, 0);
-			clrtoeol();
-			move(0, 0);
-			refresh();
+        switch (c)
+        {
+        case EOF:
+            buf[0] = '\0';
+            move(inputline, 0);
+            clrtoeol();
+            move(0, 0);
+            refresh();
 
-			return FALSE;
+            return FALSE;
 
-		default:
-			*cp++ = c;
-			addch(c);
+        default:
+            *cp++ = c;
+            addch(c);
 
-			if (cp < buf + buflen - 1)
-				break;
+            if (cp < buf + buflen - 1)
+                break;
 
-			/* fall through... */
+            /* fall through... */
 
-		case '\n':
-		case '\r':
-			*cp = 0;
-			move(inputline, 0);
-			clrtoeol();
-			move(0, 0);
-			refresh();
+        case '\n':
+        case '\r':
+            *cp = 0;
+            move(inputline, 0);
+            clrtoeol();
+            move(0, 0);
+            refresh();
 
-			return TRUE;
+            return TRUE;
 
-		case '\b':
-			if (cp == buf)
-				break;
+        case '\b':
+            if (cp == buf)
+                break;
 
-			--cp;
-			addch('\b');
-			clrtoeol();
+            --cp;
+            addch('\b');
+            clrtoeol();
+            
+            break;
+        }
+    }
 
-			break;
-		}
-	}
-
-	return FALSE;
+    return FALSE;
 }
 
 /* END CODE */

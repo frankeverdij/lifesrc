@@ -35,6 +35,7 @@ static int smartlen1;
 static int cellCount = 0; /* number of set cells */
 static State prevState; /* the state of the last free cell before backup() */
 
+
 static Cell * (*getunknown)(void);
 
 static void setState(Cell * const cell, const State state)
@@ -52,8 +53,6 @@ static void setState(Cell * const cell, const State state)
     cell->cdl->sumNear += diffState;
     cell->cd->sumNear += diffState;
     cell->cdr->sumNear += diffState;
-
-    return;
 }
 
 
@@ -62,12 +61,12 @@ static void setState(Cell * const cell, const State state)
  * Proceed through the loop if present
  */
 
-void
-rescell(Cell * cell)
+void rescell(Cell * cell)
 {
     Cell * c1;
 
-    if (cell->state == UNK) return;
+    if (cell->state == UNK)
+        return;
 
     --cellCount; // take all loops as a single cell
 
@@ -76,7 +75,6 @@ rescell(Cell * cell)
     do {
         setState(cell, UNK);
         cell->free = TRUE;
-
         cell = cell->loop;
     } while (cell != c1);
 }
@@ -96,17 +94,13 @@ void shortsetcell(Cell * cell, const State state)
             for (; (c2 = searchList[searchIdx]); searchIdx++)
             {
                 if (c2->state == UNK)
-                {
                     break;
-                }
             }
         }
         cell = cell->loop;
     } while (c1 != cell);
 
     ++cellCount; // take whole loop as a single cell
-
-    return;
 }
 
 
@@ -116,16 +110,14 @@ void shortsetcell(Cell * cell, const State state)
  * Returns ERROR if the setting is inconsistent.
  * If the cell is newly set, then it is added to the set table.
  */
-Bool
-setcell(Cell * cell, State state, Bool free)
+Bool setcell(Cell * cell, State state, Bool free)
 {
     Cell *c1, *c2;
 
     if (cell->state == state)
     {
         DPRINTF("setcell %d %d %d to state %s already set\n",
-            cell->row, cell->col, cell->gen,
-            (state == ON) ? "on" : "off");
+            cell->row, cell->col, cell->gen, (state == ON) ? "on" : "off");
 
         return TRUE;
     }
@@ -133,8 +125,8 @@ setcell(Cell * cell, State state, Bool free)
     if (cell->state == UNK)
     {
         DPRINTF("setCell %d %d %d to %s, %s successful\n",
-            cell->row, cell->col, cell->gen,
-            (free ? "free" : "forced"), ((state == ON) ? "on" : "off"));
+            cell->row, cell->col, cell->gen, (free ? "free" : "forced"),
+            ((state == ON) ? "on" : "off"));
 
         c1 = cell;
 
@@ -148,9 +140,7 @@ setcell(Cell * cell, State state, Bool free)
                 for (; (c2 = searchList[searchIdx]); searchIdx++)
                 {
                     if (c2->state == UNK)
-                    {
                         break;
-                    }
                 }
                 free = FALSE;
             }
@@ -163,8 +153,7 @@ setcell(Cell * cell, State state, Bool free)
     }
 
     DPRINTF("setcell %d %d %d to state %s inconsistent\n",
-        cell->row, cell->col, cell->gen,
-        (state == ON) ? "on" : "off");
+        cell->row, cell->col, cell->gen, (state == ON) ? "on" : "off");
 
     return FALSE;
 }
@@ -211,18 +200,21 @@ static Bool consistify(Cell * cell)
 
     // first check if the state is consistent
 
-    if (flags == IMPBAD) return FALSE;
+    if (flags == IMPBAD)
+        return FALSE;
 
     // the state is consistent
     // now for the implications
 
     // change the cell if needed
     if (((flags & IMPN) != 0) &&
-        !setcell(cell, ((flags & IMPN1) != 0) ? ON : OFF, FALSE)) return FALSE;
+        !setcell(cell, ((flags & IMPN1) != 0) ? ON : OFF, FALSE))
+            return FALSE;
 
     // change the parent cell if needed
     if (((flags & IMPC) != 0) &&
-        !setcell(prevCell, ((flags & IMPC1) != 0) ? ON : OFF, FALSE)) return FALSE;
+        !setcell(prevCell, ((flags & IMPC1) != 0) ? ON : OFF, FALSE))
+            return FALSE;
 
     if ((flags & IMPUN) != 0)
     {
@@ -230,7 +222,8 @@ static Bool consistify(Cell * cell)
         state = ((flags & IMPUN1) != 0) ? ON : OFF;
 
         DPRINTF("Forcing unknown neighbors of cell %d %d %d %s\n",
-            prevCell->row, prevCell->col, prevCell->gen, (state == ON) ? "on" : "off");
+            prevCell->row, prevCell->col, prevCell->gen,
+                (state == ON) ? "on" : "off");
 
         if (prevCell->cul->state == UNK)
             shortsetcell(prevCell->cul, state);
@@ -250,7 +243,8 @@ static Bool consistify(Cell * cell)
             shortsetcell(prevCell->cdr, state);
     }
 
-    DPRINTF("Implications successful for prevCell %d %d %d %d\n", prevCell->row, prevCell->col, prevCell->gen, prevCell->state);
+    DPRINTF("Implications successful for prevCell %d %d %d %d\n",
+        prevCell->row, prevCell->col, prevCell->gen, prevCell->state);
 
     return TRUE;
 }
@@ -260,8 +254,7 @@ static Bool consistify(Cell * cell)
  * See if a cell and its neighbors are consistent with the cell and its
  * neighbors in the next generation.
  */
-static Bool
-consistify10(Cell * cell)
+static Bool consistify10(Cell * cell)
 {
     if (!consistify(cell))
         return FALSE;
@@ -283,8 +276,7 @@ consistify10(Cell * cell)
 /*
  * Examine the next choice of cell settings.
  */
-Status
-examinenext(void)
+Status examinenext(void)
 {
     Cell * cell;
 
@@ -302,8 +294,7 @@ examinenext(void)
     cell = *nextSet++;
 
     DPRINTF("Examining saved cell %d %d %d (%s) for consistency\n",
-        cell->row, cell->col, cell->gen,
-        (cell->free ? "free" : "forced"));
+        cell->row, cell->col, cell->gen, (cell->free ? "free" : "forced"));
 
     return consistify10(cell) ? OK : ERROR;
 }
@@ -313,8 +304,7 @@ examinenext(void)
  * Set a cell to the specified value and determine all consequences we
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
-Bool
-proceed(Cell * cell, State state, Bool free)
+Bool proceed(Cell * cell, State state, Bool free)
 {
     int status;
 
@@ -334,8 +324,7 @@ proceed(Cell * cell, State state, Bool free)
  * Returns the cell which is to be tried for the other possibility.
  * Returns NULL on an "object cannot exist" error.
  */
-Cell *
-backup(void)
+Cell * backup(void)
 {
     Cell * cell;
 
@@ -353,7 +342,8 @@ backup(void)
             ((cell->state == ON) ? "on" : "off"),
             ((cell->free) ? "free": "forced"));
 
-        if (!cell->free) continue;
+        if (!cell->free)
+            continue;
 
         // free cell found
         // record old status
@@ -384,8 +374,7 @@ backup(void)
  * Do checking based on setting the specified cell.
  * Returns ERROR if an inconsistency was found.
  */
-static Bool
-go(Cell * cell, State state, Bool free)
+static Bool go(Cell * cell, State state, Bool free)
 {
     Cell ** setpos;
 
@@ -394,9 +383,7 @@ go(Cell * cell, State state, Bool free)
         setpos = nextSet;
 
         if (proceed(cell, state, free))
-        {
             return TRUE;
-        }
 
         if ((setpos == nextSet) && free)
         {
@@ -409,9 +396,7 @@ go(Cell * cell, State state, Bool free)
             cell = backup();
 
             if (cell == NULL)
-            {
                 return FALSE;
-            }
 
             state = (ON + OFF) - prevState;
         }
@@ -424,8 +409,7 @@ go(Cell * cell, State state, Bool free)
  * Find another unknown cell in a normal search.
  * Returns NULL if there are no more unknown cells.
  */
-static Cell *
-getnormalunknown(void)
+static Cell * getnormalunknown(void)
 {
     Cell * cell;
 
@@ -456,7 +440,8 @@ static Bool getsmartnumbers(Cell * cell)
     Cell ** setpos;
 
     // known and inactive cells are unimportant
-    if (cell->state != UNK) return 2;
+    if (cell->state != UNK)
+        return 2;
 
     // remember set position for proper backup
     setpos = newSet;
@@ -510,8 +495,7 @@ static Bool getsmartnumbers(Cell * cell)
 
 // Smart cell ordering
 
-static Cell *
-getsmartunknown(void)
+static Cell * getsmartunknown(void)
 {
     Cell * cell;
     Cell * best;
@@ -524,23 +508,27 @@ getsmartunknown(void)
     State bestchoice = UNK;
 
     int idx;
-    int max, window, threshold, bestlen1, bestlen0, wnd, n1, n2, a, b, c, d;
+    int max, window, threshold;
+    int bestlen1, bestlen0, wnd;
+    int n1, n2, a, b, c, d;
 
     // Move the searchList over all known cells
     for (; (cell = searchList[searchIdx]); searchIdx++)
     {
         if ((cell->state == UNK) && (cell->choose))
-        {
             break;
-        }
     }
 
     // Return NULL if no unknown cells
-    if (cell == NULL) return NULL;
+    if (cell == NULL)
+        return NULL;
 
     // Prepare threshold
     threshold = smartThreshold;
-    if (threshold <= 0) threshold = MAX_CELLS;
+    if (threshold <= 0)
+    {
+        threshold = MAX_CELLS;
+    }
 
     // Prepare the dummy maximum
     max = 2; // at least 3 cells must change
@@ -580,7 +568,9 @@ getsmartunknown(void)
                     {
                         a = n1;
                         b = n2;
-                    } else if (n1 == n2) {
+                    }
+                    else if (n1 == n2)
+                    {
                         a = n1 + 1;
                         b = -1;
                     } else {
@@ -597,7 +587,9 @@ getsmartunknown(void)
                     {
                         c = n1;
                         d = n2;
-                    } else if (n1 == n2) {
+                    }
+                    else if (n1 == n2)
+                    {
                         c = n1 + 1;
                         d = -1;
                     } else {
@@ -666,6 +658,7 @@ getsmartunknown(void)
         } else {
             smartChoice = UNK;
         }
+
         return best;
     }
 
@@ -685,14 +678,14 @@ getsmartunknown(void)
  * But for follow generations mode, we try to choose the same setting
  * as a nearby generation.
  */
-static State
-choose(const Cell * cell)
+static State choose(const Cell * cell)
 {
     /* 
      * if something pre-set by the select algorithm,
      * use the selection
      */
-    if (smartChoice != UNK) return smartChoice;
+    if (smartChoice != UNK)
+        return smartChoice;
 
     /*
      * If we are following cells in other generations,
@@ -700,12 +693,8 @@ choose(const Cell * cell)
      */
     if (followGens)
     {
-        if ((cell->past->state == ON) ||
-            (cell->future->state == ON))
-        {
+        if ((cell->past->state == ON) || (cell->future->state == ON))
             return ON;
-        }
-
     }
 
     /* 
@@ -721,8 +710,7 @@ choose(const Cell * cell)
  * The top level search routine.
  * Returns if an object is found, or is impossible.
  */
-Status
-search(const Bool batch)
+Status search(const Bool batch)
 {
     Cell * cell;
     Bool free;
@@ -752,9 +740,7 @@ search(const Bool batch)
 
         free = FALSE;
         state = (ON + OFF) - prevState;
-    }
-    else
-    {
+    } else {
         state = choose(cell);
         free = TRUE;
     }
@@ -767,6 +753,7 @@ search(const Bool batch)
         if (!go(cell, state, free)) 
         {
             printGen(curGen);
+
             return NOT_EXIST;
         }
 
@@ -795,9 +782,7 @@ search(const Bool batch)
         cell = getunknown();
 
         if (cell == NULL)
-        {
             return FOUND;
-        }
 
         state = choose(cell);
         free = TRUE;
