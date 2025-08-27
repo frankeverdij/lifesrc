@@ -92,8 +92,8 @@ static int * paramTable[] =
 {
     &curStatus,
     &rowMax, &colMax, &genMax, &edgeDiagOffset, &rowTrans, &colTrans,
-    &rowSym, &colSym, &pointSym, &fwdSym, &bwdSym,
-    &flipRows, &flipCols, &flipFwd, &flipBwd, &flipQuads,
+    &rowSym, &colSym, &pointSym, &quadSym, &fwdSym, &bwdSym,
+    &flipRows, &flipCols, &flipFwd, &flipBwd, &flipPoint, &flipQuads,
     &parent, &allObjects,
     &orderWide, &orderGens, &orderInvert, &orderMiddle, &followGens,
     &chooseUnknown, &sortOrder, NULL
@@ -334,6 +334,10 @@ main(int argc, char ** argv)
                         flipBwd = TRUE;
                         break;
 
+                    case 'p':
+                        flipPoint = TRUE;
+                        break;
+
                     case 'q':
                         flipQuads = TRUE;
                         break;
@@ -377,6 +381,10 @@ main(int argc, char ** argv)
 
                     case 'p':
                         pointSym = TRUE;
+                        break;
+
+                    case 'q':
+                        quadSym = TRUE;
                         break;
 
                     case 'f':
@@ -592,18 +600,18 @@ main(int argc, char ** argv)
     }
 
     if (parent &&
-        (rowTrans || colTrans || flipQuads || flipRows || flipCols))
+        (rowTrans || colTrans || flipPoint || flipQuads || flipRows || flipCols || flipFwd || flipBwd))
     {
         fatal("Cannot specify translations or flips with -p");
     }
 
-    if ((pointSym != 0) + (rowSym || colSym) + (fwdSym || bwdSym) > 1)
+    if (pointSym + quadSym + (rowSym || colSym) + (fwdSym || bwdSym) > 1)
         fatal("Conflicting symmetries specified");
 
     if ((fwdSym || bwdSym || flipFwd || flipBwd || flipQuads) && (rowMax != colMax))
-        fatal("Rows must equal cols with -sf, -sb, or -fq");
+        fatal("Rows must equal cols with -sf, -sb, -ff, -fb or -fq");
 
-    if ((rowTrans || colTrans) + (flipQuads != 0) > 1)
+    if ((rowTrans || colTrans) + flipPoint + flipQuads > 1)
         fatal("Conflicting translation or flipping specified");
 
     if ((rowTrans && flipRows) || (colTrans && flipCols))

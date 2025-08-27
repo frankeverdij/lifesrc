@@ -14,7 +14,7 @@ Cell * symCell(const Cell * cell)
     int nRow;
     int nCol;
 
-    if (!rowSym && !colSym && !pointSym && !fwdSym && !bwdSym)
+    if (!rowSym && !colSym && !pointSym && !quadSym && !fwdSym && !bwdSym)
         return NULL;
 
     row = cell->row;
@@ -27,6 +27,9 @@ Cell * symCell(const Cell * cell)
      */
     if (pointSym)
         return findCell(nRow, nCol, cell->gen);
+
+    if (quadSym)
+        return findCell(col, colMax + 1 - row, cell->gen);
 
     /*
      * If this is forward diagonal symmetry, then this is easy.

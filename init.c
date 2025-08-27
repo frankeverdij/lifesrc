@@ -38,6 +38,77 @@ static void setState(Cell * const cell, const State state)
 
 
 /*
+ * quadrant rotation symmetry
+ */
+Bool evalQuadSym(const int row, const int col)
+{
+    if ((colMax % 2 == 0) && (rowMax % 2 == 0))
+    {
+        // even row and columns, this is easy
+        if ((col * 2 > colMax + 1) || (row * 2 > rowMax + 1))
+            return TRUE;
+    }
+    else
+    {
+        // odd rows and columns: The center cell is always part of the search
+        if ((col * 2 == colMax + 1) && (row * 2 == rowMax + 1))
+        {
+            return FALSE;
+        }
+        else
+        {
+            // check the upper left quadrant
+            if ((col * 2 > colMax + 1) || (row * 2 > rowMax))
+                return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+/*
+ * For point symmetry we need a bit of logic to determine what to do with
+ * odd/odd row/column search space. The target search pattern should be:
+ *
+ * |???|..|
+ * |???|..|
+ * |??|...|
+ */
+Bool evalPointSym(const int row, const int col)
+{
+    if (colMax % 2 == 0)
+    {
+        // even columns, this is easy
+        if (col * 2 > colMax + 1)
+            return TRUE;
+    }
+    // so we have odd columns
+    else if (rowMax % 2 == 0)
+    {
+        //even rows, this is easy
+        if (row * 2 > rowMax + 1)
+            return TRUE;
+    }
+    // so we have both odd rows and columns
+    else if (row * 2 > rowMax + 1)
+    {
+        // lower left quadrant
+        if (col * 2 > colMax) // note that there is no +1 !
+            return TRUE;
+    }
+    else
+    {
+        // upper left quadrant
+        if (col * 2 > colMax + 1)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+
+/*
  * Order the cells to be searched by building the search table list.
  * This list is built backwards from the intended search order.
  * The default is to do searches from the middle row outwards, and
@@ -90,6 +161,12 @@ initSearchOrder(void)
                         continue;
 
                     if (bwdSym && (col > row ))
+                        continue;
+
+                    if ((pointSym) && evalPointSym(row, col))
+                        continue;
+
+                    if ((quadSym) && evalQuadSym(row, col))
                         continue;
                 }
                 table[count++] = cell;
@@ -213,7 +290,7 @@ initCells(void)
                  * this cell in the same loop as the
                  * next symmetrical cell.
                  */
-                if ((rowSym || colSym || pointSym ||
+                if ((rowSym || colSym || pointSym || quadSym ||
                     fwdSym || bwdSym) && !edge)
                 {
                     loopCells(smartOn, cell, symCell(cell));
@@ -258,7 +335,7 @@ initCells(void)
      * and the first generation, then change the future and past pointers
      * to implement it.  This is for translations and flips.
      */
-    if (rowTrans || colTrans || flipRows || flipCols || flipFwd || flipBwd || flipQuads)
+    if (rowTrans || colTrans || flipRows || flipCols || flipFwd || flipBwd || flipPoint || flipQuads)
     {
         for (row = 0; row <= rowMax+1; row++)
         {

@@ -21,6 +21,13 @@ Cell * mapCell(const Cell * cell, Bool forward)
     if (flipCols && (row >= flipCols))
         col = colMax + 1 - col;
 
+    if (flipPoint)
+    {                /* NEED TO GO BACKWARDS */
+        tmp = col;
+        col = colMax + 1 - col;
+        row = rowMax + 1 - row;
+    }
+
     if (flipQuads)
     {                /* NEED TO GO BACKWARDS */
         tmp = col;

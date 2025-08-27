@@ -80,13 +80,15 @@ EXTERN	int	rowTrans;	/* translation of rows */
 EXTERN	int	colTrans;	/* translation of columns */
 EXTERN	Bool	rowSym;		/* enable row symmetry starting at column */
 EXTERN	Bool	colSym;		/* enable column symmetry starting at row */
-EXTERN	Bool	pointSym;	/* enable symmetry with central point */
+EXTERN	Bool	pointSym;	/* enable mirror symmetry with central point */
+EXTERN	Bool	quadSym;	/* enable quarter symmetry with central point */
 EXTERN	Bool	fwdSym;		/* enable forward diagonal symmetry */
 EXTERN	Bool	bwdSym;		/* enable backward diagonal symmetry */
 EXTERN	Bool	flipRows;	/* flip rows at column number from last to first generation */
 EXTERN	Bool	flipCols;	/* flip columns at row number from last to first generation */
 EXTERN	Bool	flipFwd;	/* flip forward diagonal (/) from last to first gen */
 EXTERN	Bool	flipBwd;	/* flip backward diagonal (\) from last to first gen */
+EXTERN	Bool	flipPoint;	/* flip point from last to first gen */
 EXTERN	Bool	flipQuads;	/* flip quadrants from last to first gen */
 EXTERN	Bool	parent;		/* only look for parents */
 EXTERN	Bool	allObjects;	/* look for all objects including subPeriods */
