@@ -22,7 +22,7 @@
  */
 #define ROW_MAX   49   /* maximum rows for search rectangle */
 #define COL_MAX   132  /* maximum columns for search rectangle */
-#define GEN_MAX   8    /* maximum number of generations */
+#define GEN_MAX   10   /* maximum number of generations */
 #define TRANS_MAX 4    /* largest translation value allowed */
 
 
