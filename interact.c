@@ -415,23 +415,19 @@ int main(int argc, char ** argv)
                 }
                 break;
 
-            case 'w':
+            case 'W':
                 /*
                  * Set search method from WinLifeSearch.
                  */
-                switch (*str++)
-                {
-                    case 's':
-                        smartOn += 1;
-                        smartWindow = 50;
-                        smartThreshold = 4;
-                    default:
-                        smartOn += 1;
-                        pProceed = &proceed;
-                        pBackup = &backup;
-                        pSearch = &search;
-                        pSetCell = &setcell;
-                }
+                smartOn += 1;
+                smartWindow = 50;
+                smartThreshold = 4;
+            case 'w':
+                smartOn += 1;
+                pProceed = &proceed;
+                pBackup = &backup;
+                pSearch = &search;
+                pSetCell = &setcell;
                 break;
 
             case 'd':
@@ -449,7 +445,7 @@ int main(int argc, char ** argv)
                 break;
 
             case 'V':
-                augmentOutput = TRUE;
+                blockOutput = TRUE;
             case 'v':
                 /*
                  * Set view frequency.
@@ -458,8 +454,8 @@ int main(int argc, char ** argv)
                 {
                     switch (*str++)
                     {
-                        case 'b':
-                            blockOutput = TRUE;
+                        case 'a':
+                            augmentOutput = TRUE;
                             break;
 
                         case 'r':
@@ -2334,7 +2330,7 @@ static void usage(void)
     "   -uo  First choice for unknown cell should be ON instead of OFF",
     "   -w   Select WinLifeSearch's getNormalUnknown search method",
     "        (Default is DB/JS getNormalUnknown search method)",
-    "   -ws  Select WinLifeSearch's getSmartUnknown search method",
+    "   -W   Select WinLifeSearch's getSmartUnknown search method",
     "   -ow  Set search order to find wide objects first",
     "   -og  Set search order from lowest generation to highest",
     "   -om  Set search order from middle column outwards",
@@ -2350,10 +2346,11 @@ static void usage(void)
     "   -D   Enter debug mode if the code is compiled with -DDEBUGFLAG",
     "   -R   Use Life rules specified by born,live values",
     "   -vn  View object every n seconds using expanded lif format",
-    "   -vrn Like -vn but prints additional rle of object after the lif output",
-    "   -Vn  Like -vn but shows symmetry and first searchlist cell in lif output",
-    "   -vbn View object every n seconds using UTF8 block format",
-    "   -vbrn Like -vbn but prints additional rle of object after the block output",
+    "   -Vn  Like -vn but shows object in UTF8 block characters",
+    "   -van Shows additional information in lif and block output:",
+    "        Symmetry is show in bright and dark",
+    "        First cell to be searched is highlighted",
+    "   -vrn Also prints rle of object",
     "   -dn file  Dump status to file every n seconds",
     "   -l  file  Load status from file",
     "   -ln file  Load status from file without entering command mode",
