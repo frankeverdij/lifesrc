@@ -208,6 +208,8 @@ int main(int argc, char ** argv)
     colMax = 75;
     edgeDiagOffset = 0;
     smartOn = 0;
+    smartWindow = 50;
+    smartThreshold = 4;
 
     pProceed = &Proceed;
     pBackup = &Backup;
@@ -421,7 +423,10 @@ int main(int argc, char ** argv)
                  */
                 smartOn += 1;
                 smartWindow = 50;
-                smartThreshold = 4;
+                if (*str)
+                {
+                    smartThreshold = atoi(str);
+                }
             case 'w':
                 smartOn += 1;
                 pProceed = &proceed;
