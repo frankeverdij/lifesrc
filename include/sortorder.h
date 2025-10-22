@@ -5,6 +5,7 @@
 #include "enums.h"
 
 int orderSortFunc(const void * addr1, const void * addr2, void * gvars);
+int orderSortFuncOld(const void * addr1, const void * addr2, void * gvars);
 
 typedef	struct globals_struct globals_struct;
 

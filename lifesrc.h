@@ -101,6 +101,7 @@ EXTERN Bool followGens;    /* try to follow setting of other gens */
 EXTERN State chooseUnknown; /* First choice for unknown cell, either ON or OFF */
 EXTERN long stepConfl;     /* step counter for one Proceed-Backup action */
 EXTERN int sortOrder;      /* sort direction */
+EXTERN Bool oldSortOrder;  /* sort direction */
 
 EXTERN int smartOn;        /*
                             * use smart method (KAS):

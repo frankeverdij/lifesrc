@@ -518,23 +518,20 @@ int main(int argc, char ** argv)
 
             case 'o':
                 /*
-                 * Set output columns or file name.
+                 * Set output file name
                  */
-                if ((*str == '\0') || isdigit(*str))
+                if ((argc <= 0) || (**argv == '-'))
                 {
-                    /*
-                     * Output file name
-                     */
-                    if ((argc <= 0) || (**argv == '-'))
-                    {
-                        fatal("Missing output file name");
-                    }
-
-                    outputFile = *argv++;
-                    argc--;
-                    break;
+                    fatal("Missing output file name");
                 }
 
+                outputFile = *argv++;
+                argc--;
+                break;
+
+            case 'M':
+                oldSortOrder = TRUE;
+            case 'm':
                 /*
                  * An ordering option.
                  */
@@ -2336,15 +2333,16 @@ static void usage(void)
     "   -w   Select WinLifeSearch's getNormalUnknown search method",
     "        (Default is DB/JS getNormalUnknown search method)",
     "   -W   Select WinLifeSearch's getSmartUnknown search method",
-    "   -ow  Set search order to find wide objects first",
-    "   -og  Set search order from lowest generation to highest",
-    "   -om  Set search order from middle column outwards",
-    "   -or  Set search order from top to bottom",
-    "   -oc  Set search order from left to right",
-    "   -of  Set search order from top left to down right",
-    "   -ob  Set search order from top right to down left",
-    "   -oO  Set search order circular outwards from the center",
-    "   -oi  Invert search order",
+    "   -mg  Set search order from lowest generation to highest",
+    "   -Mg  Like -og but select old search order code",
+    "   -mw  Set search order to find wide objects first",
+    "   -mm  Set search order from middle column outwards",
+    "   -mr  Set search order from top to bottom",
+    "   -mc  Set search order from left to right",
+    "   -mf  Set search order from top left to down right",
+    "   -mb  Set search order from top right to down left",
+    "   -mO  Set search order circular outwards from the center",
+    "   -mi  Invert search order",
     "   -p   Only look for parents of last generation",
     "   -a   Find all objects (even those with subPeriods)",
     "   -b   Batch. Don't enter command mode",

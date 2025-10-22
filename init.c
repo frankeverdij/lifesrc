@@ -16,6 +16,7 @@
 #include "findcell.h"
 #include "isedge.h"
 
+static int (*sortFunc)(const void *, const void * , void *);
 
 static void setState(Cell * const cell, const State state)
 {
@@ -175,9 +176,21 @@ initSearchOrder(void)
     }
 
     /*
+     * Select old or new sort function.
+     */
+    if (oldSortOrder)
+    {
+        sortFunc = &orderSortFuncOld;
+    }
+    else
+    {
+        sortFunc = &orderSortFunc;
+    }
+
+    /*
      * Now sort the table based on our desired search order.
      */
-    qsort_r((char *) table, count, sizeof(Cell *), &orderSortFunc, &g);
+    qsort_r((char *) table, count, sizeof(Cell *), sortFunc, &g);
 
     /*
      * Finally build the search list from the table elements in the
