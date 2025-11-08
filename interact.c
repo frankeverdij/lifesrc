@@ -1803,6 +1803,11 @@ static Status loadState(const char * file)
      */
     initCells();
 
+    if (edgeDiagOffset)
+    {
+        initEdgeCells();
+    }
+
     /*
      * Handle cells which have been set.
      */
