@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export LIFESRCDUMB="${HOME}/Documents/GOL/lifesrc/lifesrcdumb -tr1 -ogr -b -vb200 -d10000"
+export LIFESRCDUMB="${HOME}/Documents/GOL/lifesrc/lifesrcdumb -tr1 -uo -mgr -b -vbr120 -d900"
 
 find . -name "*.sh" -a \! -name "launch.sh" -print | sort -t / -n -k 2,3 > scriptlist
 readarray -t array < scriptlist

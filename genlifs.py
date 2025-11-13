@@ -190,7 +190,7 @@ class Partials:
     def write_script(self, dirpath, lif, i, base, sym):
         with open(dirpath + '/' + base + ".sh", 'w') as fh:
             script = "#!/bin/sh\nset -x\ncd " + dirpath + "\n" \
-                + "if [ \! $( grep -sqE 'object|Inconsistent' " \
+                + r"if [ \! $( grep -sqE 'object|Inconsistent' " \
                 + base + ".log ; echo $? ) -eq 0 ] ; then\n" \
                 + "  if [ -f " + base + ".dmp ] ; then\n" \
                 + "    $LIFESRCDUMB " + base + ".dmp -l " + base + ".dmp" \
