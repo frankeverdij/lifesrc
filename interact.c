@@ -39,6 +39,7 @@ static char * loadFile;      /* file to load state from */
 static Bool blockOutput;     /* print Unicode blocks instead of character */
 static Bool RLEOutput;       /* print additional RLE code */
 static Bool augmentOutput;   /* print additional UTF8 code for stateList info */
+static Bool sortOrderOutput; /* print sort order in ASCII form */
 static Bool setDeep;         /* set cleared cells deeply from init file */
 static time_t startTime;
 static char timeBuf[256] = {0};
@@ -466,6 +467,10 @@ int main(int argc, char ** argv)
                         case 'r':
                             RLEOutput = TRUE;
                             break;
+
+                        case 's':
+                            sortOrderOutput = TRUE;
+                            break;
                     }
                 }
 
@@ -713,6 +718,10 @@ int main(int argc, char ** argv)
     {
         if (!quiet)
         {
+            if (sortOrderOutput)
+            {
+                printOrder(0, augmentOutput);
+            }
             printGen(0);
         }
     }
