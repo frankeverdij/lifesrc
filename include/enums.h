@@ -13,7 +13,13 @@ typedef	int		Bool;
 /*
  * Status returned by routines
  */
-typedef enum {OK, ERROR, CONSISTENT, NOT_EXIST, FOUND} Status;
+typedef int Status;
+
+#define OK          ((Status) 0)
+#define ERROR       ((Status) 1)
+#define CONSISTENT  ((Status) 2)
+#define NOT_EXIST   ((Status) 3)
+#define FOUND       ((Status) 4)
 
 /*
  * Which sort directions do we support?

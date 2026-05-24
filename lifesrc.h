@@ -98,7 +98,7 @@ EXTERN Bool orderGens;     /* ordering tries all gens first */
 EXTERN Bool orderInvert;   /* Inverts direction of non-wide orderings */
 EXTERN Bool orderMiddle;   /* ordering tries middle columns first */
 EXTERN Bool followGens;    /* try to follow setting of other gens */
-EXTERN State chooseUnknown; /* First choice for unknown cell, either ON or OFF */
+EXTERN int chooseUnknown;  /* First choice for unknown cell, either ON or OFF */
 EXTERN long stepConfl;     /* step counter for one Proceed-Backup action */
 EXTERN int sortOrder;      /* sort direction */
 EXTERN Bool oldSortOrder;  /* sort direction */
