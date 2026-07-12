@@ -223,7 +223,14 @@ int main(int argc, char ** argv)
     {
         fatal("Cannot set Life rules!");
     }
-
+    /*
+     * Check for any arguments
+     */
+    if (argc < 2)
+    {
+        usage();
+        fatal("\nNo arguments provided.");
+    }
     /*
      * echo the command line
      */
@@ -2232,7 +2239,7 @@ static void usage(void)
     "Extensively modified by Frank Everdij.",
     "",
     "lifesrc -r# -c# -g# [other options]",
-    "lifesrc -l[n] file -v# -o# file -d# file",
+    "lifesrc -l file -v#:l -o file -d#:file",
     "",
     "   -r n Number of rows",
     "   -c n Number of columns",
