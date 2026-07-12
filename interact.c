@@ -7,6 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "lifesrc.h"
 #include "state.h"
@@ -34,8 +35,9 @@ static Bool setAll;          /* set all cells from initial file */
 static Bool isLife;          /* whether the rules are for standard Life */
 static char ruleString[20];  /* rule string for printouts */
 static long foundCount;      /* number of objects found */
-static char * initFile;      /* file containing initial cells */
-static char * loadFile;      /* file to load state from */
+static char initFile[256] = {0};   /* file containing initial cells */
+static char loadFile[256] = {0};   /* file to load state from */
+static char outputFile[256] = {0}; /* file to output results to */
 static Bool blockOutput;     /* print Unicode blocks instead of character */
 static Bool RLEOutput;       /* print additional RLE code */
 static Bool augmentOutput;   /* print additional UTF8 code for stateList info */
@@ -43,7 +45,6 @@ static Bool sortOrderOutput; /* print sort order in ASCII form */
 static Bool setDeep;         /* set cleared cells deeply from init file */
 static time_t startTime;
 static char timeBuf[256] = {0};
-static char * argstr;
 static int  dumpFreq;        /* how often to perform dumps in seconds */
 static int  viewFreq;        /* how often to view results in seconds */
 
@@ -197,9 +198,7 @@ int main(int argc, char ** argv)
 
     time_t end;
     long dif = 0;
-    const char * str;
-
-    size_t asize = 1;
+    int opt;
 
     /*
      * Set a couple of defaults.
@@ -220,406 +219,310 @@ int main(int argc, char ** argv)
     setSigaction(&actDump, SIGUSR1, &alarm_handler);
     setSigaction(&actView, SIGUSR2, &alarm_handler);
 
-    /*
-     * echo the command line, before the program alters argc
-     */
-    for (int i = 1; i < argc; i++) {
-        asize += strlen(argv[i]) + 1;
-    }
-    argstr = (char *) malloc(asize);
-    if (!argstr) {
-        fatal("No memory");
-    }
-    asize = 0;
-    for (int i = 1; i < argc; i++) {
-        asize += sprintf(argstr + asize, "%s ", argv[i]);
-        assert(argstr[asize] == '\0');
-    }
-    if (asize > 0)
-    {
-        argstr[--asize] = '\0';
-    }
-
-    ttyPrintf("Command line: \n");
-    ttyPrintf("%s\n", argstr);
-
-    if (--argc <= 0)
-    {
-        usage();
-        exit(1);
-    }
-
-    argv++;
-
     if (!setRules("3/23"))
     {
         fatal("Cannot set Life rules!");
     }
 
     /*
+     * echo the command line
+     */
+    ttyPrintf("Command line: \n");
+    for (int i = 1; i < argc; i++) {
+        ttyPrintf("%s ", argv[i]);
+    }
+    ttyPrintf("\n");
+
+    /*
      * Collect the command line options.
      */
-    while (argc-- > 0)
+    while ((opt = getopt(argc, argv,
+        "abc:d:De:f:g:h:H:i:I:j:l:m:o:O:pqr:R:s:S:t:u:v:V:w:")) != -1)
     {
-        str = *argv++;
-
-        if (*str++ != '-')
+        switch (opt)
         {
-            usage();
-            exit(1);
-        }
-
-        switch (*str++)
-        {
+            case 'a':
+                allObjects = TRUE; /* Find all objects. */
+                break;
             case 'b':
-                /*
-                 * Don't enter command mode.
-                 */
-                noWait = TRUE;
+                noWait = TRUE; /* Don't enter command mode. */
                 break;
-
-            case 'q':
-                /*
-                 * Don't output.
-                 */
-                quiet = TRUE;
-                break;
-
-            case 'r':
-                /*
-                 * Set number of rows.
-                 */
-                rowMax = atoi(str);
-                break;
-
             case 'c':
-                /*
-                 * Set number of columns.
-                 */
-                colMax = atoi(str);
+                colMax = atoi(optarg); /* Set number of columns. */
                 break;
-
-            case 'g':
-                /*
-                 * Set number of generations.
-                 */
-                genMax = atoi(str);
+            case 'd':
+                /* set dump frequency and dumpfile */
+                char * dumpFile = calloc(256, sizeof(char));
+                int retv = sscanf(optarg, "%d:%s", &dumpFreq, dumpFile);
+                if (retv == 1)
+                {
+                    strncpy(dumpFile, DUMP_FILE, strlen(DUMP_FILE) + 1);
+                }
+                else if (retv != 2)
+                {
+                    fatal("incorrect argument for dump option");
+                }
                 break;
-
+            case 'D':
+                debug = TRUE; /* Turn on debugging output. */
+                break;
             case 'e':
-                /*
-                 * Set offset for diagonal areas.
-                 */
-                edgeDiagOffset = atoi(str);
-                break;
-
-            case 't':
-                /*
-                 * Set row or column translations.
-                 */
-                switch (*str++)
+                switch (*optarg)
                 {
                     case 'r':
-                        rowTrans = atoi(str);
+                        rowSym = 1; /* Enforce row symmetry. */
                         break;
-
                     case 'c':
-                        colTrans = atoi(str);
+                        colSym = 1; /* Enforce column symmetry. */
                         break;
-
-                    default:
-                        fatal("Bad translate");
-                }
-                break;
-
-            case 'f':
-                /*
-                 * Flip cells around an axis.
-                 */
-                switch (*str++)
-                {
-                    case 'r':
-                        flipRows = 1;
-                        break;
-
-                    case 'c':
-                        flipCols = 1;
-                        break;
-
-                    case 'f':
-                        flipFwd = TRUE;
-                        break;
-
-                    case 'b':
-                        flipBwd = TRUE;
-                        break;
-
                     case 'p':
-                        flipPoint = TRUE;
+                        pointSym = TRUE; /* Enforce point symmetry. */
                         break;
-
                     case 'q':
-                        flipQuads = TRUE;
+                        quadSym = TRUE; /* Enforce (rotation) quadrant symmetry */
                         break;
-
-                    default:
-                        fatal("Bad flip");
-                }
-                break;
-
-            case 'u':
-                /*
-                 * Set choose strategy for getNormalUnknown search method.
-                 */
-                switch (*str++)
-                {
-                    case 'g':
-                        followGens = TRUE;
-                        break;
-
-                    case 'o':
-                        chooseUnknown = ON;
-                        break;
-                }
-                break;
-
-            case 's':
-                /*
-                 * Set symmetry.
-                 */
-                switch (*str++)
-                {
-                    case 'r':
-                        rowSym = 1;
-                        break;
-
-                    case 'c':
-                        colSym = 1;
-                        break;
-
-                    case 'p':
-                        pointSym = TRUE;
-                        break;
-
-                    case 'q':
-                        quadSym = TRUE;
-                        break;
-
                     case 'f':
-                        fwdSym = TRUE;
+                        fwdSym = TRUE; /* Enforce forward diagonal symmetry */
                         break;
-
                     case 'b':
-                        bwdSym = TRUE;
+                        bwdSym = TRUE; /* Enforce backward diagonal symmetry */
                         break;
-
                     default:
                         fatal("Bad symmetry");
                 }
                 break;
-
-            case 'W':
-                /*
-                 * Set search method from WinLifeSearch.
-                 */
-                smartOn += 1;
-                smartWindow = 50;
-                if (*str)
+            case 'f':
+                switch (*optarg)
                 {
-                    smartThreshold = atoi(str);
-                }
-            case 'w':
-                smartOn += 1;
-                pProceed = &proceed;
-                pBackup = &backup;
-                pSearch = &search;
-                pSetCell = &setcell;
-                break;
-
-            case 'd':
-                /*
-                 * Get dump frequency.
-                 */
-                dumpFreq = atoi(str);
-                dumpFile = DUMP_FILE;
-
-                if ((argc > 0) && (**argv != '-'))
-                {
-                    argc--;
-                    dumpFile = *argv++;
+                    case 'r':
+                        flipRows = 1; /* Flip cells along central row. */
+                        break;
+                    case 'c':
+                        flipCols = 1; /* Flip cells along central column. */
+                        break;
+                    case 'f':
+                        flipFwd = TRUE; /* Flip cells along forward diagonal. */
+                        break;
+                    case 'b':
+                        flipBwd = TRUE; /* Flip cells along backward diagonal. */
+                        break;
+                    case 'p':
+                        flipPoint = TRUE; /* Flip cells around central point. */
+                        break;
+                    case 'q':
+                        flipQuads = TRUE; /* Rotate cells 90 degrees around central point. */
+                        break;
+                    default:
+                        fatal("Bad flip");
                 }
                 break;
-
-            case 'V':
-                blockOutput = TRUE;
-            case 'v':
-                /*
-                 * Set view frequency.
-                 */
-                while ((*str) && !isdigit(*str))
+            case 'g':
+                genMax = atoi(optarg); /* Set number of generations. */
+                break;
+            case 'H':
+                /* Set offset for clearing the triangular areas. */
+                edgeDiagOffset = -1;
+            case 'h':
+                if (edgeDiagOffset == -1)
                 {
-                    switch (*str++)
-                    {
-                        case 'a':
-                            augmentOutput = TRUE;
-                            break;
-
-                        case 'r':
-                            RLEOutput = TRUE;
-                            break;
-
-                        case 's':
-                            sortOrderOutput = TRUE;
-                            break;
-                    }
+                    edgeDiagOffset = -atoi(optarg); /* Clears NE-SW corner. */ 
                 }
-
-                if (*str)
+                else
                 {
-                    viewFreq = atoi(str);
+                    edgeDiagOffset = atoi(optarg); /* Clears NW-SE corner. */
                 }
                 break;
-
-            case 'l':
-                /*
-                 * Load file.
-                 */
-                if (*str == 'n')
-                {
-                    noWait = TRUE;
-                }
-
-                if ((argc <= 0) || (**argv == '-'))
-                {
-                    fatal("Missing load file name");
-                }
-
-                loadFile = *argv++;
-                argc--;
-                break;
-
+            case 'j':
+                setDeep = TRUE;
             case 'i':
-                /*
-                 * Read initial file.
-                 */
-                if (*str == 'd')
+                setAll = TRUE;
+            case 'I':
+                if (optarg)
                 {
-                    setAll = TRUE;
-                    setDeep = TRUE;
+                    strncpy(initFile, optarg, 64); /* set initial pattern filename */
                 }
-                else if (*str != 'n')
-                {
-                    setAll = TRUE;
-                }
-
-                if ((argc <= 0) || (**argv == '-'))
+                else
                 {
                     fatal("Missing initial file name");
                 }
-
-                initFile = *argv++;
-                argc--;
                 break;
-
+            case 'l':
+                if (optarg)
+                {
+                    strncpy(loadFile, optarg, 64); /*set state load filename */
+                }
+                else
+                {
+                    fatal("Missing load file name");
+                }
+                break;
             case 'o':
-                /*
-                 * Set output file name
-                 */
-                if ((argc <= 0) || (**argv == '-'))
+                if (optarg)
+                {
+                    strncpy(outputFile, optarg, 64); /* set pattern output filename */
+                }
+                else
                 {
                     fatal("Missing output file name");
                 }
-
-                outputFile = *argv++;
-                argc--;
                 break;
-
-            case 'M':
-                oldSortOrder = TRUE;
-            case 'm':
-                /*
-                 * An ordering option.
-                 */
-                while (*str)
+            case 'p':
+                parent = TRUE; /* Find parents only. */
+                break;
+            case 'q':
+                quiet = TRUE; /* Don't output. */
+                break;
+            case 'r':
+                rowMax = atoi(optarg); /* Set number of rows. */
+                break;
+            case 'R':
+                /* Set life rules. */
+                if (!setRules(optarg))
                 {
-                    switch (*str++)
+                    fatal("Bad rule string");
+                }
+                break;
+            case 'S':
+                oldSortOrder = TRUE;
+            case 's':
+                char * sopt = optarg;
+                while (*sopt)
+                {
+                    switch (*sopt++)
                     {
                         case 'w':
                             orderWide = TRUE;
                             break;
-
                         case 'g':
                             orderGens = TRUE;
                             break;
-
                         case 'i':
                             orderInvert = TRUE;
                             break;
-
                         case 'm':
                             orderMiddle = TRUE;
                             break;
-
                         case 'r':
                             sortOrder = TOPDOWN;
                             break;
-
                         case 'c':
                             sortOrder = LEFTRIGHT;
                             break;
-
                         case 'f':
                             sortOrder = DIAG;
                             break;
-
                         case 'b':
                             sortOrder = BACKDIAG;
                             break;
-
                         case 'O':
                             sortOrder = CENTEROUT;
                             break;
-
                         default:
                             fatal("Bad ordering or sorting option");
                     }
                 }
                 break;
-
-            case 'p':
-                /*
-                 * Find parents only.
-                 */
-                parent = TRUE;
-                break;
-
-            case 'a':
-                /*
-                 * Find all objects.
-                 */
-                allObjects = TRUE;
-                break;
-
-            case 'D':
-                /*
-                 * Turn on debugging output.
-                 */
-                debug = TRUE;
-                break;
-
-            case 'R':
-                /*
-                 * Set rules.
-                 */
-                if (!setRules(str))
+            case 't':
+                int shift;
+                char topt;
+                /* set translation direction and shift. */
+                int rett = sscanf(optarg, "%d:%c", &shift, &topt);
+                if (rett == 2)
                 {
-                    fatal("Bad rule string");
+                    switch (topt)
+                    {
+                        case 'r': /* display in LIF format. */
+                            rowTrans = shift; /* Translate # of rows. */
+                            break;
+                        case 'c':
+                            colTrans = shift; /* Translate # of columns. */
+                            break;
+                        default:
+                            fatal("Bad translate");
+                    }
+                }
+                else
+                {
+                    fatal("Bad translate direction or shift");
                 }
                 break;
-
-            default:
+            case 'u':
+                 /* Set choice strategy for getNormalUnknown search method. */
+                switch (*optarg)
+                {
+                    case 'g':
+                        followGens = TRUE; /* Choose the same as following or preceding generation of the cell. */
+                        break;
+                    case 'o':
+                        chooseUnknown = ON; /* Choose ON for unknown cells. */
+                        break;
+                    case 'd': /* (default) Choose OFF for unknown cells. */
+                    default:
+                        chooseUnknown = OFF;
+                        followGens = FALSE;
+                        break;
+                }
+                break;
+            case 'V':
+                RLEOutput = TRUE;
+            case 'v':
+                char vopt;
+                /* set view frequency. */
+                int ret = sscanf(optarg, "%d:%c", &viewFreq, &vopt);
+                if (ret == 2)
+                {
+                    switch (vopt)
+                    {
+                        case 'l': /* display in LIF format. */
+                            break;
+                        case 'L':
+                            augmentOutput = TRUE;
+                            break;
+                        case 'b': /* display in UTF8 block format. */
+                            blockOutput = TRUE;
+                            break;
+                        case 'B':
+                            blockOutput = TRUE;
+                            augmentOutput = TRUE;
+                            break;
+                        case 's': /* display sortorder of cells. */
+                            sortOrderOutput = TRUE;
+                            break;
+                        default:
+                            fatal("Bad view option.");
+                    }
+                }
+                else if (ret == 1)
+                {
+                    break;
+                }
+                else
+                {
+                    fatal("Bad frequency.");
+                }
+                break;
+            case 'w':
+                switch (*optarg)
+                {
+                    case 's': /* KS smartUnknown method from WinLifeSearch. */
+                        smartOn += 1;
+                        smartWindow = 50;
+                    case 'n': /* KS normalUnknown method from WinLifeSearch. */
+                        smartOn += 1;
+                        pProceed = &proceed;
+                        pBackup = &backup;
+                        pSearch = &search;
+                        pSetCell = &setcell;
+                        break;
+                    case 'd': /* (default) DB/JS normalUnknown search. */
+                    default:
+                        break;
+                }
+                break;
+            default: /* ? */
                 ttyClose();
-                fprintf(stderr, "Unknown option -%c\n", str[-1]);
+                fprintf(stderr, "Unknown option -%c\n", opt);
+                usage();
                 exit(1);
         }
     }
@@ -661,7 +564,7 @@ int main(int argc, char ** argv)
      * Check for loading state from file or reading initial
      * object from file.
      */
-    if (loadFile)
+    if (strlen(loadFile))
     {
         if (loadState(loadFile) != OK)
         {
@@ -673,7 +576,7 @@ int main(int argc, char ** argv)
     {
         initCells();
 
-        if (initFile)
+        if (strlen(initFile))
         {
             if (readFile(initFile) != OK)
             {
@@ -775,14 +678,21 @@ int main(int argc, char ** argv)
 
         if (dumpFreq)
         {
-            dumpState(dumpFile);
+            if (strlen(dumpFile))
+            {
+                dumpState(dumpFile);
+            }
+            else
+            {
+                fatal("no dumpfile specified.");
+            }
         }
 
         quitOk = (curStatus == NOT_EXIST);
 
         curGen = 0;
 
-        if (outputFile == NULL)
+        if (strlen(outputFile) == 0)
         {
             if (!noWait)
             {
@@ -1411,7 +1321,7 @@ void printGen(int gen)
         }
     }
 
-    if (outputFile)
+    if (strlen(outputFile))
     {
         if (foundCount)
         {
@@ -2327,54 +2237,67 @@ static void usage(void)
     "   -r n Number of rows",
     "   -c n Number of columns",
     "   -g n Number of generations",
-    "   -e n Clear corner triangles from the search space by setting cells to OFF",
-    "        The triangles have n cells as base. A positive number clears the",
-    "        NW-SE corners (|/ /|), a negative number clears NE-SW (|\\ \\|)",
-    "   -tr  Translate rows between last and first generation",
-    "   -tc  Translate columns between last and first generation",
+    "   -p   Only look for parents of last generation",
+    "   -h n Make the search area hexagonal by clearing the NW-SE corner"
+    "        triangles (|/ /|) from the search space by setting cells to OFF",
+    "        The triangles have n cells as base.",
+    "   -H n Same as -h but clears the NE-SW corner triangles (|\\ \\|).",
+    "",
+    "   -t n:r  Translate n rows between last and first generation",
+    "   -t n:c  Translate n columns between last and first generation",
+    "",
     "   -fr  Flip rows between last and first generation",
     "   -fc  Flip columns between last and first generation",
     "   -ff  Flip forward diagonals (/) between last and first generation",
     "   -fb  Flip backward diagonals (\\) between last and first generation",
     "   -fq  Flip quadrants (+) between last and first generation",
-    "   -sr  Enforce symmetry on rows",
-    "   -sc  Enforce symmetry on columns",
-    "   -sp  Enforce point symmetry around center",
-    "   -sf  Enforce symmetry on forward diagonal",
-    "   -sb  Enforce symmetry on backward diagonal",
-    "   -ug  First follow settings of previous or next generation",
-    "   -uo  First choice for unknown cell should be ON instead of OFF",
-    "   -w   Select WinLifeSearch's getNormalUnknown search method",
-    "        (Default is DB/JS getNormalUnknown search method)",
-    "   -W   Select WinLifeSearch's getSmartUnknown search method",
-    "   -mg  Set search order from lowest generation to highest",
-    "   -Mg  Like -og but select old search order code",
-    "   -mw  Set search order to find wide objects first",
-    "   -mm  Set search order from middle column outwards",
-    "   -mr  Set search order from top to bottom",
-    "   -mc  Set search order from left to right",
-    "   -mf  Set search order from top left to down right",
-    "   -mb  Set search order from top right to down left",
-    "   -mO  Set search order circular outwards from the center",
-    "   -mi  Invert search order",
-    "   -p   Only look for parents of last generation",
+    "",
+    "   -er  Enforce symmetry on rows",
+    "   -ec  Enforce symmetry on columns",
+    "   -ep  Enforce point symmetry around center",
+    "   -ef  Enforce symmetry on forward diagonal",
+    "   -eb  Enforce symmetry on backward diagonal",
+    "",
+    "   -uf  (default) Unknown cells first choice is OFF",
+    "   -uo  Unknown cells first choice is ON",
+    "   -ug  Unknown cells first choice follows previous or next generation",
+    "",
+    "   -wd  (default) Select DB/JS getNormalUnknown search method",
+    "   -wn  Select WinLifeSearch's getNormalUnknown search method",
+    "   -ws  Select WinLifeSearch's KS getSmartUnknown search method",
+    "",
+    "   -sg  Set search order from lowest generation to highest",
+    "   -Sg  Like -og but select old search order code",
+    "   -sw  Set search order to find wide objects first",
+    "   -sm  Set search order from middle column outwards",
+    "   -sr  Set search order from top to bottom",
+    "   -sc  Set search order from left to right",
+    "   -sf  Set search order from top left to down right",
+    "   -sb  Set search order from top right to down left",
+    "   -sO  Set search order circular outwards from the center",
+    "   -si  Invert search order",
+    "",
     "   -a   Find all objects (even those with subPeriods)",
     "   -b   Batch. Don't enter command mode",
     "   -D   Enter debug mode if the code is compiled with -DDEBUGFLAG",
     "   -R   Use Life rules specified by born,live values",
-    "   -vn  View object every n seconds using expanded lif format",
-    "   -Vn  Like -vn but shows object in UTF8 block characters",
-    "   -van Shows additional information in lif and block output:",
-    "        Symmetry is show in bright and dark",
-    "        First cell to be searched is highlighted",
-    "   -vrn Also prints rle of object",
-    "   -dn file  Dump status to file every n seconds",
-    "   -l  file  Load status from file",
-    "   -ln file  Load status from file without entering command mode",
-    "   -i  file  Read initial object setting both ON and OFF cells",
-    "   -in file  Read initial object from file setting only ON cells",
-    "   -id file  Read initial object setting OFF cells deeply (all gens)",
-    "   -o  file  Output objects to file (appending mode)",
+    "",
+    "   -v n   View object every n seconds",
+    "   -V n   Also prints rle of object",
+    "   -v n:l (default) Shows objects in expanded lif format",
+    "   -v n:b Shows object in UTF8 block characters",
+    "   -v n:L/B Same as the lowercase options, but adds additional information",
+    "            in lif and block output:",
+    "            Symmetry is show in bright and dark",
+    "            First cell to be searched is highlighted",
+    "",
+    "   -l   file  Load status from file",
+    "   -i   file  Read initial object setting both ON and OFF cells",
+    "   -I   file  Like -i, but only sets ON cells",
+    "   -j   file  Read initial object setting OFF cells deeply (all gens)",
+    "   -d n:file  Dump status to file every n seconds",
+    "   -o   file  Output objects to file (appending mode)",
+    "   -q   Don't show screen output",
     NULL
     };
 

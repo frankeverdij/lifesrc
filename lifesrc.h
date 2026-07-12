@@ -129,7 +129,6 @@ EXTERN int curGen;         /* current generation for display */
 EXTERN sig_atomic_t dumpFlag; /* sigaction flag for dumps */
 EXTERN sig_atomic_t viewFlag; /* sigaction flag for viewing */
 EXTERN char * dumpFile;       /* dump file name */
-EXTERN char * outputFile;     /* file to output results to */
 EXTERN long long viewCount;   /* counter for viewing */
 
 
