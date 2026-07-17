@@ -336,7 +336,7 @@ static Status examineNext(void)
  * Set a cell to the specified value and determine all consequences we
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
-Bool Proceed(Cell * cell, const State state, const Bool free)
+Bool proceed(Cell * cell, const State state, const Bool free)
 {
     int status;
 
@@ -356,7 +356,7 @@ Bool Proceed(Cell * cell, const State state, const Bool free)
  * Returns the cell which is to be tried for the other possibility.
  * Returns NULL on an "object cannot exist" error.
  */
-Cell * Backup(void)
+Cell * backup(void)
 {
     Cell * cell;
 
@@ -398,11 +398,11 @@ static Bool go(Cell * cell, State state, Bool free)
 
     for (;;)
     {
-        if (Proceed(cell, state, free))
+        if (proceed(cell, state, free))
             return TRUE;
 
         ++stepConfl;
-        cell = Backup();
+        cell = backup();
 
         if (cell == NULL)
             return FALSE;
@@ -468,7 +468,7 @@ static State choose(const Cell * cell)
  * The top level search routine.
  * Returns if an object is found, or is impossible.
  */
-Status Search(const Bool batch)
+Status search(const Bool batch)
 {
     Cell * cell;
     Bool free;
@@ -478,7 +478,7 @@ Status Search(const Bool batch)
 
     if (cell == NULL)
     {
-        cell = Backup();
+        cell = backup();
 
         if (cell == NULL)
             return ERROR;

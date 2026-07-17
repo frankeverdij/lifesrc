@@ -211,9 +211,9 @@ int main(int argc, char ** argv)
     smartWindow = 50;
     smartThreshold = 4;
 
-    pProceed = &Proceed;
-    pBackup = &Backup;
-    pSearch = &Search;
+    pProceed = &proceed;
+    pBackup = &backup;
+    pSearch = &search;
     pSetCell = &setCell;
 
     setSigaction(&actDump, SIGUSR1, &alarm_handler);
