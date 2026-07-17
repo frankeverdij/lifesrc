@@ -516,10 +516,10 @@ int main(int argc, char ** argv)
                         smartWindow = 50;
                     case 'n': /* KS normalUnknown method from WinLifeSearch. */
                         smartOn += 1;
-                        pProceed = &proceed;
-                        pBackup = &backup;
-                        pSearch = &search;
-                        pSetCell = &setcell;
+                        pProceed = &proceedKS;
+                        pBackup = &backupKS;
+                        pSearch = &searchKS;
+                        pSetCell = &setCellKS;
                         break;
                     case 'd': /* (default) DB/JS normalUnknown search. */
                     default:

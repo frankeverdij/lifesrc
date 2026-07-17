@@ -110,13 +110,13 @@ void shortsetcell(Cell * cell, const State state)
  * Returns ERROR if the setting is inconsistent.
  * If the cell is newly set, then it is added to the set table.
  */
-Bool setcell(Cell * cell, State state, Bool free)
+Bool setCellKS(Cell * cell, State state, Bool free)
 {
     Cell *c1, *c2;
 
     if (cell->state == state)
     {
-        DPRINTF("setcell %d %d %d to state %s already set\n",
+        DPRINTF("setCellKS %d %d %d to state %s already set\n",
             cell->row, cell->col, cell->gen, (state == ON) ? "on" : "off");
 
         return TRUE;
@@ -152,7 +152,7 @@ Bool setcell(Cell * cell, State state, Bool free)
         return TRUE;
     }
 
-    DPRINTF("setcell %d %d %d to state %s inconsistent\n",
+    DPRINTF("setCellKS %d %d %d to state %s inconsistent\n",
         cell->row, cell->col, cell->gen, (state == ON) ? "on" : "off");
 
     return FALSE;
@@ -208,12 +208,12 @@ static Bool consistify(Cell * cell)
 
     // change the cell if needed
     if (((flags & IMPN) != 0) &&
-        !setcell(cell, ((flags & IMPN1) != 0) ? ON : OFF, FALSE))
+        !setCellKS(cell, ((flags & IMPN1) != 0) ? ON : OFF, FALSE))
             return FALSE;
 
     // change the parent cell if needed
     if (((flags & IMPC) != 0) &&
-        !setcell(prevCell, ((flags & IMPC1) != 0) ? ON : OFF, FALSE))
+        !setCellKS(prevCell, ((flags & IMPC1) != 0) ? ON : OFF, FALSE))
             return FALSE;
 
     if ((flags & IMPUN) != 0)
@@ -304,11 +304,11 @@ Status examinenext(void)
  * Set a cell to the specified value and determine all consequences we
  * can from the choice.  Consequences are a contradiction or a consistency.
  */
-Bool proceed(Cell * cell, State state, Bool free)
+Bool proceedKS(Cell * cell, State state, Bool free)
 {
     int status;
 
-    if (!setcell(cell, state, free))
+    if (!setCellKS(cell, state, free))
         return FALSE;
 
     do {
@@ -324,7 +324,7 @@ Bool proceed(Cell * cell, State state, Bool free)
  * Returns the cell which is to be tried for the other possibility.
  * Returns NULL on an "object cannot exist" error.
  */
-Cell * backup(void)
+Cell * backupKS(void)
 {
     Cell * cell;
 
@@ -382,7 +382,7 @@ static Bool go(Cell * cell, State state, Bool free)
     {
         setpos = nextSet;
 
-        if (proceed(cell, state, free))
+        if (proceedKS(cell, state, free))
             return TRUE;
 
         if ((setpos == nextSet) && free)
@@ -393,7 +393,7 @@ static Bool go(Cell * cell, State state, Bool free)
             state = (ON + OFF) - state;
         } else {
             ++stepConfl;
-            cell = backup();
+            cell = backupKS();
 
             if (cell == NULL)
                 return FALSE;
@@ -450,22 +450,22 @@ static Bool getsmartnumbers(Cell * cell)
     cellno = cellCount;
 
     // test the cell
-    if (proceed(cell, ON, TRUE))
+    if (proceedKS(cell, ON, TRUE))
     {
         smartlen1 = cellCount - cellno;
 
         // back up
-        backup(); 
+        backupKS(); 
 
         // and now let's try the OFF choice
 
-        if (proceed(cell, OFF, TRUE))
+        if (proceedKS(cell, OFF, TRUE))
         {
             smartlen0 = cellCount - cellno;
             smartChoice = (smartlen1 > smartlen0) ? ON : OFF;
 
             // back up
-            backup();
+            backupKS();
 
             return TRUE;
 
@@ -475,7 +475,7 @@ static Bool getsmartnumbers(Cell * cell)
             smartChoice = OFF;
 
             // back up if something changed
-            if (setpos != newSet) backup();
+            if (setpos != newSet) backupKS();
 
             return FALSE;
         }
@@ -486,7 +486,7 @@ static Bool getsmartnumbers(Cell * cell)
         smartChoice = ON;
 
         // back up if something changed
-        if (setpos != newSet) backup();
+        if (setpos != newSet) backupKS();
 
         return FALSE;
 
@@ -710,7 +710,7 @@ static State choose(const Cell * cell)
  * The top level search routine.
  * Returns if an object is found, or is impossible.
  */
-Status search(const Bool batch)
+Status searchKS(const Bool batch)
 {
     Cell * cell;
     Bool free;
@@ -733,7 +733,7 @@ Status search(const Bool batch)
          * nothing to search so we are at a solution
          * let's start search for another one
          */
-        cell = backup();
+        cell = backupKS();
 
         if (cell == NULL)
             return ERROR;

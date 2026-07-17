@@ -179,12 +179,12 @@ extern Cell * findCell(int, int, int);
 extern void fatal(const char *);
 extern void dumparray(void);
 extern Status Search(const Bool);
-extern Status search(const Bool);
+extern Status searchKS(const Bool);
 extern Bool Proceed(Cell *, State, Bool);
-extern Bool proceed(Cell *, State, Bool);
+extern Bool proceedKS(Cell *, State, Bool);
 extern Bool setCell(Cell * const , const State, const Bool);
-extern Bool setcell(Cell * const , const State, const Bool);
+extern Bool setCellKS(Cell * const , const State, const Bool);
 extern Cell * Backup(void);
-extern Cell * backup(void);
+extern Cell * backupKS(void);
 
 /* END CODE */
