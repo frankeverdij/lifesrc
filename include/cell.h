@@ -12,7 +12,7 @@ typedef struct Cell Cell;
 
 struct Cell {
     State     state;    /* current state */
-
+    short     pad;      /* padding field to zero the MSB's of (int) state */
     cellFlags free;     /* TRUE if this cell still has free choice */
     cellFlags frozen;   /* TRUE if this cell is frozen in all gens */
     cellFlags active;   /* FALSE if mirror by a symmetry */
