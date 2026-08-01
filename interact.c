@@ -38,6 +38,7 @@ static long foundCount;      /* number of objects found */
 static char initFile[256] = {0};   /* file containing initial cells */
 static char loadFile[256] = {0};   /* file to load state from */
 static char outputFile[256] = {0}; /* file to output results to */
+static char dumpFile[256] = {0};   /* dump file name */
 static Bool blockOutput;     /* print Unicode blocks instead of character */
 static Bool RLEOutput;       /* print additional RLE code */
 static Bool augmentOutput;   /* print additional UTF8 code for stateList info */
@@ -259,11 +260,11 @@ int main(int argc, char ** argv)
                 break;
             case 'd':
                 /* set dump frequency and dumpfile */
-                char * dumpFile = calloc(256, sizeof(char));
-                int retv = sscanf(optarg, "%d:%s", &dumpFreq, dumpFile);
+                void * dummy = &dumpFile;
+                int retv = sscanf(optarg, "%d:%s", &dumpFreq, (char *)dummy);
                 if (retv == 1)
                 {
-                    strncpy(dumpFile, DUMP_FILE, strlen(DUMP_FILE) + 1);
+                    strncpy(dummy, DUMP_FILE, strlen(DUMP_FILE) + 1);
                 }
                 else if (retv != 2)
                 {
@@ -687,7 +688,7 @@ int main(int argc, char ** argv)
         {
             if (strlen(dumpFile))
             {
-                dumpState(dumpFile);
+                dumpState();
             }
             else
             {
@@ -862,7 +863,9 @@ void getCommands(void)
                 /*
                  * Dump state to a file.
                  */
-                dumpState(cp);
+                cp = getStr(cp, "Dump state to file: ");
+                strncpy(dumpFile, cp, 255);
+                dumpState();
                 break;
 
             case 'N':
@@ -1503,7 +1506,7 @@ void writeGen(const char * file, const Bool append)
  * Dump the current state of the search in the specified file.
  * If no file is specified, it is asked for.
  */
-void dumpState(const char * file)
+void dumpState(void)
 {
     FILE * fp;
     Cell ** set;
@@ -1513,16 +1516,14 @@ void dumpState(const char * file)
     int gen;
     int ** param;
 
-    file = getStr(file, "Dump state to file: ");
-
-    if (*file == '\0')
+    if (!strlen(dumpFile))
         return;
 
-    fp = fopen(file, "w");
+    fp = fopen(dumpFile, "w");
 
     if (fp == NULL)
     {
-        ttyStatus("Cannot create \"%s\"\n", file);
+        ttyStatus("Cannot create \"%s\"\n", dumpFile);
 
         return;
     }
@@ -1608,12 +1609,12 @@ void dumpState(const char * file)
 
     if (fclose(fp))
     {
-        ttyStatus("Error writing \"%s\"\n", file);
+        ttyStatus("Error writing \"%s\"\n", dumpFile);
 
         return;
     }
 
-    ttyStatus("State dumped to \"%s\"\n", file);
+    ttyStatus("State dumped to \"%s\"\n", dumpFile);
     quitOk = TRUE;
 }
 

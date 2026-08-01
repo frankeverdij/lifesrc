@@ -128,7 +128,6 @@ EXTERN int curGen;         /* current generation for display */
 
 EXTERN sig_atomic_t dumpFlag; /* sigaction flag for dumps */
 EXTERN sig_atomic_t viewFlag; /* sigaction flag for viewing */
-EXTERN char * dumpFile;       /* dump file name */
 EXTERN long long viewCount;   /* counter for viewing */
 
 
@@ -174,7 +173,7 @@ extern void getCommands(void);
 extern void initCells(void);
 extern void initSearchOrder(void);
 extern void printGen(int);
-extern void dumpState(const char *);
+extern void dumpState(void);
 extern Cell * findCell(int, int, int);
 extern void fatal(const char *);
 extern void dumparray(void);

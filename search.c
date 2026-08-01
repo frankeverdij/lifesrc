@@ -506,7 +506,7 @@ Status search(const Bool batch)
          */
         if (dumpFlag)
         {
-            dumpState(dumpFile);
+            dumpState();
             dumpFlag = FALSE;
         }
 
