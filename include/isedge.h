@@ -3,7 +3,7 @@
 
 #include "lifesrc.h"
 
-Bool isEdge(const int, const int);
+Bool isEdge(const int, const int, const int);
 
 #endif /* ISEDGE_H */
 

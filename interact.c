@@ -48,7 +48,7 @@ static time_t startTime;
 static char timeBuf[256] = {0};
 static int  dumpFreq;        /* how often to perform dumps in seconds */
 static int  viewFreq;        /* how often to view results in seconds */
-
+static int  edgeDiagOffset;  /* turn lower-right and upper-left corner triangles with n cell-bases as OFF cells. A negative number select lower-left and upper-right triangles */
 
 /*
  * Local procedures
@@ -67,7 +67,7 @@ static Bool setRules(const char *);
 static long getNum(const char **, int);
 static const char * getStr(const char *, const char *);
 static void writeGen(const char *, Bool);
-static Bool initEdgeCells(void);
+static Bool initEdgeCells(const int);
 
 static Status (*pSearch)(const Bool);
 static Bool (*pProceed)(Cell *, State, Bool);
@@ -604,7 +604,7 @@ int main(int argc, char ** argv)
     }
     else
     {
-        initCells();
+        initCells(edgeDiagOffset);
 
         if (strlen(initFile))
         {
@@ -620,7 +620,7 @@ int main(int argc, char ** argv)
         {
             if (edgeDiagOffset)
             {
-                initEdgeCells();
+                initEdgeCells(edgeDiagOffset);
             }
         }
 
@@ -772,13 +772,13 @@ int main(int argc, char ** argv)
 }
 
 
-Bool initEdgeCells(void)
+Bool initEdgeCells(const int offset)
 {
     for (int col = 1; col <= colMax; col++)
     {
         for (int row = 1; row <= rowMax; row++)
         {
-            if (isEdge(row, col))
+            if (isEdge(row, col, offset))
             {
                 for (int gen = 0; gen < genMax; gen++)
                 {
@@ -1762,11 +1762,11 @@ static Status loadState(const char * file)
     /*
      * Initialize the cells.
      */
-    initCells();
+    initCells(edgeDiagOffset);
 
     if (smartOn)
     {
-        initEdgeCells();
+        initEdgeCells(edgeDiagOffset);
     }
 
     /*

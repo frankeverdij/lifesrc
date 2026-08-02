@@ -14,7 +14,6 @@
 #include "implicationKS.h"
 #include "nextstate.h"
 #include "findcell.h"
-#include "isedge.h"
 
 static int (*sortFunc)(const void *, const void * , void *);
 
@@ -214,7 +213,7 @@ initSearchOrder(void)
  * Boundary cells are set to zero state.
  */
 void
-initCells(void)
+initCells(const int offset)
 {
     int row;
     int col;
@@ -233,10 +232,10 @@ initCells(void)
     if ((colMax <= 0) || (colMax > COL_MAX))
         fatal("Column number out of range");
 
-    if ((colMax <= edgeDiagOffset) || (colMax + edgeDiagOffset <= 0))
+    if ((colMax <= offset) || (colMax + offset <= 0))
         fatal("Edge diagonal offset too big");
 
-    if ((edgeDiagOffset != 0) && (rowMax != colMax))
+    if ((offset != 0) && (rowMax != colMax))
         fatal("Edge diagonal offset set but search area is not square");
 
     if ((genMax <= 0) || (genMax > GEN_MAX))

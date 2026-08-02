@@ -75,7 +75,6 @@ EXTERN Status curStatus;   /* current status of search */
 EXTERN int rowMax;         /* maximum number of rows */
 EXTERN int colMax;         /* maximum number of columns */
 EXTERN int genMax;         /* maximum number of generations */
-EXTERN int edgeDiagOffset; /* turn lower-right and upper-left corner triangles with n cell-bases as OFF cells. A negative number select lower-left and upper-right triangles */
 EXTERN int rowTrans;       /* translation of rows */
 EXTERN int colTrans;       /* translation of columns */
 EXTERN Bool rowSym;        /* enable row symmetry starting at column */
@@ -171,7 +170,7 @@ EXTERN Flags implic[TRIMSIZE];
  * Global procedures
  */
 extern void getCommands(void);
-extern void initCells(void);
+extern void initCells(const int);
 extern void initSearchOrder(void);
 extern void printGen(int);
 extern void dumpState(void);
