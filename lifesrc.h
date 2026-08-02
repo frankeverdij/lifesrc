@@ -116,7 +116,6 @@ EXTERN int smartThreshold; /* check threshold */
  * do not affect the status of a search in progress.
  * They are either setTable on the command line or are computed.
  */
-EXTERN Bool quiet;         /* don't output */
 EXTERN Bool debug;         /* enable debugging output (if compiled so) */
 EXTERN Bool quitOk;        /* ok to quit without confirming */
 EXTERN Bool inited;        /* initialization has been done */
