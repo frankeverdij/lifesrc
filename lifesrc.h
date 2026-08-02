@@ -118,7 +118,6 @@ EXTERN int smartThreshold; /* check threshold */
  */
 EXTERN Bool debug;         /* enable debugging output (if compiled so) */
 EXTERN Bool quitOk;        /* ok to quit without confirming */
-EXTERN Bool inited;        /* initialization has been done */
 EXTERN State bornRules[9]; /* rules for whether a cell is to be born */
 EXTERN State liveRules[9]; /* rules for whether a live cell stays alive */
 EXTERN int curGen;         /* current generation for display */

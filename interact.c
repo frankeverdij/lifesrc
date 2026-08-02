@@ -663,8 +663,6 @@ int main(int argc, char ** argv)
         getCommands();
     }
 
-    inited = TRUE;
-
     /*
      * Arm the output timers
      */
