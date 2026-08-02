@@ -17,6 +17,7 @@
 #include "lifesrc.h"
 #include "implicationKS.h"
 
+#include "searchKS.h"
 
 /*
  * Local variables

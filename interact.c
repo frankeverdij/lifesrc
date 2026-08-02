@@ -23,6 +23,8 @@
 #include "findcell.h"
 #include "tty.h"
 #include "isedge.h"
+#include "search.h"
+#include "searchKS.h"
 
 #define VERSION "4.0"
 

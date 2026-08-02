@@ -28,6 +28,7 @@
 #include "findcell.h"
 #include "tty.h"
 
+#include "search.h"
 
 /*
  * Local variables
