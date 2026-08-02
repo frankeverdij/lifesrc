@@ -88,6 +88,11 @@ void alarm_handler(const int signo)
     {
         viewFlag = TRUE;
     }
+    if (signo == SIGTERM)
+    {
+        dumpFlag = TRUE;
+        termFlag = TRUE;
+    }
 }
 
 
@@ -192,7 +197,7 @@ Bool set_initial_cells(void)
 
 int main(int argc, char ** argv)
 {
-    struct sigaction actDump, actView;
+    struct sigaction actDump, actView, actTerm;
     struct sigevent sevDump, sevView;
     struct itimerspec itsDump, itsView;
     timer_t tidDump, tidView;
@@ -219,6 +224,7 @@ int main(int argc, char ** argv)
 
     setSigaction(&actDump, SIGUSR1, &alarm_handler);
     setSigaction(&actView, SIGUSR2, &alarm_handler);
+    setSigaction(&actTerm, SIGTERM, &alarm_handler);
 
     if (!setRules("3/23"))
     {
@@ -1616,6 +1622,12 @@ void dumpState(void)
 
     ttyStatus("State dumped to \"%s\"\n", dumpFile);
     quitOk = TRUE;
+
+    /* abort program if SIGTERM is set */
+    if (termFlag)
+    {
+        exit(0);
+    }
 }
 
 
