@@ -96,11 +96,11 @@ void alarm_handler(const int signo)
 {
     if (signo == SIGUSR1)
     {
-        dumpFlag = TRUE;
+        viewFlag = TRUE;
     }
     if (signo == SIGUSR2)
     {
-        viewFlag = TRUE;
+        dumpFlag = TRUE;
     }
     if (signo == SIGTERM)
     {
@@ -236,9 +236,7 @@ int main(int argc, char ** argv)
     pSearch = &search;
     pSetCell = &setCell;
 
-    setSigaction(&actDump, SIGUSR1, &alarm_handler);
-    setSigaction(&actView, SIGUSR2, &alarm_handler);
-    setSigaction(&actTerm, SIGTERM, &alarm_handler);
+    setSigaction(&actView, SIGUSR1, &alarm_handler);
 
     if (!setRules("3/23"))
     {
@@ -668,21 +666,27 @@ int main(int argc, char ** argv)
     /*
      * Arm the output timers
      */
+    createTimer(&sevView, &itsView, &tidView, SIGUSR1, viewFreq);
+    if (timer_settime(tidView, 0, &itsView, NULL) == -1)
+    {
+        perror("timer_settime View failed");
+        exit(EXIT_FAILURE);
+    }
+
     if (dumpFreq)
     {
-        createTimer(&sevDump, &itsDump, &tidDump, SIGUSR1, dumpFreq);
+        /*
+         * Set the dump-to-file interrupt handlers
+         */
+        setSigaction(&actDump, SIGUSR2, &alarm_handler);
+        setSigaction(&actTerm, SIGTERM, &alarm_handler);
+
+        createTimer(&sevDump, &itsDump, &tidDump, SIGUSR2, dumpFreq);
         if (timer_settime(tidDump, 0, &itsDump, NULL) == -1)
         {
             perror("timer_settime Dump failed");
             exit(EXIT_FAILURE);
         }
-    }
-
-    createTimer(&sevView, &itsView, &tidView, SIGUSR2, viewFreq);
-    if (timer_settime(tidView, 0, &itsView, NULL) == -1)
-    {
-        perror("timer_settime View failed");
-        exit(EXIT_FAILURE);
     }
 
     time(&startTime);
