@@ -76,6 +76,20 @@ static Bool (*pSetCell)(Cell * const , const State, const Bool);
 
 
 /*
+ * Switch to KS functions if smartON is set
+ */
+void setKSInterface(const int smart)
+{
+    if (smart)
+    {
+        pProceed = &proceedKS;
+        pBackup = &backupKS;
+        pSearch = &searchKS;
+        pSetCell = &setCellKS;
+    }
+}
+
+/*
  * Signal handler for output
  */
 void alarm_handler(const int signo)
@@ -111,7 +125,7 @@ static int * paramTable[] =
     &flipRows, &flipCols, &flipFwd, &flipBwd, &flipPoint, &flipQuads,
     &parent, &allObjects,
     &orderWide, &orderGens, &orderInvert, &orderMiddle, &followGens,
-    &chooseUnknown, &sortOrder, NULL
+    &chooseUnknown, &sortOrder, &smartOn, NULL
 };
 
 
@@ -523,10 +537,6 @@ int main(int argc, char ** argv)
                         smartWindow = 50;
                     case 'n': /* KS normalUnknown method from WinLifeSearch. */
                         smartOn += 1;
-                        pProceed = &proceedKS;
-                        pBackup = &backupKS;
-                        pSearch = &searchKS;
-                        pSetCell = &setCellKS;
                         break;
                     case 'd': /* (default) DB/JS normalUnknown search. */
                     default:
@@ -573,6 +583,12 @@ int main(int argc, char ** argv)
         if (!ttyOpen())
             fatal("Cannot initialize terminal");
     }
+
+    /*
+     * make sure that function pointer are pointing at KS functions
+     * if smartON is set
+     */
+    setKSInterface(smartOn);
 
     /*
      * Check for loading state from file or reading initial
@@ -1738,11 +1754,17 @@ static Status loadState(const char * file)
     }
 
     /*
+     * make sure that function pointer are pointing at KS functions
+     * if smartON is set
+     */
+    setKSInterface(smartOn);
+
+    /*
      * Initialize the cells.
      */
     initCells();
 
-    if (edgeDiagOffset)
+    if (smartOn)
     {
         initEdgeCells();
     }
