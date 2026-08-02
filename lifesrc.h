@@ -173,7 +173,7 @@ extern void printGen(int);
 extern void dumpState(void);
 extern Cell * findCell(int, int, int);
 extern void fatal(const char *);
-extern void dumparray(void);
+
 extern Status search(const Bool);
 extern Status searchKS(const Bool);
 extern Bool proceed(Cell *, State, Bool);
