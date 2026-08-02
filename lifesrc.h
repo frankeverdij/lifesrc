@@ -90,7 +90,6 @@ EXTERN Bool flipBwd;       /* flip backward diagonal (\) from last to first gen 
 EXTERN Bool flipPoint;     /* flip point from last to first gen */
 EXTERN Bool flipQuads;     /* flip quadrants from last to first gen */
 EXTERN Bool parent;        /* only look for parents */
-EXTERN Bool allObjects;    /* look for all objects including subPeriods */
 
 EXTERN Bool orderWide;     /* ordering tries to find wide objects */
 EXTERN Bool orderGens;     /* ordering tries all gens first */

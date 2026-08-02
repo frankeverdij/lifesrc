@@ -49,6 +49,7 @@ static char timeBuf[256] = {0};
 static int  dumpFreq;        /* how often to perform dumps in seconds */
 static int  viewFreq;        /* how often to view results in seconds */
 static int  edgeDiagOffset;  /* turn lower-right and upper-left corner triangles with n cell-bases as OFF cells. A negative number select lower-left and upper-right triangles */
+static Bool allObjects;      /* look for all objects including subPeriods */
 
 /*
  * Local procedures
