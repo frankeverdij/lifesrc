@@ -25,6 +25,7 @@
 #include "isedge.h"
 #include "search.h"
 #include "searchKS.h"
+#include "init.h"
 
 #define VERSION "4.0"
 
