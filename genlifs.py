@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from os import path, makedirs
-import copy
 import argparse
+import copy
+import hashlib
 import sys
 
 """
@@ -159,10 +160,14 @@ class Partials:
                     for n in range(self.partialInfo[j][0]):
                         bg[m + offset[1]][n + width - self.partialInfo[j][0]] \
                             = self.partials[j][m][n]
-
+                pat = []
+                for i in bg:
+                    pat.append(''.join(list(i)) + '\n')
+                pat = ''.join(pat)
+                h = hashlib.md5(pat.encode(encoding="ascii"), usedforsecurity=False)
                 # save pattern and pattern info
                 self.patternInfo.append([ncol, j % self.period, offset[0],
-                                        offset[1]])
+                                        offset[1], h.hexdigest()])
                 self.patterns.append(bg)
 
     def write_patterns(self):
@@ -178,6 +183,11 @@ class Partials:
                     row = ''.join(list(p)) + '\n'
                     fh.write(row)
                 fh.close()
+
+            # write the md5
+            with open(dirpath + '/' + futureGen + ".md5", 'w') as fh:
+                fh.write(j[4])
+            fh.close()
 
             # write shell script for this pattern
             if not self.symmetric:
