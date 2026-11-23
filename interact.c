@@ -707,7 +707,7 @@ int main(int argc, char ** argv)
             secToHMS(dif, timeBuf);
         }
 
-        if ((curStatus == FOUND) && !allObjects && subPeriods())
+        if ((curStatus == FOUND) && subPeriods())
         {
             curStatus = OK;
             continue;
