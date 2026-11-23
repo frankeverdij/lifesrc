@@ -17,6 +17,7 @@
 #include "lifesrc.h"
 #include "implicationKS.h"
 
+#include "setstate.h"
 #include "searchKS.h"
 
 /*
@@ -36,32 +37,12 @@ static int smartlen1;
 static int cellCount = 0; /* number of set cells */
 static State prevState; /* the state of the last free cell before backup() */
 
-
 static Cell * (*getunknown)(void);
-
-static void setState(Cell * const cell, const State state)
-{
-    /* backup previous state */
-    int diffState = state - cell->state;
-    /* set cell state */
-    cell->state = state;
-    /* correct the neighbor sum for cells touching this cell */
-    cell->cul->sumNear += diffState;
-    cell->cu->sumNear += diffState;
-    cell->cur->sumNear += diffState;
-    cell->cl->sumNear += diffState;
-    cell->cr->sumNear += diffState;
-    cell->cdl->sumNear += diffState;
-    cell->cd->sumNear += diffState;
-    cell->cdr->sumNear += diffState;
-}
-
 
 /*
  * Set the state of a cell back to UNK/FREE
  * Proceed through the loop if present
  */
-
 void rescell(Cell * cell)
 {
     Cell * c1;
