@@ -707,7 +707,7 @@ int main(int argc, char ** argv)
             secToHMS(dif, timeBuf);
         }
 
-        if ((curStatus == FOUND) && !allObjects && subPeriods())
+        if ((curStatus == FOUND) && subPeriods())
         {
             curStatus = OK;
             continue;
@@ -2287,7 +2287,7 @@ static void usage(void)
     "   -c n Number of columns",
     "   -g n Number of generations",
     "   -p   Only look for parents of last generation",
-    "   -h n Make the search area hexagonal by clearing the NW-SE corner"
+    "   -h n Make the search area hexagonal by clearing the NW-SE corner",
     "        triangles (|/ /|) from the search space by setting cells to OFF",
     "        The triangles have n cells as base.",
     "   -H n Same as -h but clears the NE-SW corner triangles (|\\ \\|).",
@@ -2316,7 +2316,7 @@ static void usage(void)
     "   -ws  Select WinLifeSearch's KS getSmartUnknown search method",
     "",
     "   -sg  Set search order from lowest generation to highest",
-    "   -Sg  Like -og but select old search order code",
+    "   -Sg  Like -sg but select old search order code",
     "   -sw  Set search order to find wide objects first",
     "   -sm  Set search order from middle column outwards",
     "   -sr  Set search order from top to bottom",
@@ -2326,7 +2326,7 @@ static void usage(void)
     "   -sO  Set search order circular outwards from the center",
     "   -si  Invert search order",
     "",
-    "   -a   Find all objects (even those with subPeriods)",
+    "   -a   Find all objects",
     "   -b   Batch. Don't enter command mode",
     "   -D   Enter debug mode if the code is compiled with -DDEBUGFLAG",
     "   -R   Use Life rules specified by born,live values",
